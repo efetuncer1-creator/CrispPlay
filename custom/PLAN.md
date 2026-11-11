@@ -8,6 +8,7 @@
 
 - Aşama 0 kodu hazır: `custom/` iskeleti, marka, güncelleme adresi ve sürüm politikası, Hakkında'da GPL atfı, `upstream-sync.yml`. Upstream dosyalarında 20 işaretli kanca satırı + `version.rc.in`'de 2 değer; liste `custom/HOOKS.md`.
 - Aşama 1: derleme ortamı kuruldu, uygulama derleniyor ve açılıyor; ayrıntı ve eksikler `custom/BUILD.md`. Açık kalan: paketleme (windeployqt + çalışma zamanı DLL'leri), PS5 slice yamalı FFmpeg, FidelityFX 1.1.4 optical flow kitaplığı.
+- Aşama 2 (Türkçe) tamam: `custom/i18n/tr.json` upstream kataloğun 2808 girdisinin tamamını kapsıyor, Ayarlar → Arayüz dili'nde "Türkçe" var, Türkçe Windows'ta "Sistemi izle" Türkçeyi seçer. Upstream'e 7 yeni kanca satırı (toplam 27, liste `custom/HOOKS.md`). Terimler `custom/i18n/GLOSSARY.md`; her sync'te `python custom/scripts/i18n_check.py`.
 - Test GPU'su: NVIDIA GeForce RTX 3060 Ti (+ AMD tümleşik grafik).
 
 ## Amaç ve temel ilke
@@ -85,7 +86,7 @@ Yeni upstream etiketi çıktığında bir GitHub Action günlük kontrolde bunu 
 3. PR gövdesi çakışan dosyaları ve kontrol listesini yazar.
 4. Yetki: upstream `.github/workflows/` altında değişiklik yaparsa `GITHUB_TOKEN` o dalı push edemez; `workflow` yetkili bir PAT `SYNC_TOKEN` secret'ı olarak eklenmeli. Repo ayarında "Allow GitHub Actions to create and approve pull requests" açık olmalı. Fork'larda zamanlanmış workflow'lar Actions sekmesinden bir kez elle etkinleştirilmeli; repo 60 gün hareketsiz kalırsa GitHub zamanlamayı durdurur.
 5. Çakışmalar `custom/HOOKS.md`'deki kanca listesine bakılarak çözülür: upstream değişikliği alınır, bizim kanca satırı yeniden eklenir.
-6. `custom/i18n/tr.json` için betik çalıştırılır: upstream'de yeni eklenen metinler "çevrilmedi" listesine düşer, eskimiş girdiler raporlanır.
+6. `python custom/scripts/i18n_check.py` çalıştırılır: upstream'de yeni eklenen metinler "çevrilmedi" listesine düşer (çevrilene kadar İngilizce görünür), eskimiş girdiler ve yer tutucu uyuşmazlıkları raporlanır; uyuşmazlıkta çıkış kodu 1. `--add-missing` yeni girdileri boş `tr` ile dosyaya ekler.
 7. `custom/branding/Branding.cmake` içinde `CRISPPLAY_PATCH` 1'e çekilir.
 8. Windows'ta derleme + duman testi; sorun yoksa PR birleştirilir, bizim sürüm etiketi atılır (ör. `v2.1.6-crispplay.1`).
 

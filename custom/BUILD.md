@@ -17,7 +17,10 @@ powershell -ExecutionPolicy Bypass -File custom\scripts\build.ps1 -Test
 
 Çıktı `out\build\x64-release\` altında (`veyra_qml_ui.exe`).
 
-**Durum (2026-11-11):** Qt'ye bağlı testler derleniyor ve geçiyor (branding 7/7, upstream güncelleme denetleyicisi 29/29, i18n 0 hata). `veyra_qml_ui` henüz derlenmiyor: motor kodu NVIDIA DLSS SDK başlıklarını (`nvsdk_ngx.h`) koşulsuz istiyor. Tam uygulama için `third_party_local/` altına (git'e girmez) şunlar gerekiyor:
+**Durum (2026-11-11):** Qt'ye bağlı testler derleniyor ve geçiyor (branding 7/7, upstream güncelleme denetleyicisi 29/29, i18n 0 hata). DLSS SDK ile `veyra_qml_ui`'nin tüm kaynakları derleniyor; yalnız bağlama `veyra_nvof.lib` (Optical Flow SDK) eksik diye duruyor. Motor kodu DLSS başlıklarını (`nvsdk_ngx.h`) koşulsuz, bağlayıcı da NVOF kitaplığını istiyor. `third_party_local/` altına (git'e girmez):
+
+- İndirildi: DLSS SDK 310.7.0 (`a291cc7`), XeSS 3.0.2 (sürüm zip'i), FidelityFX 2.3.0 (`60f4ea8`), FidelityFX 1.1.4 (sürüm zip'i; `ffx_opticalflow_x64.lib` hazır gelmiyor, SDK içinden derlenmeli, isteğe bağlı).
+- Eksik: Optical Flow SDK 5.0.7 (NVIDIA hesabı ister).
 
 | SDK | Beklenen yer | Kaynak |
 | --- | --- | --- |

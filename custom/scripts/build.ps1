@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     # Folder holding qt\, vcpkg\ and vcpkg_installed\ (see custom/BUILD.md).
-    [string]$Deps = (Join-Path $PSScriptRoot "..\..\..\deps"),
+    [string]$Deps = "",
     [ValidateSet("x64-release", "x64-debug")][string]$Preset = "x64-release",
     # Default: the app plus the tests that need only Qt.
     [string[]]$Target = @("veyra_qml_ui", "crispplay_branding_tests", "veyra_update_checker_tests", "veyra_ui_i18n_tests"),
@@ -13,6 +13,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+# Windows PowerShell 5.1 leaves $PSScriptRoot empty inside param() defaults.
+if (-not $Deps) { $Deps = Join-Path $root "..\deps" }
 $deps = (Resolve-Path $Deps).Path
 $qt = Join-Path $deps "qt\6.8.3\msvc2022_64"
 $ffmpeg = Join-Path $deps "vcpkg_installed\x64-windows"
@@ -26,6 +28,12 @@ $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.
 if (-not $vs) { throw "Visual Studio 2022 C++ tools not found" }
 
 $build = Join-Path $root "out\build\$Preset"
+# NVIDIA DLSS SDK: the engine includes nvsdk_ngx.h unconditionally, so the app
+# only builds with it (see custom/BUILD.md). Same switch as upstream build.ps1.
+$dlss = Join-Path $root "third_party_local\nvidia\DLSS_SDK_310.7.0"
+$dlssArgs = if (Test-Path -LiteralPath "$dlss\include\nvsdk_ngx.h") {
+    "-DVEYRA_ENABLE_EXPERIMENTAL_DLSSNR=ON -DVEYRA_DLSS_SDK_ROOT=`"$($dlss -replace '\\', '/')`""
+} else { "-DVEYRA_ENABLE_EXPERIMENTAL_DLSSNR=OFF" }
 $ffmpegCMake = $ffmpeg -replace '\\', '/'
 $batch = Join-Path $root "out\crispplay-build.cmd"
 New-Item -ItemType Directory -Force (Split-Path $batch) | Out-Null
@@ -34,7 +42,7 @@ New-Item -ItemType Directory -Force (Split-Path $batch) | Out-Null
     "call `"$vs\VC\Auxiliary\Build\vcvars64.bat`" >nul 2>&1 || exit /b 4",
     'chcp 65001 >nul',
     "cd /d `"$root`"",
-    "cmake --preset $Preset -B `"$build`" -DVEYRA_BUILD_QML_UI=ON -DVEYRA_ENABLE_DEINTERLACE=OFF -DVEYRA_ENABLE_EXPERIMENTAL_DLSSNR=OFF -DCMAKE_PREFIX_PATH=`"$qt`" -DVEYRA_FFMPEG_ROOT=`"$ffmpegCMake`" || exit /b 5",
+    "cmake --preset $Preset -B `"$build`" -DVEYRA_BUILD_QML_UI=ON -DVEYRA_ENABLE_DEINTERLACE=OFF $dlssArgs -DCMAKE_PREFIX_PATH=`"$qt`" -DVEYRA_FFMPEG_ROOT=`"$ffmpegCMake`" || exit /b 5",
     "cmake --build `"$build`" --target $($Target -join ' ') || exit /b 6"
 ) | Set-Content -LiteralPath $batch -Encoding ASCII
 & cmd.exe /c "`"$batch`""

@@ -7,7 +7,7 @@
 ## Durum (2026-11-11)
 
 - Aşama 0 kodu hazır: `custom/` iskeleti, marka, güncelleme adresi ve sürüm politikası, Hakkında'da GPL atfı, `upstream-sync.yml`. Upstream dosyalarında 20 işaretli kanca satırı + `version.rc.in`'de 2 değer; liste `custom/HOOKS.md`.
-- **Henüz derlenmedi:** makinede MSVC/Qt/CMake yok. İlk derleme Aşama 1'de; `crispplay_branding_tests` ve upstream `veyra_update_checker_tests` o zaman çalıştırılacak.
+- Aşama 1: derleme ortamı kuruldu, uygulama derleniyor ve açılıyor; ayrıntı ve eksikler `custom/BUILD.md`. Açık kalan: paketleme (windeployqt + çalışma zamanı DLL'leri), PS5 slice yamalı FFmpeg, FidelityFX 1.1.4 optical flow kitaplığı.
 - Test GPU'su: NVIDIA GeForce RTX 3060 Ti (+ AMD tümleşik grafik).
 
 ## Amaç ve temel ilke

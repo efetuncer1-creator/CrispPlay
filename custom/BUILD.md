@@ -17,10 +17,12 @@ powershell -ExecutionPolicy Bypass -File custom\scripts\build.ps1 -Test
 
 Çıktı `out\build\x64-release\` altında (`veyra_qml_ui.exe`).
 
-**Durum (2026-11-11):** Qt'ye bağlı testler derleniyor ve geçiyor (branding 7/7, upstream güncelleme denetleyicisi 29/29, i18n 0 hata). DLSS SDK ile `veyra_qml_ui`'nin tüm kaynakları derleniyor; yalnız bağlama `veyra_nvof.lib` (Optical Flow SDK) eksik diye duruyor. Motor kodu DLSS başlıklarını (`nvsdk_ngx.h`) koşulsuz, bağlayıcı da NVOF kitaplığını istiyor. `third_party_local/` altına (git'e girmez):
+**Durum (2026-11-11):** `veyra_qml_ui.exe` derleniyor (EXE bilgisi `CrispPlay 2.1.5-crispplay.1`); testler geçiyor (branding 7/7, upstream güncelleme denetleyicisi 29/29, i18n 0 hata). Duman testi: `--data-dir out\smoke-data --page set --tab about --exit-after 10000` ile açıldı, pencere başlığı doğru, RTX 3060 Ti seçildi, çıkış 0. Güncelleme denetimi `http-404` (henüz CrispPlay release yok, beklenen). PS5/Xbox iletişim kutularında iki upstream QML uyarısı var (bu derlemede o özellikler kapalı). Video oynatma, SR/NR/FG denenmedi.
 
-- İndirildi: DLSS SDK 310.7.0 (`a291cc7`), XeSS 3.0.2 (sürüm zip'i), FidelityFX 2.3.0 (`60f4ea8`), FidelityFX 1.1.4 (sürüm zip'i; `ffx_opticalflow_x64.lib` hazır gelmiyor, SDK içinden derlenmeli, isteğe bağlı).
-- Eksik: Optical Flow SDK 5.0.7 (NVIDIA hesabı ister).
+Motor kodu DLSS başlıklarını (`nvsdk_ngx.h`) koşulsuz, bağlayıcı da NVOF kitaplığını istiyor. `third_party_local/` altında (git'e girmez):
+
+- DLSS SDK 310.7.0 (`a291cc7`), Optical Flow SDK 5.0.7 (NVIDIA hesabıyla indirilen zip), XeSS 3.0.2 (sürüm zip'i), FidelityFX 2.3.0 (`60f4ea8`), FidelityFX 1.1.4 (sürüm zip'i; `ffx_opticalflow_x64.lib` hazır gelmiyor, SDK içinden derlenmeli, isteğe bağlı, henüz derlenmedi).
+- Çalıştırma: `deps\qt\6.8.3\msvc2022_64\bin` ve `deps\vcpkg_installed\x64-windows\bin` PATH'te olmalı (paketleme/windeployqt henüz yok). SR/NR/FG için gereken NVIDIA çalışma zamanı DLL'leri (`nvngx_*.dll` vb.) EXE yanına henüz konmadı.
 
 | SDK | Beklenen yer | Kaynak |
 | --- | --- | --- |

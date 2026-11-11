@@ -29,6 +29,11 @@ inline QUrl releaseApiUrl() {
 }
 inline QString releaseTagPath(const QString& tag) { return repoPath() + QStringLiteral("/releases/tag/") + tag; }
 
+// Discord application ID (Developer Portal > General Information > Application ID)
+// of the application "CrispPlay". When empty, Rich Presence
+// stays off and the setting shows a note instead of the options. See custom/DISCORD.md.
+inline QString discordAppId() { return QStringLiteral("1570034995815514172"); }
+
 // GPL-3 attribution shown on the About page.
 inline QUrl upstreamUrl() { return QUrl(QStringLiteral("https://github.com/Likely7/Veyra-NRVideo")); }
 inline QString attribution() {

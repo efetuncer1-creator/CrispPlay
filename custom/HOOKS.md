@@ -2,7 +2,7 @@
 
 Her satır `VEYRA_CUSTOM` ile işaretli. Upstream sync'te çakışma çıkarsa: upstream'in yeni hâlini al, aşağıdaki kancayı aynı anlamla yeniden ekle.
 
-Kontrol: `git grep -n VEYRA_CUSTOM -- ':!custom'` şu an **28** sonuç vermeli: aşağıdaki tablodaki 27 kanca satırı + `.github/workflows/upstream-sync.yml` içindeki bu komutun kendisini anan 1 satır (`version.rc.in` satırları yorumsuz olduğu için sayılmaz; onlar `@CRISPPLAY_` ile aranır).
+Kontrol: `git grep -n VEYRA_CUSTOM -- ':!custom'` şu an **31** sonuç vermeli: aşağıdaki tablodaki 30 kanca satırı + `.github/workflows/upstream-sync.yml` içindeki bu komutun kendisini anan 1 satır (`version.rc.in` satırları yorumsuz olduğu için sayılmaz; onlar `@CRISPPLAY_` ile aranır).
 
 | Dosya | Satır | Ne yapar |
 | --- | --- | --- |
@@ -13,9 +13,11 @@ Kontrol: `git grep -n VEYRA_CUSTOM -- ':!custom'` şu an **28** sonuç vermeli: 
 | `src/ui/UpdateChecker.cpp` | 5 | Include; `versionNumber` → `releaseVersion` (4 parçalı sürüm, `-crispplay.N`); URL doğrulama → `isReleaseUrl`; parça sayısı kontrolü → `isNull()`; gösterilen sürüm → `displayVersion` |
 | `src/ui/bridge/Preferences.cpp` | 5 | Include; README / Issues / Releases adresleri branding'den; `language` tercihi `crispplay::i18n::extraLanguages()` dillerini de kabul eder (Türkçe) |
 | `apps/veyra-qml/main.cpp` | 2 | Include; QML'e `crispBrand` bağlam özelliği |
+| `apps/veyra-qml/main.cpp` | 2 | Discord Rich Presence: include + `crispplay::discord::install(...)` (`crispDiscord` bağlam özelliği, köprüye Qt sinyaliyle bağlanır, çıkışta temizler) |
 | `qml/Veyra/Main.qml` | 1 | Pencere başlığı `crispBrand.appName` |
 | `qml/Veyra/HomePage.qml` | 1 | Ana sayfa başlığı `crispBrand.homeTitle` |
 | `qml/Veyra/SettingsPage.qml` | 3 | Hakkında: ad + "Veyra (Likely7) tabanlıdır" GPL atfı; Arayüz dili menüsüne `crispBrand.languages` (Türkçe) eklenir |
+| `qml/Veyra/SettingsPage.qml` | 1 | Hakkında bölümü: `Loader` ile `custom/qml/DiscordSettings.qml` (Discord Rich Presence ayarı; `custom/CMakeLists.txt` dosyayı `qml/CrispPlay/` altına kopyalar) |
 | `src/ui/UiLanguage.cpp` | 5 | `crispplay/I18n.h` include; `load()` katalog baytlarını `catalogJson(code, …)`'dan geçirir (`tr` için `:/crispplay/i18n/tr.json` upstream kataloğun üstüne birleştirilir, eksikler İngilizce); `；` birleştirmesi Latin dillerde `; ` (`latinScript`); `resolve()` açık `tr` tercihini ve Türkçe Windows dilini `tr`'ye eşler |
 | `tests/unit/UpdateCheckerTests.cpp` | 1 | Test release adresi branding'den (upstream testleri bizim repoyla geçsin) |
 

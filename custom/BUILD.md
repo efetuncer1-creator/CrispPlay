@@ -22,7 +22,9 @@ powershell -ExecutionPolicy Bypass -File custom\scripts\build.ps1 -Test
 Motor kodu DLSS başlıklarını (`nvsdk_ngx.h`) koşulsuz, bağlayıcı da NVOF kitaplığını istiyor. `third_party_local/` altında (git'e girmez):
 
 - DLSS SDK 310.7.0 (`a291cc7`), Optical Flow SDK 5.0.7 (NVIDIA hesabıyla indirilen zip), XeSS 3.0.2 (sürüm zip'i), FidelityFX 2.3.0 (`60f4ea8`), FidelityFX 1.1.4 (sürüm zip'i; `ffx_opticalflow_x64.lib` hazır gelmiyor, SDK içinden derlenmeli, isteğe bağlı, henüz derlenmedi).
-- Çalıştırma: `deps\qt\6.8.3\msvc2022_64\bin` ve `deps\vcpkg_installed\x64-windows\bin` PATH'te olmalı (paketleme/windeployqt henüz yok). SR/NR/FG için gereken NVIDIA çalışma zamanı DLL'leri (`nvngx_*.dll` vb.) EXE yanına henüz konmadı.
+- Çalıştırma: `deps\qt\6.8.3\msvc2022_64\bin` ve `deps\vcpkg_installed\x64-windows\bin` PATH'te olmalı (paketleme/windeployqt henüz yok).
+- Çalışma zamanı bileşenleri: upstream `Veyra-2.1.5-NVIDIA-win64-portable.zip` (SHA-256 `f78a3dca…80ca`, upstream `SHA256SUMS.txt` ile doğrulandı) içinden `runtime\`, `runtime_local\` ve `licenses\` EXE'nin yanına (`out\build\x64-release\`) konur; uygulama bunları `src/base/RuntimePaths.cpp` ile EXE yanında arar. Zip `deps\downloads\veyra-2.1.5\` altında.
+- 2026-11-11 RTX 3060 Ti, hta.mp4 (720p30 H.264), SR + NR + FG açık: DLSS 4 SR 1280×720 → 3840×2160 (`gpuSrP95` ≈ 4,2 ms), NR `community-SF-RTX20-RTX50` iç 1920×1080 (≈ 25 ms), DLSS-G FG ×6 (toplu ≈ 15 ms), NVOF akış ≈ 1,8 ms; VRAM 2,4 GB. Kaynak karesi başına GPU ≈ 55 ms > 33 ms bütçe: bu kombinasyonda GPU sınırda, ekrana ~60 kare/sn gidiyor (75 Hz ekran). NR'yi düşürmek ya da FG'yi ×2 yapmak bütçeye sığdırır.
 
 | SDK | Beklenen yer | Kaynak |
 | --- | --- | --- |

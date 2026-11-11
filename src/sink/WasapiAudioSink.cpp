@@ -1,6 +1,7 @@
 #include "veyra/sink/AudioGain.h"
 #include "veyra/sink/WasapiAudioSink.h"
 #include "veyra/sink/RecordingAudioTap.h"
+#include "crispplay/replay/Hooks.h" // VEYRA_CUSTOM
 #include "veyra/engine/PlaybackRate.h"
 #include "veyra/media/NetworkInput.h"
 #include <functiondiscoverykeys_devpkey.h>
@@ -911,8 +912,8 @@ bool AudioRenderer::pumpOnce(AudioPcmSource& pipeline, double* firstWrittenPtsMs
     // device clock, which the player's A/V sync follows; frames queued in the
     // shared buffer alone read ~40 ms early (engine and device latency).
     // Prefill before Start uses the queue plus the latency measured meanwhile.
-    if(got&&!pausedEndpoint_&&recordingAudioActive()){
-        if(auto tap=recordingAudioSink()){
+    if(got&&!pausedEndpoint_&&(recordingAudioActive()||crispplay::replay::audioWanted())){ // VEYRA_CUSTOM
+        if(auto tap=crispplay::replay::audioTap(recordingAudioSink())){ // VEYRA_CUSTOM
             const int64_t queuedUs=recordingClockUs()+int64_t(padding)*1000000/int64_t(sampleRate_);
             int64_t playoutUs=queuedUs+tapLatencyUs_;
             UINT64 pos=0,qpc=0;

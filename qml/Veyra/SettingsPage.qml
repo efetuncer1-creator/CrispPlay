@@ -602,6 +602,7 @@ VPage {
                             }
                         }
                     }
+                    Loader { Layout.fillWidth: true; source: typeof crispReplay !== "undefined" ? "qrc:/crispplay/ReplaySettings.qml" : "" } // VEYRA_CUSTOM
                     }
                     VGroup {
                         objectName: "set-smooth-motion"
@@ -972,6 +973,7 @@ VPage {
                                 { id: "hold", a: qsTr("按住查看原画") },
                                 { id: "screenshot", a: qsTr("截图"), note: qsTr("游戏模式下在游戏里也能用") },
                                 { id: "record", a: qsTr("开始 / 停止录制"), note: qsTr("游戏模式下在游戏里也能用") },
+                                { id: "replay", a: "Anlık tekrarı kaydet", note: "Ayarlar → Oynatma'da açıkken çalışır" }, // VEYRA_CUSTOM
                                 { id: "toggleMode", a: qsTr("切换极简 / 专业") },
                                 { id: "gamePanel", a: qsTr("游戏模式：调整画面"), note: qsTr("仅在游戏模式中接管按键；支持 Ctrl、Alt、Shift 组合") },
                                 { id: "gameExit", a: qsTr("游戏模式：退出鼠标穿透"), note: qsTr("退出全屏，恢复普通窗口操作") }

@@ -718,6 +718,7 @@ Window {
     Shortcut { sequence: veyra.shortcuts.fullscreen; onActivated: root.toggleFullscreen() }
     Shortcut { sequence: veyra.shortcuts.screenshot; onActivated: veyra.takeScreenshot() }
     Shortcut { sequence: veyra.shortcuts.record; autoRepeat: false; onActivated: veyra.toggleRecording("shortcut") } // a held key must not toggle at the repeat rate
+    Loader { source: typeof crispReplay !== "undefined" ? "qrc:/crispplay/ReplayHost.qml" : "" } // VEYRA_CUSTOM instant replay shortcut + notice
     Shortcut {
         sequence: veyra.shortcuts.toggleMode
         enabled: dialogs.dialog === ""

@@ -42,7 +42,7 @@ using veyra::engine::PresentCapture;
 
 namespace {
 
-constexpr unsigned kSlots = 4;                          // NV12 inputs; NVENC keeps at most 4 outputs pending
+constexpr unsigned kSlots = 6;                          // NV12 inputs, as the live recorder; NVENC keeps at most 4 outputs pending
 constexpr uint32_t kGpuWaitMs = 3000;
 constexpr int64_t kKeyIntervalUs = 2'000'000;           // a keyframe at least this often, whatever the frame rate
 constexpr int64_t kProbeUs = 500'000;                   // presented frame rate is measured before the encoder opens
@@ -317,6 +317,7 @@ struct Service::Impl {
         if (const auto name = segment->encoderText(); !name.empty()) encoderName = name;
         segment->finish();
         framesBase += segment->frames.load(); droppedBase += segment->dropped.load();
+        veyra::log::info("replay", std::format("encoder session ends frames={} dropped={}", segment->frames.load(), segment->dropped.load()));
         finishing.push_back(std::move(segment));
         segment.reset();
         audioActive = false;
@@ -653,8 +654,8 @@ struct Service::Impl {
         std::wstring reason;
         const bool ok = writeClip(path, clip, info, audio.valid() ? &audio : nullptr, reason);
         const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
-        if (ok) veyra::log::info("replay", std::format("saved path={} seconds={:.2f} videoPackets={} audioPackets={} bytes={} writeMs={:.0f}",
-            utf8(path), double(clip.durationUs) / 1e6, clip.videoPackets, clip.audioPackets, clip.bytes, ms));
+        if (ok) veyra::log::info("replay", std::format("saved path={} seconds={:.2f} videoPackets={} audioPackets={} bytes={} writeMs={:.0f} audioOverflow={} audioRuns={}",
+            utf8(path), double(clip.durationUs) / 1e6, clip.videoPackets, clip.audioPackets, clip.bytes, ms, audioOverflow.load(), audioRuns.load()));
         else veyra::log::error("replay", std::format("save failed path={} reason={}", utf8(path), utf8(reason)));
         std::lock_guard lock(saveMutex);
         if (ok) { ++saved; lastPath = path; lastSeconds = double(clip.durationUs) / 1e6; lastError = SaveError::None; lastErrorDetail.clear(); }

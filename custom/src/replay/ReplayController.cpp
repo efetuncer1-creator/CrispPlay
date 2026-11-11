@@ -25,6 +25,9 @@ int validSeconds(int seconds) {
 
 ReplayController::ReplayController(const QString& settingsFile, QObject* parent) : QObject(parent), file_(settingsFile) {
     load();
+    // Test hook: a window shorter than the settings page offers, so a short
+    // clip exercises eviction (CRISPPLAY_TEST_REPLAY_SECONDS=5).
+    if (const int testSeconds = qEnvironmentVariableIntValue("CRISPPLAY_TEST_REPLAY_SECONDS"); testSeconds > 0) settings_.seconds = testSeconds;
     timer_.setInterval(500);
     connect(&timer_, &QTimer::timeout, this, &ReplayController::poll);
     apply(false);

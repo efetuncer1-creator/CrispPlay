@@ -4,7 +4,7 @@ param(
     [string]$Deps = "",
     [ValidateSet("x64-release", "x64-debug")][string]$Preset = "x64-release",
     # Default: the app plus the tests that need only Qt.
-    [string[]]$Target = @("veyra_qml_ui", "crispplay_branding_tests", "veyra_update_checker_tests", "veyra_ui_i18n_tests"),
+    [string[]]$Target = @("veyra_qml_ui", "crispplay_branding_tests", "crispplay_i18n_tests", "veyra_update_checker_tests", "veyra_ui_i18n_tests"),
     [switch]$Test
 )
 # CrispPlay build wrapper. Upstream scripts/build.ps1 is left untouched; this one
@@ -51,7 +51,7 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 if ($Test) {
     $env:PATH = "$qt\bin;$ffmpeg\bin;$env:PATH"
     $failed = 0
-    foreach ($t in @("custom\crispplay_branding_tests.exe", "veyra_update_checker_tests.exe", "veyra_ui_i18n_tests.exe")) {
+    foreach ($t in @("custom\crispplay_branding_tests.exe", "custom\crispplay_i18n_tests.exe", "veyra_update_checker_tests.exe", "veyra_ui_i18n_tests.exe")) {
         $exe = Join-Path $build $t
         if (-not (Test-Path $exe)) { continue }
         & $exe | Select-Object -Last 2

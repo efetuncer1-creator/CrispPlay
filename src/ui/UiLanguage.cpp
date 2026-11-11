@@ -1,5 +1,6 @@
 #include "veyra/ui/UiLanguage.h"
 #include "veyra/Log.h"
+#include "crispplay/I18n.h" // VEYRA_CUSTOM
 
 #include <QCoreApplication>
 #include <QFile>
@@ -85,7 +86,7 @@ std::unique_ptr<CatalogTranslator> load(const QString& code) {
         veyra::log::warn("i18n", "catalog resource missing; interface stays in the source language");
         return nullptr;
     }
-    const auto doc = QJsonDocument::fromJson(file.readAll());
+    const auto doc = QJsonDocument::fromJson(crispplay::i18n::catalogJson(code, file.readAll())); // VEYRA_CUSTOM
     auto t = std::make_unique<CatalogTranslator>();
     for (const auto value : doc.object().value(QStringLiteral("entries")).toArray()) {
         const auto e = value.toObject();
@@ -150,7 +151,7 @@ QString translatePieces(const CatalogTranslator& t, const QString& s, int depth)
             part.replace(trimmed, done);
         }
         // Full-width separators read oddly between Latin sentences.
-        const QString glue = sep == QStringLiteral("；") && currentCode == QStringLiteral("en") ? QStringLiteral("; ") : sep;
+        const QString glue = sep == QStringLiteral("；") && crispplay::i18n::latinScript(currentCode) ? QStringLiteral("; ") : sep; // VEYRA_CUSTOM
         return parts.join(glue);
     }
     return s;
@@ -161,6 +162,8 @@ QString translatePieces(const CatalogTranslator& t, const QString& s, int depth)
 QString resolve(const QString& preference) {
     static const QStringList known{QStringLiteral("zh-CN"), QStringLiteral("zh-TW"), QStringLiteral("en"), QStringLiteral("ja")};
     if (known.contains(preference)) return preference;
+    if (crispplay::i18n::extraLanguages().contains(preference)) return preference; // VEYRA_CUSTOM
+    if (const QString extra = crispplay::i18n::systemLanguage(QLocale::system()); !extra.isEmpty()) return extra; // VEYRA_CUSTOM
     const QLocale system = QLocale::system();
     if (system.language() == QLocale::Chinese) {
         const auto territory = system.territory();

@@ -3,6 +3,8 @@
 // hooks, and no upstream target has to link anything new.
 #pragma once
 
+#include "crispplay/I18n.h"
+
 #include <QRegularExpression>
 #include <QString>
 #include <QUrl>
@@ -41,6 +43,7 @@ inline QVariantMap qmlProperties() {
         {QStringLiteral("attribution"), attribution()},
         {QStringLiteral("repoUrl"), repoUrl()},
         {QStringLiteral("upstreamUrl"), upstreamUrl()},
+        {QStringLiteral("languages"), crispplay::i18n::qmlLanguages()},
     };
 }
 

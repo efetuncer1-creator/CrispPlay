@@ -267,7 +267,7 @@ bool QmlPlayerBridge::setPreference(const QString& key, const QVariant& value) {
     } else if (key == QLatin1String("language")) {
         const QString v = value.toString();
         static const QStringList languages{"auto", "zh-CN", "zh-TW", "en", "ja"};
-        if (!languages.contains(v)) return false;
+        if (!languages.contains(v) && !crispplay::i18n::extraLanguages().contains(v)) return false; // VEYRA_CUSTOM
         stored = v;
     } else if (key == QLatin1String("monitorGpu")) {
         const QString v = value.toString();

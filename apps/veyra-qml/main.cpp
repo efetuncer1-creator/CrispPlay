@@ -17,6 +17,7 @@
 #include <QPixmap>
 #include "../veyra/resource.h"
 #include <QQmlApplicationEngine>
+#include "crispplay/Branding.h" // VEYRA_CUSTOM
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -754,6 +755,7 @@ static int runApplication(int argc, char** argv, QString& restartProgram, QStrin
                      [thumbnails](const QString& path) { thumbnails->setSource(path); });
     engine.addImportPath(QCoreApplication::applicationDirPath() + "/qml");
     engine.rootContext()->setContextProperty(QStringLiteral("veyra"), &bridge);
+    engine.rootContext()->setContextProperty(QStringLiteral("crispBrand"), crispplay::branding::qmlProperties()); // VEYRA_CUSTOM
     bridge.setQmlEngine(&engine);   // Qt.uiLanguage drives the per-language font (Theme.qml)
 
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,

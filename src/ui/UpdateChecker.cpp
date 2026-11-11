@@ -1,4 +1,5 @@
 #include "veyra/ui/UpdateChecker.h"
+#include "crispplay/Branding.h" // VEYRA_CUSTOM
 #include <QDesktopServices>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -11,10 +12,7 @@ namespace veyra::ui {
 namespace {
 constexpr qsizetype maxBody = 128 * 1024;
 QVersionNumber versionNumber(const QString& text, bool local) {
-    static const QRegularExpression stable(QStringLiteral("^v?([0-9]+\\.[0-9]+\\.[0-9]+)$"));
-    static const QRegularExpression installed(QStringLiteral("^v?([0-9]+\\.[0-9]+\\.[0-9]+)(?:\\.0)?(?:-[A-Za-z0-9.-]+)?$"));
-    const auto match = (local ? installed : stable).match(text);
-    return match.hasMatch() ? QVersionNumber::fromString(match.captured(1)) : QVersionNumber{};
+    return crispplay::branding::releaseVersion(text, local); // VEYRA_CUSTOM
 }
 }
 UpdateChecker::UpdateChecker(QString currentVersion, QObject* parent, QUrl endpoint, int timeoutMs)
@@ -79,16 +77,14 @@ void UpdateChecker::finish() {
         const auto tag = obj.value(QStringLiteral("tag_name")).toString();
         const auto remote = versionNumber(tag, false), local = versionNumber(currentVersion_, true);
         const QUrl url(obj.value(QStringLiteral("html_url")).toString());
-        const bool validUrl = url.scheme() == QStringLiteral("https") && url.host() == QStringLiteral("github.com")
-            && url.userInfo().isEmpty() && url.port(-1) == -1 && !url.hasQuery() && !url.hasFragment()
-            && url.path() == QStringLiteral("/Likely7/Veyra-NRVideo/releases/tag/") + tag;
+        const bool validUrl = crispplay::branding::isReleaseUrl(url, tag); // VEYRA_CUSTOM
         if (error.error != QJsonParseError::NoError || !document.isObject()
             || !obj.value(QStringLiteral("draft")).isBool() || obj.value(QStringLiteral("draft")).toBool()
             || !obj.value(QStringLiteral("prerelease")).isBool() || obj.value(QStringLiteral("prerelease")).toBool()
-            || local.segmentCount() != 3 || remote.segmentCount() != 3 || !validUrl) {
+            || local.isNull() || remote.isNull() || !validUrl) { // VEYRA_CUSTOM
             failure_ = QStringLiteral("invalid-release");
         } else if (QVersionNumber::compare(remote, local) > 0) {
-            latestVersion_ = remote.toString(); releaseUrl_ = url;
+            latestVersion_ = crispplay::branding::displayVersion(remote); releaseUrl_ = url; // VEYRA_CUSTOM
             emit releaseChanged();
             emit updateAvailable(latestVersion_);
             result = QStringLiteral("available");

@@ -73,7 +73,7 @@ VPage {
             spacing: 6
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                text: "Veyra NR Video"
+                text: typeof crispBrand !== "undefined" ? crispBrand.homeTitle : "Veyra NR Video" // VEYRA_CUSTOM
                 color: Theme.t1
                 font.family: Theme.fontUi
                 font.pixelSize: Theme.fsH1

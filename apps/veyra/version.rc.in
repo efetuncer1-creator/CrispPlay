@@ -13,9 +13,9 @@ BEGIN
  BEGIN
   BLOCK "040904B0"
   BEGIN
-   VALUE "FileDescription", "Veyra Video Player"
+   VALUE "FileDescription", "@CRISPPLAY_FILE_DESCRIPTION@"
    VALUE "FileVersion", "@VEYRA_DISPLAY_VERSION@"
-   VALUE "ProductName", "Veyra"
+   VALUE "ProductName", "@CRISPPLAY_PRODUCT_NAME@"
    VALUE "ProductVersion", "@VEYRA_DISPLAY_VERSION@"
    VALUE "OriginalFilename", "@VEYRA_RESOURCE_FILENAME@"
    VALUE "LegalCopyright", "Veyra contributors. GPL-3.0."

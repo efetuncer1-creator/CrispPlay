@@ -34,7 +34,7 @@ Window {
     flags: Qt.Window | Qt.FramelessWindowHint
            | (veyra.passthroughActive ? Qt.WindowTransparentForInput : 0)
            | (veyra.gameInputActive ? Qt.WindowDoesNotAcceptFocus : 0)
-    title: "Veyra " + veyra.version
+    title: (typeof crispBrand !== "undefined" ? crispBrand.appName : "Veyra") + " " + veyra.version // VEYRA_CUSTOM
 
     // Page ids match the prototype's PAGES keys so a design screenshot and an
     // app screenshot can be compared under the same name.

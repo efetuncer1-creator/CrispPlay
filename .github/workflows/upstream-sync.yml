@@ -1,0 +1,107 @@
+# CrispPlay: upstream (Likely7/Veyra-NRVideo) release tag tracking.
+# Daily: find the newest upstream release tag vX.Y.Z (suffixes such as -sources
+# are skipped) that main does not contain yet, and open a PR from sync/vX.Y.Z.
+#  - Clean merge: the branch holds main + the tag merged, ready to test.
+#  - Conflicts:   the branch is the bare upstream tag, so GitHub shows the
+#                 conflicting files on the PR; resolve locally using custom/HOOKS.md.
+# Token: upstream changes under .github/workflows can only be pushed with a token
+# that has the `workflow` scope. Store one as the SYNC_TOKEN secret; without it
+# GITHUB_TOKEN is used and such a push fails with a clear error.
+name: upstream-sync
+
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      UPSTREAM: https://github.com/Likely7/Veyra-NRVideo.git
+      GH_TOKEN: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Find newest upstream release tag
+        id: tag
+        run: |
+          git remote add upstream "$UPSTREAM"
+          git fetch --no-tags upstream '+refs/tags/v*:refs/upstream-tags/v*'
+          tag=$(git for-each-ref --format='%(refname:lstrip=2)' refs/upstream-tags \
+                | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
+          if [ -z "$tag" ]; then echo "No upstream release tag found"; exit 1; fi
+          echo "Newest upstream release: $tag"
+          commit=$(git rev-parse "refs/upstream-tags/$tag^{commit}")
+          if git merge-base --is-ancestor "$commit" origin/main; then
+            echo "main already contains $tag"; echo "todo=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git ls-remote --exit-code --heads origin "sync/$tag" >/dev/null; then
+            echo "sync/$tag already exists; PR is open or pending"; echo "todo=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "todo=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
+      - name: Merge and push sync branch
+        id: merge
+        if: steps.tag.outputs.todo == 'true'
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+          COMMIT: ${{ steps.tag.outputs.commit }}
+        run: |
+          git config user.name "crispplay-sync[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "sync/$TAG" origin/main
+          if git merge --no-ff --no-edit -m "Merge upstream $TAG" "$COMMIT"; then
+            echo "clean=true" >> "$GITHUB_OUTPUT"
+            git push origin "sync/$TAG"
+          else
+            git diff --name-only --diff-filter=U > "$RUNNER_TEMP/conflicts.txt"
+            git merge --abort
+            echo "clean=false" >> "$GITHUB_OUTPUT"
+            git push origin "$COMMIT:refs/heads/sync/$TAG"
+          fi
+          {
+            echo "Upstream etiketi: \`$TAG\` (\`$COMMIT\`)"
+            echo
+            if [ -s "$RUNNER_TEMP/conflicts.txt" ]; then
+              echo "**Çakışma var.** Bu dal upstream etiketinin kendisi; yerelde çöz:"
+              echo
+              echo '```'
+              echo "git fetch origin && git checkout -b sync-fix/$TAG origin/main"
+              echo "git merge origin/sync/$TAG"
+              echo '```'
+              echo
+              echo "Çakışan dosyalar (kancalar için \`custom/HOOKS.md\`):"
+              sed 's/^/- `/; s/$/`/' "$RUNNER_TEMP/conflicts.txt"
+            else
+              echo "Temiz birleşti. Windows'ta derle + duman testi, sonra birleştir."
+            fi
+            echo
+            echo "Kontrol listesi:"
+            echo "- [ ] \`git grep -n VEYRA_CUSTOM -- ':!custom'\` sayısı HOOKS.md ile aynı"
+            echo "- [ ] \`custom/branding/Branding.cmake\` içinde CRISPPLAY_PATCH 1'e çekildi"
+            echo "- [ ] \`custom/i18n/tr.json\` eksik/eskimiş çeviri raporu"
+            echo "- [ ] Windows derleme + duman testi"
+          } > "$RUNNER_TEMP/body.md"
+
+      - name: Open pull request
+        if: steps.tag.outputs.todo == 'true'
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          gh pr create --base main --head "sync/$TAG" \
+            --title "Upstream $TAG" --body-file "$RUNNER_TEMP/body.md"

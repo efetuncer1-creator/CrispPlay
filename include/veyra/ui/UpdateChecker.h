@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include "crispplay/Branding.h" // VEYRA_CUSTOM
 
 namespace veyra::ui {
 // UI-only, bounded asynchronous metadata request; never touches the engine.
@@ -15,7 +16,7 @@ class UpdateChecker final : public QObject {
     Q_PROPERTY(QUrl releaseUrl READ releaseUrl NOTIFY releaseChanged)
 public:
     explicit UpdateChecker(QString currentVersion, QObject* parent = nullptr,
-        QUrl endpoint = QUrl(QStringLiteral("https://api.github.com/repos/Likely7/Veyra-NRVideo/releases/latest")),
+        QUrl endpoint = crispplay::branding::releaseApiUrl(), // VEYRA_CUSTOM
         int timeoutMs = 12000);
     ~UpdateChecker() override;
     bool checking() const { return reply_ != nullptr; }

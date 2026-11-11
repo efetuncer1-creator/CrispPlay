@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 project(veyra VERSION 2.1.5 LANGUAGES C CXX RC)
+include(custom/branding/Branding.cmake) # VEYRA_CUSTOM
 # Moonlight/Xbox have C sources independently of the optional PS5 backend.
 # Shown in the EXE's version resource and in the package name. CMake versions
 # must be numeric, so the beta marker lives here instead.
@@ -1826,3 +1827,4 @@ if(TARGET veyra_qml_ui)
   configure_file(apps/veyra/veyra.manifest ${CMAKE_CURRENT_BINARY_DIR}/veyra-qml.manifest COPYONLY)
   target_link_options(veyra_qml_ui PRIVATE "/MANIFESTINPUT:veyra-qml.manifest")
 endif()
+add_subdirectory(custom) # VEYRA_CUSTOM

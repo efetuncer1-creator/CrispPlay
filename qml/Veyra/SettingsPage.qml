@@ -1104,13 +1104,14 @@ VPage {
                         }
                         ColumnLayout {
                             spacing: 4
-                            VH1 { text: "Veyra" }
+                            VH1 { text: typeof crispBrand !== "undefined" ? crispBrand.appName : "Veyra" } // VEYRA_CUSTOM
                             Text {
                                 text: qsTr("版本 ") + veyra.version
                                 color: Theme.t2
                                 font.family: Theme.fontUi
                                 font.pixelSize: Theme.fsBody
                             }
+                            Text { visible: typeof crispBrand !== "undefined"; text: visible ? crispBrand.attribution : ""; textFormat: Text.StyledText; color: Theme.t2; linkColor: Theme.t1; font.family: Theme.fontUi; font.pixelSize: Theme.fsBody; onLinkActivated: (link) => Qt.openUrlExternally(link) } // VEYRA_CUSTOM
                         }
                     }
                     VGroup {

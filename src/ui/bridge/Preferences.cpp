@@ -1,5 +1,6 @@
 // QML bridge: Preferences responsibilities.
 #include "../QmlPlayerBridge_p.h"
+#include "crispplay/Branding.h" // VEYRA_CUSTOM
 
 namespace veyra::ui {
 // --- shell preferences -------------------------------------------------------
@@ -117,7 +118,7 @@ QVariantList QmlPlayerBridge::readComponentList() const {
 
 void QmlPlayerBridge::openProjectPage() {
     // 关于 → 交流群: the group QR codes are kept current in the project README.
-    if (!QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/Likely7/Veyra-NRVideo#readme"))))
+    if (!QDesktopServices::openUrl(crispplay::branding::readmeUrl())) // VEYRA_CUSTOM
         emit notice(tr("无法打开浏览器"), true);
 }
 
@@ -562,11 +563,11 @@ void QmlPlayerBridge::updateLiveCompanionCompat() {
 int QmlPlayerBridge::uiScaleActive() const { return qApp ? qApp->property("veyraUiScale").toInt() : 0; }
 void QmlPlayerBridge::openFeedbackPage() {
     copyDiagnostics();
-    QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/Likely7/Veyra-NRVideo/issues")));
+    QDesktopServices::openUrl(crispplay::branding::issuesUrl()); // VEYRA_CUSTOM
     emit notice(tr("诊断信息已复制，可直接粘贴到反馈里"), false);
 }
 void QmlPlayerBridge::openReleasesPage() {
-    QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/Likely7/Veyra-NRVideo/releases")));
+    QDesktopServices::openUrl(crispplay::branding::releasesUrl()); // VEYRA_CUSTOM
 }
 bool QmlPlayerBridge::openSponsorLink(const QString& id) {
     // The author's pages as the author gave them (2026-10-19); the page shows buttons,

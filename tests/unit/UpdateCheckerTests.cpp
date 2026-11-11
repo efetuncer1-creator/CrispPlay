@@ -12,7 +12,7 @@ using veyra::ui::UpdateChecker;
 namespace {
 QByteArray release(QString tag = QStringLiteral("v2.0.8"), bool prerelease = false, bool draft = false,
                    QString url = {}) {
-    if (url.isEmpty()) url = QStringLiteral("https://github.com/Likely7/Veyra-NRVideo/releases/tag/") + tag;
+    if (url.isEmpty()) url = QStringLiteral("https://github.com") + crispplay::branding::releaseTagPath(tag); // VEYRA_CUSTOM
     return QJsonDocument(QJsonObject{{"tag_name", tag}, {"draft", draft}, {"prerelease", prerelease},
                                     {"html_url", url}}).toJson();
 }

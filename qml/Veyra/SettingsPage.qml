@@ -1162,6 +1162,7 @@ VPage {
                             VButton { text: qsTr("打开目录"); ghost: true; onClicked: veyra.openDataFolder() }
                         }
                     }
+                    Loader { Layout.fillWidth: true; source: typeof crispDiscord !== "undefined" ? crispDiscord.settingsQml : "" } // VEYRA_CUSTOM
                     // The diagnostics the engine actually reports, shown verbatim.
                     Rectangle {
                         Layout.fillWidth: true

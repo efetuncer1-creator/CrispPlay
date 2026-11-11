@@ -27,6 +27,11 @@ inline QUrl releaseApiUrl() {
 }
 inline QString releaseTagPath(const QString& tag) { return repoPath() + QStringLiteral("/releases/tag/") + tag; }
 
+// Discord application ID (Developer Portal > General Information > Application ID).
+// Empty until the app exists: Rich Presence then stays off and the setting shows
+// a note instead of the options. See custom/DISCORD.md.
+inline QString discordAppId() { return QString(); }
+
 // GPL-3 attribution shown on the About page.
 inline QUrl upstreamUrl() { return QUrl(QStringLiteral("https://github.com/Likely7/Veyra-NRVideo")); }
 inline QString attribution() {

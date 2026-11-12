@@ -42,7 +42,10 @@ class SubsController final : public QObject {
     Q_PROPERTY(QString ocrWarning READ ocrWarning NOTIFY stateChanged)
     Q_PROPERTY(QString engineWarning READ engineWarning NOTIFY stateChanged)
     Q_PROPERTY(int state READ state NOTIFY stateChanged)
+    // Test hook (CRISPPLAY_TEST_SUBS_SETTINGS=1): SubsHost.qml opens this settings tab at start.
+    Q_PROPERTY(bool testOpenSettings READ testOpenSettings CONSTANT)
 public:
+    bool testOpenSettings() const { return qEnvironmentVariableIsSet("CRISPPLAY_TEST_SUBS_SETTINGS"); }
     SubsController(const QString& dataDirectory, QObject* bridge, QObject* parent = nullptr);
     ~SubsController() override;
 

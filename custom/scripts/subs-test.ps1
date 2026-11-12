@@ -14,6 +14,10 @@ param(
     # Transcript to compare the shown lines with (tab separated: seconds, speaker, English, Turkish reference).
     [string]$Transcript = "",
     [string]$Size = "1600x900",
+    # Open Ayarlar -> Altyazı çevirisi instead of playing (screenshot of the settings tab).
+    [switch]$Settings,
+    # Initial contents of crispplay-subs.v1.json besides "enabled" (e.g. @{ online = $true }).
+    [hashtable]$Options = @{},
     [string]$Name = ""
 )
 # Subtitle translation real-pipeline run (custom/docs/SUBS.md): plays a clip in
@@ -38,17 +42,26 @@ $data = Join-Path $work "data"
 New-Item -ItemType Directory -Force $data | Out-Null
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
-[IO.File]::WriteAllText((Join-Path $data "crispplay-subs.v1.json"), (@{ enabled = ($Subs -eq "on") } | ConvertTo-Json), $utf8)
+$subsSettings = @{ enabled = ($Subs -eq "on") } + $Options
+[IO.File]::WriteAllText((Join-Path $data "crispplay-subs.v1.json"), ($subsSettings | ConvertTo-Json), $utf8)
 [IO.File]::WriteAllText((Join-Path $data "qml-preferences.v1.json"), (@{ language = "tr"; recordDir = (Join-Path $work "clips") } | ConvertTo-Json), $utf8)
 
 $env:PATH = "$deps\qt\6.8.3\msvc2022_64\bin;$deps\vcpkg_installed\x64-windows\bin;$env:PATH"
-# Development models (the release build downloads them into <data>\models).
-$models = Join-Path $deps "models"
-if (Test-Path $models) { $env:CRISPPLAY_SUBS_MODEL_ROOT = $models }
+# Development models (the release build downloads them into <data>\models): the
+# model package unzipped into out\subs-models (..\dist\crispplay-subs-models-v1.zip,
+# custom/subs/net/README.md). ModelStore verifies every file of it.
+$models = Join-Path $root "out\subs-models"
+if (-not (Test-Path (Join-Path $models "ppocr-rec"))) {
+    $zip = Join-Path $root "..\dist\crispplay-subs-models-v1.zip"
+    if (-not (Test-Path $zip)) { throw "Model package not found: $zip (custom\scripts\package-subs-models.ps1)" }
+    Expand-Archive -LiteralPath $zip -DestinationPath $models -Force
+}
+$env:CRISPPLAY_SUBS_MODEL_ROOT = $models
 $env:CRISPPLAY_SUBS_TRACE = "1"
 $events = Join-Path $work "events.jsonl"
 $env:CRISPPLAY_SUBS_EVENT_LOG = $events
 if ($Effects -ne "none") { $env:CRISPPLAY_TEST_SUBS_EFFECTS = $Effects } else { Remove-Item Env:CRISPPLAY_TEST_SUBS_EFFECTS -ErrorAction SilentlyContinue }
+if ($Settings) { $env:CRISPPLAY_TEST_SUBS_SETTINGS = "1" } else { Remove-Item Env:CRISPPLAY_TEST_SUBS_SETTINGS -ErrorAction SilentlyContinue }
 $log = Join-Path $build "logs\veyra-qml.log"
 if (Test-Path $log) { Remove-Item -Force $log }
 
@@ -82,7 +95,8 @@ function Save-Window($handle, $path) {
 }
 
 $process = Start-Process -FilePath $exe -WorkingDirectory $build -PassThru -RedirectStandardOutput (Join-Path $work "stdout.txt") -RedirectStandardError (Join-Path $work "stderr.txt") `
-    -ArgumentList @("--data-dir", "`"$data`"", "--size", $Size, "--exit-after", "$RunMs", "`"$media`"")
+    -ArgumentList $(if ($Settings) { @("--data-dir", "`"$data`"", "--size", $Size, "--exit-after", "$RunMs", "--page", "set") }
+                    else { @("--data-dir", "`"$data`"", "--size", $Size, "--exit-after", "$RunMs", "`"$media`"") })
 $null = $process.Handle
 $started = Get-Date
 $shots = @($ShotsAtMs | Sort-Object)

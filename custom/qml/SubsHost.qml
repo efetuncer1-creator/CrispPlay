@@ -11,6 +11,11 @@ Item {
         autoRepeat: false
         onActivated: crispSubs.toggle()
     }
+    // Test hook for screenshots: open Ayarlar → Altyazı çevirisi (settingsPage is Main.qml's id).
+    Timer {
+        interval: 600; running: crispSubs.testOpenSettings
+        onTriggered: if (typeof settingsPage !== "undefined") settingsPage.section = "subs"
+    }
     Connections {
         target: crispSubs
         // The bridge's notice signal is what Main.qml shows as a toast.

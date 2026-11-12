@@ -49,6 +49,7 @@ int main(int argc, char** argv) {
         } catch (const std::exception& e) {
             subtest::fail(test.name, 0, std::string("exception: ") + e.what());
         }
+        std::fflush(stdout);
         if (subtest::currentFailed) {
             ++failed;
             std::printf("FAILED %s\n", test.name);
@@ -58,6 +59,7 @@ int main(int argc, char** argv) {
             ++passed;
         }
     }
+    std::fflush(stdout);
     std::printf("Totals: %d passed, %d failed, %d skipped\n", passed, failed, skipped);
     return failed == 0 ? 0 : 1;
 }

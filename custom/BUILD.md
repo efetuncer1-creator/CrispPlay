@@ -8,7 +8,7 @@ Kurulum bir kez yapılır. Bağımlılıklar repo dışında, repo ile aynı sev
 | Qt | 6.8.3 `win64_msvc2022_64` | `pip install aqtinstall`, sonra `aqt install-qt windows desktop 6.8.3 win64_msvc2022_64 -O deps\qt` |
 | FFmpeg | 9.0.1#1 (vcpkg, `vcpkg.json` temeli `30ef65c`) | `git clone https://github.com/microsoft/vcpkg deps\vcpkg`, `bootstrap-vcpkg.bat`, sonra repo kökünden `deps\vcpkg\vcpkg.exe install --x-manifest-root=. --x-install-root=..\deps\vcpkg_installed --triplet x64-windows` (~12 dk) |
 | nv-codec-headers | n13.0.19.0 (`e844e5b`) | `git clone --depth 1 --branch n13.0.19.0 https://github.com/FFmpeg/nv-codec-headers third_party_local\nvidia\nv-codec-headers-13.0` |
-| CTranslate2 + oneDNN + SentencePiece (isteğe bağlı, altyazı çevirisi) | 4.9.0 / 3.1.1 / 0.2.1, MKL'siz, statik /MT | `powershell -ExecutionPolicy Bypass -File custom\scriptsuild-ctranslate2.ps1` (~15 dk) → `deps\ctranslate2-install`; ayrıntı `custom/subs/mt/README.md`. Yoksa çevirmen atlanır |
+| CTranslate2 + oneDNN + SentencePiece (isteğe bağlı, altyazı çevirisi) | 4.9.0 / 3.1.1 / 0.2.1, MKL'siz, statik /MT | `powershell -ExecutionPolicy Bypass -File custom\scripts\build-ctranslate2.ps1` (~15 dk) → `deps\ctranslate2-install`; ayrıntı `custom/subs/mt/README.md`. Yoksa çevirmen atlanır |
 
 Derleme ve testler:
 

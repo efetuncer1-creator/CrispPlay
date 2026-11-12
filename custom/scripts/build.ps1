@@ -6,7 +6,7 @@ param(
     # Default: the app plus the tests that need only Qt.
     [string[]]$Target = @("veyra_qml_ui", "crispplay_branding_tests", "crispplay_i18n_tests", "crispplay_discord_tests",
                           "veyra_update_checker_tests", "veyra_ui_i18n_tests",
-                          "crispplay_replay_ring_tests", "crispplay_replay_clip_check",
+                          "crispplay_replay_ring_tests", "crispplay_replay_clip_check", "crispplay_subs_core_tests",
                           "crispplay_subs_mt_tests", "crispplay_subs_ocr_tests"),
     [switch]$Test
 )
@@ -63,8 +63,8 @@ if ($Test) {
     $env:PATH = "$qt\bin;$ffmpeg\bin;$env:PATH"
     $failed = 0
     foreach ($t in @("custom\crispplay_branding_tests.exe", "custom\crispplay_i18n_tests.exe", "custom\crispplay_discord_tests.exe",
-                     "custom\crispplay_replay_ring_tests.exe", "custom\subs\mt\crispplay_subs_mt_tests.exe",
-                     "custom\subs\ocr\crispplay_subs_ocr_tests.exe",
+                     "custom\crispplay_replay_ring_tests.exe", "custom\subs\core\crispplay_subs_core_tests.exe",
+                     "custom\subs\mt\crispplay_subs_mt_tests.exe", "custom\subs\ocr\crispplay_subs_ocr_tests.exe",
                      "veyra_update_checker_tests.exe", "veyra_ui_i18n_tests.exe")) {
         $exe = Join-Path $build $t
         if (-not (Test-Path $exe)) { continue }

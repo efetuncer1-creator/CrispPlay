@@ -99,6 +99,8 @@ if(TARGET Qt6::Test)
   set_target_properties(crispplay_replay_ring_tests PROPERTIES AUTOMOC ON)
 endif()
 
+# --- Game subtitle translation (Phase 5): text core (AGPL-3.0 port of CouchSubs), engine, OCR ---
+add_subdirectory(subs/core)
 add_subdirectory(subs/mt) # Phase 5 subtitle translation engine (custom/subs/mt/README.md)
 add_subdirectory(subs/ocr) # Phase 5 OCR readers (custom/subs/ocr/README.md)
 

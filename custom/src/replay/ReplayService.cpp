@@ -245,14 +245,14 @@ struct Segment {
     void encoderMain();
 };
 
-// Fan-out the presenter calls: the live recorder first, then replay.
-struct CaptureFanout final : PresentCapture {
+// Replay's entry in the present chain (crispplay/present/Hooks.h); the chain
+// calls the live recorder first, then the taps.
+struct CaptureTap final : present::Tap {
     Service::Impl* owner = nullptr;
-    std::atomic<PresentCapture*> inner{nullptr};
-    bool innerRecorded = false, ownRecorded = false;   // engine thread
     bool record(ID3D12GraphicsCommandList* list, const Frame& frame) override;
     void submitted(ID3D12Fence* fence, uint64_t value) override;
     void discarded() override;
+    void sessionEnded() override;
 };
 
 struct Service::Impl {
@@ -266,7 +266,7 @@ struct Service::Impl {
     bool unsupported = false;
     std::wstring error, encoderName;
     uint64_t framesBase = 0, droppedBase = 0;
-    CaptureFanout fanout;
+    CaptureTap tap;
 
     // --- the stream in the ring (streamMutex) --------------------------------
     std::mutex streamMutex;
@@ -309,7 +309,7 @@ struct Service::Impl {
     double lastSeconds = 0;
     SaveError lastError = SaveError::None;
 
-    Impl() { fanout.owner = this; }
+    Impl() { tap.owner = this; }
 
     // ---- capture (engine thread) ---------------------------------------------
     void retire(std::shared_ptr<Segment>& segment) {
@@ -716,20 +716,10 @@ void Segment::encoderMain() {
     encoderFinished = true;
 }
 
-bool CaptureFanout::record(ID3D12GraphicsCommandList* list, const Frame& frame) {
-    auto* recorder = inner.load(std::memory_order_acquire);
-    innerRecorded = recorder && recorder->record(list, frame);
-    ownRecorded = owner->record(list, frame);
-    return innerRecorded || ownRecorded;
-}
-void CaptureFanout::submitted(ID3D12Fence* fence, uint64_t value) {
-    if (innerRecorded) { innerRecorded = false; if (auto* recorder = inner.load(std::memory_order_acquire)) recorder->submitted(fence, value); }
-    if (ownRecorded) { ownRecorded = false; owner->submitted(fence, value); }
-}
-void CaptureFanout::discarded() {
-    if (innerRecorded) { innerRecorded = false; if (auto* recorder = inner.load(std::memory_order_acquire)) recorder->discarded(); }
-    if (ownRecorded) { ownRecorded = false; owner->discarded(); }
-}
+bool CaptureTap::record(ID3D12GraphicsCommandList* list, const Frame& frame) { return owner->record(list, frame); }
+void CaptureTap::submitted(ID3D12Fence* fence, uint64_t value) { owner->submitted(fence, value); }
+void CaptureTap::discarded() { owner->discarded(); }
+void CaptureTap::sessionEnded() { Service::instance().sessionEnded(); }
 
 namespace {
 // The audio owner thread's fan-out: the live recorder's tap first, then replay.
@@ -746,7 +736,7 @@ struct AudioFanout final : sink::RecordingAudioSink {
 Service& Service::instance() {
     // Process lifetime on purpose: engine sessions and audio renderers may
     // call the hooks until the very end of the process.
-    static Service* service = [] { auto* s = new Service; installBackend(s); return s; }();
+    static Service* service = [] { auto* s = new Service; installBackend(s); present::addTap(&s->p_->tap); return s; }();
     return *service;
 }
 Service::Service() : p_(std::make_unique<Impl>()) {}
@@ -879,11 +869,6 @@ void Service::shutdown(uint32_t timeoutMs) {
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
-}
-
-PresentCapture* Service::wrapCapture(PresentCapture* inner) {
-    p_->fanout.inner.store(inner, std::memory_order_release);
-    return &p_->fanout;
 }
 
 void Service::sessionEnded() {

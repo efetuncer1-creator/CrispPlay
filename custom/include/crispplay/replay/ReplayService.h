@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 
+#include "crispplay/present/Hooks.h"
 #include "crispplay/replay/Hooks.h"
 #include "crispplay/replay/PacketRing.h"
 
@@ -80,9 +81,9 @@ public:
     // Stops capturing and waits for the worker threads, at most timeoutMs.
     void shutdown(uint32_t timeoutMs);
 
-    // Backend (hooks).
-    veyra::engine::PresentCapture* wrapCapture(veyra::engine::PresentCapture* inner) override;
-    void sessionEnded() override;
+    // Engine thread (present chain tap): the session that owns the device ended.
+    void sessionEnded();
+    // Backend (audio hooks).
     bool audioWanted() const override;
     std::shared_ptr<veyra::sink::RecordingAudioSink> audioTap(std::shared_ptr<veyra::sink::RecordingAudioSink> inner) override;
 

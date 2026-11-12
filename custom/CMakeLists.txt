@@ -103,6 +103,7 @@ endif()
 add_subdirectory(subs/core)
 add_subdirectory(subs/mt) # Phase 5 subtitle translation engine (custom/subs/mt/README.md)
 add_subdirectory(subs/ocr) # Phase 5 OCR readers (custom/subs/ocr/README.md)
+add_subdirectory(subs/app) # Phase 5 app integration: capture, overlay, settings (keep last: uses the targets above)
 
 # --- CrispPlay logo -------------------------------------------------------------
 # No upstream hook: this file runs after the root CMakeLists has copied

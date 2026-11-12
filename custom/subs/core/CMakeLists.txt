@@ -8,6 +8,10 @@ target_compile_features(crispplay_subs_core PUBLIC cxx_std_20)
 if(MSVC)
   target_compile_options(crispplay_subs_core PRIVATE /utf-8 /W4)
 endif()
+if(WIN32)
+  # NormalizeString (Unicode NFKC/NFD) for the game pack key, see PackText.cpp.
+  target_link_libraries(crispplay_subs_core PRIVATE Normaliz)
+endif()
 
 file(GLOB crispplay_subs_core_test_sources CONFIGURE_DEPENDS tests/*.cpp)
 add_executable(crispplay_subs_core_tests ${crispplay_subs_core_test_sources})

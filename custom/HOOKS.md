@@ -31,6 +31,8 @@ QML kancaları `typeof crispBrand !== "undefined"` / `typeof crispReplay !== "un
 
 ## Bilinçli olarak dokunulmayanlar
 
+- Logo/ikon: upstream dosyalarına kanca yok. `custom/CMakeLists.txt` kökün derleme klasörüne kopyaladığı `veyra.ico` ve `qml/Veyra/logo.png` dosyalarının üzerine `custom/branding/crispplay.ico` ve `logo-256.png` yazar (EXE/pencere ikonu ve uygulama içi logo). Kaynak: Gemini ile üretildi, seçenekler `custom/branding/concepts/`.
+
 - `qml/Veyra/Theme.qml` yazı tipi seçimi: `ja` ve `zh-TW` dışındaki her dil (`en` ve `tr` dahil) aynı Latin yolunu (`Noto Sans SC`, yoksa Qt'nin sistem yedeği) kullanır; Türkçe için kanca gerekmedi.
 - `i18n/catalog.json`: Türkçe metinler yalnızca `custom/i18n/tr.json` içinde; bakım betiği `custom/scripts/i18n_check.py`.
 - `app.setApplicationName("Veyra")` / `setOrganizationName` (`apps/veyra-qml/main.cpp`): veri ve ayar klasörünü belirliyor olabilir. Değiştirmek kullanıcı ayarlarını taşır; ayrı karar gerektirir.
@@ -39,5 +41,4 @@ QML kancaları `typeof crispBrand !== "undefined"` / `typeof crispReplay !== "un
 
 ## Bekleyen
 
-- `assets/veyra.ico` ve `qml/Veyra/logo.png`: CrispPlay ikonu henüz yok. Hazır olunca `custom/branding/` altına konup derlemede seçilecek (yeni kanca gerekecek).
 - `scripts/package-*.py`: sürüm paketleme betikleri Likely7 adreslerini yazıyor. İlk CrispPlay sürümünden önce `custom/scripts/` altında kendi paketleme betiğimiz yazılacak; upstream betiklerine dokunulmayacak.

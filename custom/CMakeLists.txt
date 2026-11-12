@@ -98,3 +98,23 @@ if(TARGET Qt6::Test)
   target_link_libraries(crispplay_replay_ring_tests PRIVATE Qt6::Core Qt6::Test)
   set_target_properties(crispplay_replay_ring_tests PROPERTIES AUTOMOC ON)
 endif()
+
+# --- CrispPlay logo -------------------------------------------------------------
+# No upstream hook: this file runs after the root CMakeLists has copied
+# assets/veyra.ico and qml/Veyra/logo.png into the build tree, so ours are
+# written over those copies (EXE/window icon and the in-app logo).
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/branding/crispplay.ico" "${CMAKE_BINARY_DIR}/veyra.ico" COPYONLY)
+foreach(rc veyra-version.rc veyra-qml-version.rc)
+  if(EXISTS "${CMAKE_BINARY_DIR}/${rc}")
+    set_property(SOURCE "${CMAKE_BINARY_DIR}/${rc}" DIRECTORY "${PROJECT_SOURCE_DIR}"
+      APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/branding/crispplay.ico")
+  endif()
+endforeach()
+if(TARGET veyra_qml_files)
+  # veyra_qml_files copies qml/ on every build; replace its logo afterwards.
+  add_custom_target(crispplay_logo ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/branding/logo-256.png" "${CMAKE_BINARY_DIR}/qml/Veyra/logo.png"
+    COMMENT "CrispPlay logo")
+  add_dependencies(crispplay_logo veyra_qml_files)
+  add_dependencies(veyra_qml_ui crispplay_logo)
+endif()

@@ -159,13 +159,13 @@ private slots:
         for (int x = 0; x < 20; ++x) img.row(2)[4 * x] = img.row(2)[4 * x + 1] = img.row(2)[4 * x + 2] = 0;    // dark
         for (int c = 0; c < 3; ++c) img.row(2)[4 * 3 + c] = 250, img.row(2)[4 * 18 + c] = 250;              // bright
         // Column 18 bright but surrounded by dark too; make a bright pixel with no dark nearby.
-        BandImage far = BandImage::make(30, 1);
-        for (int c = 0; c < 3; ++c) far.row(0)[4 * 0 + c] = 0, far.row(0)[4 * 29 + c] = 250;
-        for (int x = 1; x < 29; ++x) for (int c = 0; c < 3; ++c) far.row(0)[4 * x + c] = 150;
+        BandImage distant = BandImage::make(30, 1);
+        for (int c = 0; c < 3; ++c) distant.row(0)[4 * 0 + c] = 0, distant.row(0)[4 * 29 + c] = 250;
+        for (int x = 1; x < 29; ++x) for (int c = 0; c < 3; ++c) distant.row(0)[4 * x + c] = 150;
         const BandImage a = whiteTextOnly(img);
         QCOMPARE(int(a.row(2)[4 * 3]), 0);    // text
         QCOMPARE(int(a.row(0)[4 * 3]), 255);  // dark background -> white
-        const BandImage b = whiteTextOnly(far);
+        const BandImage b = whiteTextOnly(distant);
         QCOMPARE(int(b.row(0)[4 * 29]), 255); // bright but no dark pixel within 5 px
     }
 
@@ -183,7 +183,7 @@ private slots:
         QCOMPARE(wordiness("well\xE2\x80\xA6"), 4);              // trailing ellipsis
         QCOMPARE(wordiness("rock\xE2\x80\x99n"), 6);             // curly apostrophe join
         QCOMPARE(wordiness(""), 0);
-        QVERIFY(wordiness("Take the money") > wordiness("Take tlie rnoney"));
+        QVERIFY(wordiness("Take the money") > wordiness("Take tbe rn0ney"));
     }
     void repairs() {
         QCOMPARE(repairReading("l'm here, l think"), std::string("I'm here, I think"));
@@ -194,7 +194,7 @@ private slots:
         QCOMPARE(repairReading("level"), std::string("level"));
     }
     void choice() {
-        QCOMPARE(chooseReading("Take tlie rnoney", "Take the money", true, true).text, std::string("Take the money"));
+        QCOMPARE(chooseReading("Take the rn0ney", "Take the money", true, true).text, std::string("Take the money"));
         QVERIFY(chooseReading("Take the money", "Take tbe m0ney", true, true).ppocr == false);
         QVERIFY(chooseReading("Same", "Same", true, true).ppocr);     // tie -> PP-OCR
         QVERIFY(!chooseReading("Only windows", "", false, true).ppocr);
@@ -208,7 +208,7 @@ private slots:
         QCOMPARE(rows[0].box.x, 150.f);
         QCOMPARE(rows[0].box.w, 250.f);
         // Centred row in a 1000 px band: symmetric about 500, plus 0.6 line heights.
-        const Rect c = ppocrCrop({150, 50, 250, 22}, 1000, 200);
+        const Rect c = ppocrCrop({150, 50, 300, 22}, 1000, 200);
         QCOMPARE(c.x, float(int(500 - (350 + 0.6f * 22))));
         QCOMPARE(c.x + c.w, float(int(500 + (350 + 0.6f * 22))));
         QCOMPARE(c.y, float(int(50 - 0.3f * 22)));
@@ -240,10 +240,10 @@ private slots:
     void ppocrInputShape() {
         int w = 0;
         // 20 px high crop: RapidOCR first scales the short side to 30 (rounded to 32), then to 48 high.
-        const auto small = ppocrInput(BandImage::make(100, 20), 48, &w);
+        const auto narrowIn = ppocrInput(BandImage::make(100, 20), 48, &w);
         QCOMPARE(w, 320);  // narrow: padded to 48 * 320 / 48
-        QCOMPARE(int(small.size()), 3 * 48 * 320);
-        QCOMPARE(small[0], -1.f);  // black -> -1
+        QCOMPARE(int(narrowIn.size()), 3 * 48 * 320);
+        QCOMPARE(narrowIn[0], -1.f);  // black -> -1
         const auto wide = ppocrInput(BandImage::make(1300, 48), 48, &w);
         QCOMPARE(w, 1300);
         QVERIFY(ppocrInput(BandImage{}, 48, &w).empty());

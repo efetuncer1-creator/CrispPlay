@@ -215,7 +215,7 @@ BandImage resizeBilinear(const BandImage& img, int width, int height) {
     }
     struct Tap { int i0, i1; float f; };
     const auto taps = [](int dst, int src) {
-        std::vector<Tap> t(size_t(dst));
+        std::vector<Tap> t(static_cast<size_t>(dst));
         const double scale = double(src) / dst;
         for (int d = 0; d < dst; ++d) {
             double f = (d + 0.5) * scale - 0.5;

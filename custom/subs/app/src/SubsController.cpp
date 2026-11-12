@@ -152,8 +152,11 @@ void SubsController::store() const {
 void SubsController::apply(bool persist) {
     Paths paths;
     paths.dataDirectory = dataDirectory_.toStdWString();
-    paths.translatorModel = models_->translatorModelDir().toStdWString();
-    paths.ocrModel = models_->ocrModelPath().toStdWString();
+    // Only verified files are loaded: until the store says Ready there is no local model.
+    if (models_->state() == ModelStore::State::Ready) {
+        paths.translatorModel = models_->translatorModelDir().toStdWString();
+        paths.ocrModel = models_->ocrModelPath().toStdWString();
+    }
     Service::instance().configure(settings_, paths);
     if (persist) store();
     if (settings_.enabled) timer_.start();
@@ -261,7 +264,6 @@ void SubsController::testOnline() {
 
 void SubsController::refresh() {
     Service::instance().probeOcr();
-    models_->refresh();
     timer_.start();
     poll();
 }
@@ -272,17 +274,24 @@ void SubsController::poll() {
 
     QString models;
     switch (models_->state()) {
-    case ModelStore::State::Ready: models = QStringLiteral("Model dosyaları hazır"); break;
+    case ModelStore::State::Ready:
+        models = models_->usesDeveloperOverride() ? QStringLiteral("Hazır (geliştirici klasörü: %1)").arg(QDir::toNativeSeparators(models_->modelRoot()))
+                                                  : QStringLiteral("Hazır · %1").arg(QDir::toNativeSeparators(models_->modelRoot()));
+        break;
     case ModelStore::State::Downloading:
         models = models_->bytesTotal() > 0
             ? QStringLiteral("İndiriliyor: %1 / %2").arg(megabytes(models_->bytesDone()), megabytes(models_->bytesTotal()))
             : QStringLiteral("İndiriliyor…");
         break;
     case ModelStore::State::Failed: models = QStringLiteral("İndirilemedi: %1").arg(models_->error()); break;
-    case ModelStore::State::Missing:
-        models = models_->bytesTotal() > 0 ? QStringLiteral("Model dosyaları yok (indirme boyutu %1)").arg(megabytes(models_->bytesTotal()))
-                                           : QStringLiteral("Model dosyaları yok");
+    case ModelStore::State::Missing: {
+        const qint64 size = builtInModelManifest().zipSize;
+        if (models_->checking()) models = QStringLiteral("Model dosyaları denetleniyor…");
+        else if (!models_->error().isEmpty()) models = QStringLiteral("Model dosyaları bozuk: %1").arg(models_->error());
+        else models = size > 0 ? QStringLiteral("İndirilmedi · çeviri modeli (OPUS-MT) ve OCR ağı, tek dosya %1").arg(megabytes(size))
+                               : QStringLiteral("Model dosyaları yok");
         break;
+    }
     }
 
     QString ocr;
@@ -307,8 +316,9 @@ void SubsController::poll() {
     case State::Off: case State::Starting: line = QStringLiteral("Başlatılıyor: OCR ve çeviri modeli yükleniyor…"); break;
     case State::NoOcr: line = QStringLiteral("Çalışmıyor: Windows OCR kullanılamıyor"); break;
     case State::NoEngine:
-        line = models_->state() == ModelStore::State::Ready || !localBuilt()
-            ? QStringLiteral("Çalışmıyor: çeviri motoru yok") : QStringLiteral("Çalışmıyor: çeviri modeli indirilmemiş");
+        line = models_->state() == ModelStore::State::Ready || !localBuilt() ? QStringLiteral("Çalışmıyor: çeviri motoru yok")
+             : models_->checking() ? QStringLiteral("Başlatılıyor: model dosyaları denetleniyor…")
+             : QStringLiteral("Çalışmıyor: çeviri modeli indirilmemiş · aşağıdan indirin");
         break;
     case State::Running:
         if (!s.samples) line = QStringLiteral("Açık · oynatma başlayınca altyazılar okunur");
@@ -325,7 +335,7 @@ void SubsController::poll() {
     const bool changed = line != summary_ || ocr != ocrWarning_ || engine != engineWarning_ || models != modelSummary_ || int(s.state) != state_;
     summary_ = line; ocrWarning_ = ocr; engineWarning_ = engine; modelSummary_ = models; state_ = int(s.state);
     if (changed) emit stateChanged();
-    if (!settings_.enabled && models_->state() != ModelStore::State::Downloading && s.state == State::Off) timer_.stop();
+    if (!settings_.enabled && models_->state() != ModelStore::State::Downloading && !models_->checking() && s.state == State::Off) timer_.stop();
 }
 
 } // namespace crispplay::subs::app

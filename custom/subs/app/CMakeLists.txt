@@ -1,7 +1,7 @@
 # Game subtitle translation in the app (Phase 5c/5d/5f, custom/docs/SUBS.md):
 # band capture in the present chain, OCR + translation worker, overlay line,
 # settings object. Hooked from custom/CMakeLists.txt with add_subdirectory(subs/app),
-# which must stay after subs/core, subs/mt, subs/ocr and (once merged) subs/net.
+# which must stay after subs/core, subs/net, subs/mt and subs/ocr.
 #
 # The app builds without CTranslate2 (no local translator: the settings page says
 # so) and without ONNX Runtime (Windows OCR only).
@@ -19,7 +19,8 @@ set(_subs_app_sources
 if(NOT TARGET crispplay_subs_net)
   # Contract headers only: a stand-in without download and online engines.
   list(APPEND _subs_app_sources src/NetFallback.cpp
-    "${_subs_net_include}/crispplay/subs/ModelStore.h" "${_subs_net_include}/crispplay/subs/OnlineTranslator.h")
+    "${_subs_net_include}/crispplay/subs/ModelStore.h" "${_subs_net_include}/crispplay/subs/OnlineTranslator.h"
+    "${_subs_net_include}/crispplay/subs/ModelManifest.h")
   message(STATUS "CrispPlay subs app: crispplay_subs_net not in this build; model download and online engines are stubbed")
 endif()
 

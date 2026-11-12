@@ -13,3 +13,14 @@ CrispPlay'in (`custom/`) eklediklerini listeler.
 
 Based on CouchSubs by Sinan Yorulmaz (https://github.com/yorulmazsinan/couchsubs), modified on 2026-11-12.
 Taşınan dosyalar AGPL-3.0 başlığını taşır; GPL-3'ün 13. maddesi bu birleştirmeye izin verir.
+
+### Altyazı modelleri (ayrı sürüm dosyası, `custom/subs/net`)
+
+Uygulama paketine girmez; özellik ilk açıldığında `crispplay-subs-models-v1.zip` (GitHub sürümü `subs-models-v1`) indirilir. Atıf ve lisans dosyaları zip'in içindedir (kaynakları `custom/subs/net/model-licenses/`).
+
+| Model | Lisans | Not |
+|---|---|---|
+| OPUS-MT `opus-mt-tc-big-en-tr` (Helsinki-NLP, University of Helsinki), CTranslate2 int8'e dönüştürüldü | CC BY 4.0 | atıf zorunlu: `custom/subs/net/model-licenses/opus-mt-ATTRIBUTION.txt` |
+| PP-OCRv6 small tanıma ağı (PaddleOCR), RapidOCR 3.10.0 ONNX | Apache-2.0 | değiştirilmedi |
+
+Çevrimiçi motor (DeepL, OpenAI uyumlu) üçüncü taraf kodu içermez; kullanıcının kendi hesabıyla kullandığı hizmetlerdir (`custom/subs/net/README.md`).

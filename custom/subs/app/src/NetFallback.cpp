@@ -22,7 +22,13 @@ ModelStore::ModelStore(QString dataDirectory, QObject* parent) : QObject(parent)
                                                                               : QDir(dataDirectory).filePath(QStringLiteral("models"));
     refresh();
 }
+ModelStore::ModelStore(QString dataDirectory, ModelStoreOptions, QObject* parent) : ModelStore(std::move(dataDirectory), parent) {}
 ModelStore::~ModelStore() { delete impl_; }
+
+const ModelManifest& builtInModelManifest() { static const ModelManifest none; return none; }
+ModelStoreOptions defaultModelStoreOptions() { return {}; }
+bool ModelStore::checking() const { return false; }
+bool ModelStore::usesDeveloperOverride() const { return !qEnvironmentVariable("CRISPPLAY_SUBS_MODEL_ROOT").isEmpty() && impl_->root != QString(); }
 
 ModelStore::State ModelStore::state() const { return impl_->state; }
 QString ModelStore::modelRoot() const { return impl_->root; }

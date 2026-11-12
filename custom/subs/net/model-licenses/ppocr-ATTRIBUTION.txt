@@ -1,0 +1,16 @@
+CrispPlay subtitle OCR model
+============================
+
+Model:    PP-OCRv6 small text recognition model (PP-OCRv6_rec_small)
+Authors:  PaddlePaddle Authors (PaddleOCR, https://github.com/PaddlePaddle/PaddleOCR)
+ONNX:     RapidOCR 3.10.0 model repository (RapidAI),
+          https://www.modelscope.cn/models/RapidAI/RapidOCR/resolve/v3.10.0/onnx/PP-OCRv6/rec/PP-OCRv6_rec_small.onnx
+          SHA-256 6f327246b50388f3c176ae304bd95767ea6dc0c9ae92153ef8cbe210b3c14884
+License:  Apache License 2.0 (see LICENSE-Apache-2.0.txt)
+
+PP-OCRv6_rec_small_dict.txt is the model's "character" metadata (18708 entries),
+written one per line by CrispPlay for reference. The model file is unmodified.
+
+Turkish / Türkçe:
+Metin tanıma modeli: PaddleOCR PP-OCRv6 small (PaddlePaddle Authors), RapidOCR
+3.10.0 ONNX dışa aktarımı, Apache-2.0. Model dosyası değiştirilmemiştir.

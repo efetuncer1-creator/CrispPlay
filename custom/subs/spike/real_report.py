@@ -132,8 +132,7 @@ def main():
                                   "cer": round(100 * err, 1), "empty": round(100 * none / len(frames), 1)}
         print(f"| {name} | {100 * good / len(frames):.1f} | {100 * body / len(frames):.1f} | {100 * err:.1f} | {100 * none / len(frames):.1f} |")
 
-    print("\n### Altyazı başına (2 okuma/sn)\n\n| okuyucu | ilk kare doğru % | ilk 3 karenin ortak okuması % | art arda aynı iki okuma (ilk gönderilen) % | en sık okuma (ekranda kalan) % | herhangi bir kare % |
-|---|---|---|---|---|---|")
+    print("\n### Altyazı başına (2 okuma/sn)\n\n| okuyucu | ilk kare doğru % | ilk 3 karenin ortak okuması % | art arda aynı iki okuma (ilk gönderilen) % | en sık okuma (ekranda kalan) % | herhangi bir kare % |\n|---|---|---|---|---|---|")
     final = {}
     for name in READERS:
         first = cons = stable = anyok = mode = 0

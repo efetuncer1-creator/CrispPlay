@@ -10,6 +10,7 @@
 - Aşama 1: derleme ortamı kuruldu, uygulama derleniyor ve açılıyor; ayrıntı ve eksikler `custom/BUILD.md`. Açık kalan: paketleme (windeployqt + çalışma zamanı DLL'leri), PS5 slice yamalı FFmpeg, FidelityFX 1.1.4 optical flow kitaplığı.
 - Aşama 2 (Türkçe) tamam: `custom/i18n/tr.json` upstream kataloğun 2808 girdisinin tamamını kapsıyor, Ayarlar → Arayüz dili'nde "Türkçe" var, Türkçe Windows'ta "Sistemi izle" Türkçeyi seçer. Upstream'e 7 yeni kanca satırı (toplam 27, liste `custom/HOOKS.md`). Terimler `custom/i18n/GLOSSARY.md`; her sync'te `python custom/scripts/i18n_check.py`.
 - Test GPU'su: NVIDIA GeForce RTX 3060 Ti (+ AMD tümleşik grafik).
+- Aşama 5 denemesi (2026-11-12, dal `feature/subs`): OCR + çeviri hattı gerçek bir oyun klibinde ölçüldü, sonuç "devam, üç değişiklikle" (ikinci OCR okuyucusu, CTranslate2, çeviri kalitesi beklentisi). Rapor ve uygulama planı `custom/docs/SUBS_SPIKE.md`.
 
 ## Amaç ve temel ilke
 

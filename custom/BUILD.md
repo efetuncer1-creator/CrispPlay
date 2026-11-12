@@ -17,6 +17,8 @@ powershell -ExecutionPolicy Bypass -File custom\scripts\build.ps1 -Test
 
 Çıktı `out\build\x64-release\` altında (`veyra_qml_ui.exe`).
 
+Taşınabilir paket: `powershell -ExecutionPolicy Bypass -File custom\scripts\package.ps1 [-Force] [-NoZip]` → `..\dist\CrispPlay-<sürüm>-win64-portable\` (+ `.zip`, + GPL-3 kaynak zip'i `CrispPlay-<sürüm>-source.zip` = `git archive HEAD`). İçerik: `CrispPlay.exe`, QML, `*.dxil` shader'lar, `windeployqt` Qt'si, vcpkg FFmpeg, MSVC CRT, `runtime\`/`runtime_local\` (kullanıcı verisi hariç), lisanslar, `BENIOKU.txt`. Ayarlar paketin içinde kalır (`runtime_local\user-data-2.0.0`). 2026-11-12: 1631 dosya, 1000 MB, zip 679 MB; zip'ten açılıp yalnız `C:\Windows\System32` PATH'iyle çalıştırıldı, Türkçe açıldı, hta.mp4 30 fps oynadı, çıkış 0.
+
 Çalıştırma: `custom\scripts\CrispPlay.cmd` Qt/FFmpeg yollarını ayarlayıp EXE'yi açar; ayarlar `%APPDATA%\CrispPlay` altında (ilk açılışta Türkçe), üzerine bırakılan video açılır. Masaüstündeki `CrispPlay` kısayolu bu dosyayı çağırır.
 
 **Durum (2026-11-11):** `veyra_qml_ui.exe` derleniyor (EXE bilgisi `CrispPlay 2.1.5-crispplay.1`); testler geçiyor (branding 7/7, upstream güncelleme denetleyicisi 29/29, i18n 0 hata; Aşama 2'den beri Türkçe `crispplay_i18n_tests` 9/9). Duman testi: `--data-dir out\smoke-data --page set --tab about --exit-after 10000` ile açıldı, pencere başlığı doğru, RTX 3060 Ti seçildi, çıkış 0. Güncelleme denetimi `http-404` (henüz CrispPlay release yok, beklenen). PS5/Xbox iletişim kutularında iki upstream QML uyarısı var (bu derlemede o özellikler kapalı). Video oynatma, SR/NR/FG denenmedi.

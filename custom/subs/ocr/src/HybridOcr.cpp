@@ -14,15 +14,20 @@ double msSince(std::chrono::steady_clock::time_point t0) {
 }
 }  // namespace
 
-ReadingChoice chooseReading(std::string_view windowsText, std::string_view ppocrText, bool havePpocr, bool repair) {
+ReadingChoice chooseReading(std::string_view windowsText, std::string_view ppocrText, bool havePpocr, bool repair,
+                            float ppocrConfidence, float trustAbove) {
     std::string w = repair ? repairReading(windowsText) : collapseSpaces(windowsText);
     if (!havePpocr) return {std::move(w), false};
     std::string p = repair ? repairReading(ppocrText) : collapseSpaces(ppocrText);
+    if (ppocrConfidence >= trustAbove && hasAlnum(p)) return {std::move(p), true};
     if (wordiness(w) > wordiness(p)) return {std::move(w), false};
     return {std::move(p), true};
 }
 
-std::vector<TextRow> mergeRows(const std::vector<WinOcrLine>& lines) {
+// Largest horizontal gap, in line heights, between two pieces joined into one row.
+constexpr float kMaxJoinGap = 2.0f;
+
+std::vector<TextRow> mergeRows(const std::vector<WinOcrLine>& lines, int bandW) {
     std::vector<const WinOcrLine*> sorted;
     for (const auto& l : lines) sorted.push_back(&l);
     std::stable_sort(sorted.begin(), sorted.end(), [](auto a, auto b) {
@@ -33,12 +38,44 @@ std::vector<TextRow> mergeRows(const std::vector<WinOcrLine>& lines) {
     for (const auto* l : sorted) {
         const float x0 = l->box.x, y0 = l->box.y, x1 = l->box.x + l->box.w, y1 = l->box.y + l->box.h;
         const float mid = (y0 + y1) / 2;
-        if (!groups.empty() && groups.back().y0 <= mid && mid <= groups.back().y1) {
-            auto& g = groups.back();
+        // Same text row and horizontally close: one line Windows OCR split in two.
+        // Text far to the side on the same row (HUD, counters) stays its own row.
+        Group* target = nullptr;
+        for (auto& g : groups) {
+            const float gap = std::max(x0 - g.x1, g.x0 - x1);
+            const float h = std::max(g.y1 - g.y0, y1 - y0);
+            if (g.y0 <= mid && mid <= g.y1 && gap <= kMaxJoinGap * h) target = &g;
+        }
+        if (target) {
+            auto& g = *target;
             g.x0 = std::min(g.x0, x0), g.y0 = std::min(g.y0, y0), g.x1 = std::max(g.x1, x1), g.y1 = std::max(g.y1, y1);
             g.members.push_back(l);
         } else {
             groups.push_back({x0, y0, x1, y1, {l}});
+        }
+    }
+    std::stable_sort(groups.begin(), groups.end(), [](const Group& a, const Group& b) { return a.y0 + a.y1 < b.y0 + b.y1; });
+    // Second pass, for subtitles Windows OCR read as two far-apart pieces (words
+    // missing in the middle): a piece inside the symmetric crop of a centred piece
+    // on the same text row joins it, or both crops would read the whole line.
+    if (bandW > 0) {
+        for (bool merged = true; merged;) {
+            merged = false;
+            for (size_t i = 0; i < groups.size() && !merged; ++i) {
+                for (size_t j = 0; j < groups.size() && !merged; ++j) {
+                    if (i == j) continue;
+                    auto& a = groups[i];
+                    auto& b = groups[j];
+                    const float midB = (b.y0 + b.y1) / 2;
+                    if (!(a.x0 < 0.6f * bandW && a.x1 > 0.4f * bandW) || midB < a.y0 || midB > a.y1) continue;
+                    const Rect cropA = ppocrCrop({a.x0, a.y0, a.x1 - a.x0, a.y1 - a.y0}, bandW, 1 << 20);
+                    if (b.x0 < cropA.x || b.x1 > cropA.x + cropA.w) continue;
+                    a.x0 = std::min(a.x0, b.x0), a.y0 = std::min(a.y0, b.y0), a.x1 = std::max(a.x1, b.x1), a.y1 = std::max(a.y1, b.y1);
+                    a.members.insert(a.members.end(), b.members.begin(), b.members.end());
+                    groups.erase(groups.begin() + std::ptrdiff_t(j));
+                    merged = true;
+                }
+            }
         }
     }
     std::vector<TextRow> rows;
@@ -123,7 +160,7 @@ OcrFrame HybridOcrReader::read(const BandImage& band, int64_t timeMs, HybridDeta
     }
 
     const auto t1 = std::chrono::steady_clock::now();
-    for (const auto& row : mergeRows(*found)) {
+    for (const auto& row : mergeRows(*found, band.width)) {
         HybridLine line;
         line.windowsText = collapseSpaces(row.text);
         line.windowsBox = row.box;
@@ -135,7 +172,8 @@ OcrFrame HybridOcrReader::read(const BandImage& band, int64_t timeMs, HybridDeta
             line.ppocrText = collapseSpaces(reading.text);
             line.ppocrConfidence = reading.confidence;
         }
-        const auto choice = chooseReading(line.windowsText, line.ppocrText, ppocr_ != nullptr, options_.repairText);
+        const auto choice = chooseReading(line.windowsText, line.ppocrText, ppocr_ != nullptr, options_.repairText,
+                                          line.ppocrConfidence, options_.ppocrTrustAbove);
         line.ppocrChosen = choice.ppocr;
         if (!choice.text.empty()) {
             OcrLine out;

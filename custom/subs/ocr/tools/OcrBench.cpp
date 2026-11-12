@@ -2,7 +2,7 @@
 // scores them the way custom/subs/spike/real_report.py and ocr_hybrid.py did.
 //
 //   crispplay_ocr_bench [--real DIR] [--synthetic DIR] [--manifest FILE] [--model FILE]
-//                       [--threads N] [--limit N] [--no-real] [--no-synthetic] [--verbose]
+//                       [--threads N] [--trust C] [--limit N] [--no-real] [--no-synthetic] [--verbose]
 //
 // Real clip: DIR holds frames/ (1920x432 cuts starting at row 648 of 1080p,
 // 2 per second), transcript.tsv and real.json (the spike's numbers). These are a
@@ -185,6 +185,7 @@ std::vector<std::string> readings(const OcrFrame& frame, const HybridDetail& d, 
 struct Args {
     QString real, synthetic, manifest, model;
     int threads = 2, limit = 0;
+    float trust = -1.f;  // < 0: library default
     bool doReal = true, doSynthetic = true, verbose = false;
 };
 
@@ -371,6 +372,14 @@ int runSynthetic(HybridOcrReader& reader, const Args& a) {
         for (auto& [y, t] : wl) win += (win.empty() ? "" : " ") + t;
         for (auto& [y, t] : ol) ours += (ours.empty() ? "" : " ") + t;
         win = collapseSpaces(win), ours = collapseSpaces(ours);
+        if (a.verbose && !ok(ours, truth)) {
+            std::printf("  MISS %s [%s]\n    truth: %s\n    win  : %s\n    ours : %s\n", qPrintable(item["file"].toString()),
+                        qPrintable(item["style"].toString()), truth.c_str(), win.c_str(), ours.c_str());
+            for (const auto& r : d.rows)
+                std::printf("      row y%.0f h%.0f crop %.0f..%.0f | W: %s | P: %s (%.2f)%s\n", r.windowsBox.y, r.windowsBox.h,
+                            r.cropBox.x, r.cropBox.x + r.cropBox.w, r.windowsText.c_str(), r.ppocrText.c_str(),
+                            r.ppocrConfidence, r.ppocrChosen ? " *P" : "");
+        }
         rows.push_back({item["bg"].toString().startsWith("v1_"), item["style"].toString().toStdString(), ok(win, truth),
                         ok(ours, truth), cer(win, truth), cer(ours, truth), d.totalMs});
     }
@@ -414,19 +423,21 @@ int main(int argc, char** argv) {
         else if (k == "--model") a.model = next();
         else if (k == "--windows-only") a.model.clear();
         else if (k == "--threads") a.threads = next().toInt();
+        else if (k == "--trust") a.trust = next().toFloat();
         else if (k == "--limit") a.limit = next().toInt();
         else if (k == "--no-real") a.doReal = false;
         else if (k == "--no-synthetic") a.doSynthetic = false;
         else if (k == "--verbose") a.verbose = true;
         else {
             std::printf("usage: crispplay_ocr_bench [--real DIR] [--synthetic DIR] [--manifest FILE] [--model FILE | --windows-only]\n"
-                        "                           [--threads N] [--limit N] [--no-real] [--no-synthetic] [--verbose]\n");
+                        "                           [--threads N] [--trust C] [--limit N] [--no-real] [--no-synthetic] [--verbose]\n");
             return 2;
         }
     }
     HybridOptions options;
     options.ppocrModel = a.model.toStdWString();
     options.ppocrThreads = a.threads;
+    if (a.trust >= 0.f) options.ppocrTrustAbove = a.trust;
     HybridOcrReader reader(options);
     const auto& ws = reader.windowsStatus();
     std::printf("Windows OCR: %s (%s)%s%s\n", ws.available ? "ready" : "UNAVAILABLE", ws.languageTag.c_str(),

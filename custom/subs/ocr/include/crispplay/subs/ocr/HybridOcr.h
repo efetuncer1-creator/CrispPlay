@@ -26,6 +26,9 @@ struct HybridOptions {
     int ppocrThreads = 2;
     bool repairText = true;            // spike's three repairs before scoring (and in the output)
     bool whiteTextFallback = true;
+    // A PP-OCR reading at or above this mean confidence wins without scoring
+    // (> 1 disables it). See README for the measurement behind the default.
+    float ppocrTrustAbove = 2.f;
 };
 
 struct HybridLine {
@@ -52,15 +55,22 @@ struct ReadingChoice {
     std::string text;
     bool ppocr = false;
 };
-// Keeps the more word-like reading; a tie goes to PP-OCR (spike rule).
-ReadingChoice chooseReading(std::string_view windowsText, std::string_view ppocrText, bool havePpocr, bool repair);
+// Keeps the more word-like reading; a tie goes to PP-OCR (spike rule). A PP-OCR
+// reading with confidence >= trustAbove wins outright.
+ReadingChoice chooseReading(std::string_view windowsText, std::string_view ppocrText, bool havePpocr, bool repair,
+                            float ppocrConfidence = -1.f, float trustAbove = 2.f);
 
-// Windows OCR lines grouped into text rows (a row's mid height inside the previous row).
+// Windows OCR lines grouped into text rows: pieces whose mid height lies inside a
+// row and that are at most two line heights apart horizontally join it (one line
+// split in two); with `bandW` > 0, a piece inside the symmetric PP-OCR crop of a
+// centred row on the same height joins it too (a subtitle with missing middle
+// words). Text far to the side (HUD) stays its own row. Rows top to bottom, words
+// left to right.
 struct TextRow {
     Rect box;
     std::string text;
 };
-std::vector<TextRow> mergeRows(const std::vector<WinOcrLine>& lines);
+std::vector<TextRow> mergeRows(const std::vector<WinOcrLine>& lines, int bandW = 0);
 
 // The crop PP-OCR reads for a row box in a band `bandW` x `bandH`.
 Rect ppocrCrop(const Rect& row, int bandW, int bandH);

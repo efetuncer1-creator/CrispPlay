@@ -195,7 +195,7 @@ public:
     ~HttpTranslator() override { online::wipe(key_); }
 
     std::optional<std::string> translate(const std::string& english) override {
-        if (blankText(english)) return std::string();
+        if (online::blankText(english)) return std::string();
         if (english.size() > size_t(online::kMaxInputBytes)) return std::nullopt;
         QByteArray body = requestBody(english);
         std::wstring headers = L"Content-Type: application/json\r\nAccept: application/json\r\n" + authHeader();

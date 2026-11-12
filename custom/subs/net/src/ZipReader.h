@@ -18,7 +18,7 @@ struct ZipEntry {
     QString name;          // '/' separated, validated
     bool directory = false;
     quint16 method = 0;    // 0 store, 8 deflate
-    quint32 crc32 = 0;
+    quint32 crc = 0; // CRC-32 (not "crc32": zlib.h defines that as a macro)
     qint64 compressedSize = 0;
     qint64 size = 0;
     qint64 localHeaderOffset = 0;
@@ -33,6 +33,7 @@ class ZipReader {
 public:
     bool open(const QString& path, QString* error);
     const QList<ZipEntry>& entries() const { return entries_; }
+    void close() { file_.close(); } // Windows cannot delete or rename an open file
 
     // Writes the entry's data to `out` (and `hash` when given), checking the size, the
     // CRC-32 and that the deflate stream ends exactly. `cancel` is polled between chunks.

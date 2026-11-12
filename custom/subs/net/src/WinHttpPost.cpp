@@ -38,6 +38,14 @@ WinHttpPost::~WinHttpPost() {
     if (session_) WinHttpCloseHandle(session_);
 }
 
+void WinHttpPost::abortCurrent() {
+    std::lock_guard lock(mutex_);
+    if (current_) {
+        WinHttpCloseHandle(current_);
+        current_ = nullptr;
+    }
+}
+
 void WinHttpPost::cancel() {
     std::lock_guard lock(mutex_);
     cancelled_ = true;
@@ -96,6 +104,17 @@ std::optional<HttpResponse> WinHttpPost::post(const QUrl& url, const std::wstrin
     }
     int t = remaining();
     WinHttpSetTimeouts(request, t, t, t, t);
+    // Hard deadline on top of the per-step timeouts: closing the request handle ends
+    // whatever WinHTTP call is blocked at that moment.
+    PTP_TIMER timer = CreateThreadpoolTimer(
+        [](PTP_CALLBACK_INSTANCE, PVOID self, PTP_TIMER) { static_cast<WinHttpPost*>(self)->abortCurrent(); }, this,
+        nullptr);
+    if (timer) {
+        ULARGE_INTEGER due;
+        due.QuadPart = ULONGLONG(-(LONGLONG(timeoutMs) * 10000)); // relative, 100 ns units
+        FILETIME ft{due.LowPart, due.HighPart};
+        SetThreadpoolTimer(timer, &ft, 0, 0);
+    }
 
     std::optional<HttpResponse> result;
     if (alive() && WinHttpSendRequest(request, headers.c_str(), DWORD(-1L), const_cast<char*>(body.constData()),
@@ -130,8 +149,13 @@ std::optional<HttpResponse> WinHttpPost::post(const QUrl& url, const std::wstrin
             }
         }
     }
+    if (timer) {
+        SetThreadpoolTimer(timer, nullptr, 0, 0);
+        WaitForThreadpoolTimerCallbacks(timer, TRUE);
+        CloseThreadpoolTimer(timer);
+    }
     finish();
-    if (cancelled_.load()) return std::nullopt;
+    if (cancelled_.load() || remaining() <= 0) return std::nullopt;
     return result;
 }
 

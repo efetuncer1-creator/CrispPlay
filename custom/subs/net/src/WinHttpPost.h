@@ -38,6 +38,7 @@ public:
     void cancel();
 
 private:
+    void abortCurrent(); // deadline timer callback
     void* session_ = nullptr;
     std::mutex mutex_;
     void* current_ = nullptr;

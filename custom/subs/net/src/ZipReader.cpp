@@ -135,7 +135,7 @@ bool ZipReader::open(const QString& path, QString* error) {
         entry.name = name;
         entry.directory = name.endsWith(QLatin1Char('/'));
         entry.method = method;
-        entry.crc32 = crc;
+        entry.crc = crc;
         entry.compressedSize = csize;
         entry.size = usize;
         entry.localHeaderOffset = localOffset;
@@ -204,7 +204,7 @@ bool ZipReader::extract(const ZipEntry& entry, QIODevice& out, QCryptographicHas
         if (z.avail_in != 0 || remaining != 0) return fail(error, QStringLiteral("trailing data: %1").arg(entry.name));
     }
     if (written != entry.size) return fail(error, QStringLiteral("size mismatch: %1").arg(entry.name));
-    if (quint32(crc) != entry.crc32) return fail(error, QStringLiteral("CRC mismatch: %1").arg(entry.name));
+    if (quint32(crc) != entry.crc) return fail(error, QStringLiteral("CRC mismatch: %1").arg(entry.name));
     return true;
 }
 

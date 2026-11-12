@@ -376,6 +376,7 @@ struct ModelStore::Impl {
         detail::ZipReader zip;
         QString zipError;
         if (!zip.open(partPath, &zipError)) {
+            zip.close();
             QFile::remove(partPath);
             r.error = QStringLiteral("Model paketi okunamadı: %1").arg(zipError);
             return r;
@@ -426,6 +427,7 @@ struct ModelStore::Impl {
         }
         if (cancel.load()) { r.cancelled = true; return r; }
 
+        zip.close();
         // Install: each top-level folder is swapped with two renames on the same volume.
         QStringList tops;
         for (const ModelFileEntry& f : manifest.files)

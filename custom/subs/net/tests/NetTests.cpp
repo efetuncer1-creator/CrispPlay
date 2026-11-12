@@ -382,7 +382,7 @@ private slots:
             QTRY_VERIFY(!store.checking());
             store.download();
             QTRY_COMPARE_WITH_TIMEOUT(store.state(), ModelStore::State::Failed, 10000);
-            QVERIFY2(store.error().contains(QLatin1String("yönlendirildi")), qPrintable(store.error()));
+            QVERIFY2(store.error().contains(QStringLiteral("yönlendirildi")), qPrintable(store.error()));
             QCOMPARE(server.requests().size(), 1);
         }
     }

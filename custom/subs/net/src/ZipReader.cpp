@@ -160,7 +160,7 @@ bool ZipReader::extract(const ZipEntry& entry, QIODevice& out, QCryptographicHas
     QByteArray in(kChunk, Qt::Uninitialized), outBuf(kChunk, Qt::Uninitialized);
     qint64 remaining = entry.compressedSize, written = 0;
     uLong crc = z_crc32(0L, Z_NULL, 0);
-    auto emit = [&](const char* data, qint64 n) -> bool {
+    auto sink = [&](const char* data, qint64 n) -> bool {
         written += n;
         if (written > entry.size) return false;
         crc = z_crc32(crc, reinterpret_cast<const Bytef*>(data), uInt(n));
@@ -174,7 +174,7 @@ bool ZipReader::extract(const ZipEntry& entry, QIODevice& out, QCryptographicHas
             const qint64 n = file_.read(in.data(), qMin<qint64>(remaining, kChunk));
             if (n <= 0) return fail(error, QStringLiteral("read error"));
             remaining -= n;
-            if (!emit(in.constData(), n)) return fail(error, QStringLiteral("write error or size overflow"));
+            if (!sink(in.constData(), n)) return fail(error, QStringLiteral("write error or size overflow"));
         }
     } else {
         z_stream z;
@@ -197,7 +197,7 @@ bool ZipReader::extract(const ZipEntry& entry, QIODevice& out, QCryptographicHas
             rc = inflate(&z, Z_NO_FLUSH);
             if (rc != Z_OK && rc != Z_STREAM_END) return fail(error, QStringLiteral("corrupt deflate data: %1").arg(entry.name));
             const qint64 produced = outBuf.size() - z.avail_out;
-            if (produced && !emit(outBuf.constData(), produced))
+            if (produced && !sink(outBuf.constData(), produced))
                 return fail(error, QStringLiteral("write error or size overflow: %1").arg(entry.name));
         }
         // The stream must use exactly the bytes the directory promised.

@@ -480,6 +480,28 @@ private slots:
         qunsetenv("CRISPPLAY_SUBS_MODEL_ROOT");
     }
 
+    // The real release asset built by package-subs-models.ps1, installed offline: a complete
+    // .part file skips the network, so this checks zip SHA-256, the zip reader on .NET's
+    // output and every file against the compiled-in manifest. Skipped without ..\dist.
+    void realPackageOffline() {
+        const QString zipPath = QStringLiteral(CRISPPLAY_SUBS_MODELS_ZIP);
+        if (!QFileInfo::exists(zipPath)) QSKIP("dist/crispplay-subs-models-v1.zip not built");
+        QTemporaryDir dir;
+        ModelStoreOptions o = options("http://127.0.0.1:1/never", builtInModelManifest()); // nothing listens there
+        const QString part = dir.path() + "/models/.download/" + o.manifest.assetName + ".part";
+        QVERIFY(QDir().mkpath(QFileInfo(part).absolutePath()));
+        QVERIFY(QFile::copy(zipPath, part));
+        ModelStore store(dir.path(), o);
+        QTRY_VERIFY(!store.checking());
+        QCOMPARE(store.state(), ModelStore::State::Missing);
+        store.download();
+        QTRY_COMPARE_WITH_TIMEOUT(store.state(), ModelStore::State::Ready, 120000);
+        QVERIFY(QFileInfo(store.translatorModelDir() + "/model.bin").size() == 237977893);
+        QVERIFY(QFileInfo::exists(store.ocrModelPath()));
+        QVERIFY(QFileInfo::exists(store.translatorModelDir() + "/LICENSE-CC-BY-4.0.txt"));
+        QVERIFY(!QFileInfo::exists(part));
+    }
+
     // --- secrets and config -------------------------------------------------------------------
     void dpapiRoundTrip() {
         QTemporaryDir dir;

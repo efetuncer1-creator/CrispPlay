@@ -29,6 +29,16 @@ inline QUrl releaseApiUrl() {
 }
 inline QString releaseTagPath(const QString& tag) { return repoPath() + QStringLiteral("/releases/tag/") + tag; }
 
+// Subtitle models (Phase 5): one pinned release asset, downloaded on first use and
+// verified against the manifest compiled into crispplay_subs_net (custom/subs/net/README.md).
+// A new model set gets a new tag and asset name; an existing asset is never replaced.
+inline QString subsModelsTag() { return QStringLiteral("subs-models-v1"); }
+inline QString subsModelsAsset() { return QStringLiteral("crispplay-subs-models-v1.zip"); }
+inline QUrl subsModelsUrl() {
+    return QUrl(repoUrl().toString() + QStringLiteral("/releases/download/") + subsModelsTag() + QStringLiteral("/")
+                + subsModelsAsset());
+}
+
 // Discord application ID (Developer Portal > General Information > Application ID)
 // of the application "CrispPlay". When empty, Rich Presence
 // stays off and the setting shows a note instead of the options. See custom/DISCORD.md.

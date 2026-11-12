@@ -1,5 +1,6 @@
 // QML bridge: Subtitles responsibilities.
 #include "../QmlPlayerBridge_p.h"
+#include "crispplay/subs/app/Hooks.h" // VEYRA_CUSTOM
 
 namespace veyra::ui {
 // --- subtitles (P4-c) --------------------------------------------------------
@@ -194,6 +195,7 @@ void QmlPlayerBridge::tickSubtitles() {
     view.preview = i.engine.previewView();
     view.videoWidth = s.metrics.resolution.output.width;
     view.videoHeight = s.metrics.resolution.output.height;
+    crispplay::subs::appendLines(draw, view, client); // VEYRA_CUSTOM translated game subtitle
     updateSubtitleOverlay(i.subOverlay, draw, view);
     QString joined;
     for (const auto& line : draw) { if (line.text.empty()) continue; if (!joined.isEmpty()) joined += QStringLiteral(" | "); joined += QString::fromStdWString(line.text); }

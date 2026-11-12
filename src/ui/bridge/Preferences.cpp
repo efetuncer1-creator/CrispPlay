@@ -462,7 +462,7 @@ const QVariantMap& shortcutDefaults() {
     static const QVariantMap d{{"playPause", "Space"}, {"fullscreen", "F"}, {"lock", "Ctrl+L"},
                                {"hold", "V"}, {"screenshot", "F7"}, {"record", "F8"}, {"toggleMode", "Tab"},
                                {"gamePanel", "Home"}, {"gameExit", "Ctrl+Alt+Home"},
-                               {"replay", "F9"}}; // VEYRA_CUSTOM instant replay
+                               {"replay", "F9"}, {"subs", "F10"}}; // VEYRA_CUSTOM instant replay, subtitle translation
     return d;
 }
 }

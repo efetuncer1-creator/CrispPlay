@@ -95,6 +95,7 @@ Betik model dosyalarının özetlerini bilinen değerlerle karşılaştırır (f
 - gömülü manifest ve indirme adresi
 - indirme: başarılı kurulum + damga + yeniden açılışta anında Ready + bozulan dosyayı `refresh()`'in bulması ve yeniden indirmeyle onarma; yanlış zip özeti; yanlış dosya özeti; yarıda kesilen indirme → `Range` ile sürdürme; büyük yanıt; HTTP 404; aynı makineye yönlendirme kabul; yabancı makine / HTTP CDN / kullanıcı-parolalı adrese yönlendirme reddi; HTTPS zorunluluğu; iptal + sürdürme; durma zaman aşımı; geliştirici klasörü
 - DPAPI gidiş-dönüş (Unicode yol, dosyada açık metin yok, bozulmuş blob), ayar kaydet/yükle (kırpma, bozuk dosya), fabrika kuralları (None → `nullptr`, anahtarsız → `nullptr`, uzak düz HTTP reddi, yerel HTTP kabul)
+- gerçek model paketi: `..\dist\crispplay-subs-models-v1.zip` varsa tam `.part` olarak konup ağsız kurulur (zip özeti, .NET'in ürettiği zip'in okunması, gömülü manifestteki 11 dosya); dosya yoksa atlanır
 - DeepL ve OpenAI uyumlu istek/yanıt biçimi (yol, başlıklar, JSON alanları), hata kodları, yönlendirmenin izlenmemesi, zaman aşımı → `nullopt`, iptal sonrası yeniden çalışma
 
 ## Doğrulanmayanlar

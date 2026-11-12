@@ -8,6 +8,8 @@
 // at an existing folder (developer override, e.g. ..\deps\models).
 #pragma once
 
+#include <crispplay/subs/ModelManifest.h>
+
 #include <QObject>
 #include <QString>
 
@@ -19,11 +21,17 @@ class ModelStore : public QObject {
     Q_PROPERTY(qint64 bytesDone READ bytesDone NOTIFY progress)
     Q_PROPERTY(qint64 bytesTotal READ bytesTotal NOTIFY progress)
     Q_PROPERTY(QString error READ error NOTIFY stateChanged)
+    // True while the files on disk are being hashed (after construction without a valid
+    // stamp, and after refresh()). state() stays Missing until the check says Ready.
+    Q_PROPERTY(bool checking READ checking NOTIFY stateChanged)
 public:
     enum class State { Missing = 0, Downloading = 1, Ready = 2, Failed = 3 };
     Q_ENUM(State)
 
+    // Built-in source (GitHub release subs-models-v1) and manifest.
     explicit ModelStore(QString dataDirectory, QObject* parent = nullptr);
+    // Same with another source/manifest (tests, future model sets).
+    ModelStore(QString dataDirectory, ModelStoreOptions options, QObject* parent = nullptr);
     ~ModelStore() override;
 
     State state() const;
@@ -34,6 +42,8 @@ public:
     qint64 bytesDone() const;
     qint64 bytesTotal() const;
     QString error() const;
+    bool checking() const;
+    bool usesDeveloperOverride() const; // CRISPPLAY_SUBS_MODEL_ROOT is in effect
 
     // Downloads the pinned model release asset, verifies SHA-256 of every file,
     // installs atomically. No-op when Ready. Never blocks the caller.

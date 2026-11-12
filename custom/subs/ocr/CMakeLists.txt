@@ -58,10 +58,11 @@ endif()
 if(TARGET Qt6::Gui)
   add_executable(crispplay_ocr_bench tools/OcrBench.cpp)
   target_compile_options(crispplay_ocr_bench PRIVATE /utf-8)
+  target_compile_definitions(crispplay_ocr_bench PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
   target_compile_definitions(crispplay_ocr_bench PRIVATE
     CRISPPLAY_PPOCR_MODEL="${CRISPPLAY_PPOCR_MODEL}"
     CRISPPLAY_DEPS_DIR="${CRISPPLAY_DEPS_DIR}"
     CRISPPLAY_SPIKE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../spike")
-  target_link_libraries(crispplay_ocr_bench PRIVATE crispplay_subs_ocr Qt6::Gui)
+  target_link_libraries(crispplay_ocr_bench PRIVATE crispplay_subs_ocr Qt6::Gui psapi)
   crispplay_subs_ocr_runtime(crispplay_ocr_bench)
 endif()

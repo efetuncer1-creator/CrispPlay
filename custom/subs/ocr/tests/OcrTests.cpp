@@ -207,6 +207,15 @@ private slots:
         QCOMPARE(rows[0].text, std::string("Hello world"));
         QCOMPARE(rows[0].box.x, 150.f);
         QCOMPARE(rows[0].box.w, 250.f);
+        // Far-apart pieces of one centred subtitle join only in the second pass; a
+        // HUD counter on the same height stays separate.
+        std::vector<WinOcrLine> split = {{"Looks", {400, 100, 100, 30}}, {"company.", {760, 102, 220, 30}},
+                                         {"24", {1330, 104, 40, 30}}};
+        QCOMPARE(int(mergeRows(split).size()), 3);
+        const auto joined = mergeRows(split, 1383);
+        QCOMPARE(int(joined.size()), 2);
+        QCOMPARE(joined[0].text, std::string("Looks company."));
+        QCOMPARE(joined[1].text, std::string("24"));
         // Centred row in a 1000 px band: symmetric about 500, plus 0.6 line heights.
         const Rect c = ppocrCrop({150, 50, 300, 22}, 1000, 200);
         QCOMPARE(c.x, float(int(500 - (350 + 0.6f * 22))));

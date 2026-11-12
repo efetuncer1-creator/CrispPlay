@@ -8,6 +8,9 @@
 // 2 per second), transcript.tsv and real.json (the spike's numbers). These are a
 // game's text and pictures: they stay in deps\, never in the repo.
 // Synthetic set: DIR holds frames/; the manifest is custom/subs/spike/testset_manifest.json.
+#include <windows.h>
+#include <psapi.h>
+
 #include <QDir>
 #include <QFile>
 #include <QImage>
@@ -446,5 +449,8 @@ int main(int argc, char** argv) {
     if (!reader.windowsReady()) return 1;
     if (a.doReal) runReal(reader, a, reader.ppocrReady());
     if (a.doSynthetic) runSynthetic(reader, a);
+    PROCESS_MEMORY_COUNTERS pmc{};
+    if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)))
+        std::printf("\nPeak working set (whole bench process): %.0f MB\n", pmc.PeakWorkingSetSize / 1048576.0);
     return 0;
 }

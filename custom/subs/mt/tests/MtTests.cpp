@@ -117,19 +117,27 @@ private slots:
         QVERIFY(!containsUnknownMarker("?? <unk>"));
     }
 
-#ifdef CRISPPLAY_HAVE_CT2
+    // The translator slots exist in every build (moc does not see compile
+    // definitions reliably); without CTranslate2 they skip.
     void missingModelReturnsNullopt()
     {
+#ifndef CRISPPLAY_HAVE_CT2
+        QSKIP("built without CTranslate2");
+#else
         OpusMtTranslator t(std::filesystem::path(L"Z:/does-not-exist/ünïcode-model"));
         QVERIFY(!t.translate("Hello there.").has_value());
         QVERIFY(!t.isLoaded());
         QVERIFY(!t.lastError().empty());
         QVERIFY(!t.translate("Again.").has_value()); // failure is remembered, still no crash
         t.cancel();
+#endif
     }
 
     void brokenModelReturnsNullopt()
     {
+#ifndef CRISPPLAY_HAVE_CT2
+        QSKIP("built without CTranslate2");
+#else
         const auto dir = std::filesystem::temp_directory_path() / "crispplay-mt-broken-model";
         std::filesystem::create_directories(dir);
         for (const char* name : {"model.bin", "config.json", "source.spm", "target.spm"}) {
@@ -143,10 +151,14 @@ private slots:
         QVERIFY(!t.translate("Hello there.").has_value());
         QVERIFY(!t.lastError().empty());
         std::filesystem::remove_all(dir);
+#endif
     }
 
     void translatesWithModel()
     {
+#ifndef CRISPPLAY_HAVE_CT2
+        QSKIP("built without CTranslate2");
+#else
         if (!haveModel()) QSKIP("OPUS-MT model not found (set CRISPPLAY_MT_MODEL)");
         OpusMtTranslator t(modelDir());
         QVERIFY(t.load());
@@ -174,10 +186,14 @@ private slots:
         QVERIFY(lng.has_value());
         QVERIFY(!lng->empty());
         QVERIFY2(t.lastLatencyMs() < 20000, "long input took too long");
+#endif
     }
 
     void cancelStopsRunningTranslation()
     {
+#ifndef CRISPPLAY_HAVE_CT2
+        QSKIP("built without CTranslate2");
+#else
         if (!haveModel()) QSKIP("OPUS-MT model not found (set CRISPPLAY_MT_MODEL)");
         OpusMtTranslator t(modelDir()); // not loaded yet: the call below spends ~0.3 s loading
         std::optional<std::string> result = std::string("unset");
@@ -190,8 +206,8 @@ private slots:
         const auto again = t.translate("Almost.");
         QVERIFY(again.has_value());
         QCOMPARE(q(*again), QStringLiteral("Neredeyse."));
-    }
 #endif
+    }
 };
 
 QTEST_GUILESS_MAIN(MtTests)

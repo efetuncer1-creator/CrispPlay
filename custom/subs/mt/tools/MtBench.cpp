@@ -13,6 +13,7 @@
 // mt_bench.py --out file, "lines":[{id,hyp}]).
 
 #include <crispplay/subs/mt/OpusMtTranslator.h>
+#include <crispplay/subs/mt/TextSplit.h>
 
 #include <QCoreApplication>
 #include <QFile>
@@ -70,8 +71,8 @@ using Stats = std::vector<double>; // [hyp, ref, match] per order
 std::vector<std::map<std::u32string, int>> charNgrams(const std::string& s, int order)
 {
     std::u32string text;
-    for (QChar32 c : QString::fromStdString(s).toUcs4()) {
-        if (!QChar::isSpace(c)) text.push_back(char32_t(c));
+    for (const char32_t c : QString::fromStdString(s).toUcs4()) {
+        if (!QChar::isSpace(c)) text.push_back(c);
     }
     std::vector<std::map<std::u32string, int>> out(order);
     for (int n = 1; n <= order; ++n) {

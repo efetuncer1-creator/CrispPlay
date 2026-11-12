@@ -13,8 +13,10 @@ param(
 )
 # Builds the CPU-only, MKL-free CTranslate2 + SentencePiece used by
 # custom/subs/mt (CRISPPLAY_CT2_ROOT). Pinned sources, MSVC + Ninja, Release.
-# Result: <Prefix>\bin\ctranslate2.dll (oneDNN linked in statically, MSVC
-# OpenMP = vcomp140.dll), <Prefix>\lib\{ctranslate2,sentencepiece}.lib, headers.
+# Everything is a static library with the static CRT (/MT), like the app (root
+# CMakeLists sets MultiThreaded), so the translator links straight into the EXE:
+# <Prefix>\lib\{ctranslate2,dnnl,cpu_features,sentencepiece}.lib + headers.
+# The only runtime file is MSVC's OpenMP, vcomp140.dll (VC redist, OpenMP folder).
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
@@ -27,7 +29,7 @@ if (-not $Prefix) { $Prefix = Join-Path $deps $(if ($Backend -eq "dnnl") { "ctra
 $pins = @(
     @{ Name = "ctranslate2-src";   Url = "https://github.com/OpenNMT/CTranslate2.git";  Commit = "a22ba1c63ee35d1a0d25db149aa2a66d36a6a732" }, # v4.9.0, MIT
     @{ Name = "onednn-src";        Url = "https://github.com/uxlfoundation/oneDNN.git"; Commit = "64f6bcbcbab628e96f33a62c3e975f8535a7bde4" }, # v3.1.1, Apache-2.0 (as in the CT2 4.9.0 wheel)
-    @{ Name = "sentencepiece-src"; Url = "https://github.com/google/sentencepiece.git"; Commit = "eafd99cf3b8bfa5101c2c5f42aab2cc39947938d" }  # v0.2.3, Apache-2.0
+    @{ Name = "sentencepiece-src"; Url = "https://github.com/google/sentencepiece.git"; Commit = "31646a467d2051eb904e0b45de3a73e91fe1c1e3" }  # v0.2.1, Apache-2.0 (last tag bundling protobuf-lite + absl subset; v0.2.2+ fetch abseil/protobuf at configure time)
 )
 # CTranslate2 submodules we need (commits are pinned by the CT2 commit itself).
 $ct2Submodules = @("third_party/spdlog", "third_party/cpu_features")
@@ -65,7 +67,7 @@ if ($Clean -and (Test-Path $buildRoot)) { Remove-Item -Recurse -Force $buildRoot
 $dnnlPrefix = Join-Path $deps "ctranslate2-build\onednn-install"
 $fwd = { param($s) $s -replace '\\', '/' }
 
-$common = "-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+$common = "-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded"
 $cmds = @()
 if ($Backend -eq "dnnl") {
     # Same switches as CTranslate2's own Windows wheel build (python/tools/prepare_build_environment_windows.sh),
@@ -76,10 +78,14 @@ if ($Backend -eq "dnnl") {
 } else {
     $ct2Backend = "-DWITH_DNNL=OFF -DWITH_RUY=ON"
 }
-$cmds += "cmake -S `"$ct2Src`" -B `"$buildRoot\ctranslate2`" $common -DCMAKE_INSTALL_PREFIX=`"$(& $fwd $Prefix)`" -DBUILD_SHARED_LIBS=ON -DBUILD_CLI=OFF -DBUILD_TESTS=OFF -DWITH_MKL=OFF -DWITH_CUDA=OFF -DWITH_CUDNN=OFF -DOPENMP_RUNTIME=COMP $ct2Backend || exit /b 12"
+$cmds += "cmake -S `"$ct2Src`" -B `"$buildRoot\ctranslate2`" $common -DCMAKE_INSTALL_PREFIX=`"$(& $fwd $Prefix)`" -DBUILD_SHARED_LIBS=OFF -DBUILD_CLI=OFF -DBUILD_TESTS=OFF -DWITH_MKL=OFF -DWITH_CUDA=OFF -DWITH_CUDNN=OFF -DOPENMP_RUNTIME=COMP $ct2Backend || exit /b 12"
 $cmds += "cmake --build `"$buildRoot\ctranslate2`" --target install || exit /b 13"
-# SentencePiece: static, dynamic CRT (/MD) to match the app; protobuf-lite is built in.
-$cmds += "cmake -S `"$(Join-Path $deps 'sentencepiece-src')`" -B `"$buildRoot\sentencepiece`" $common -DCMAKE_INSTALL_PREFIX=`"$(& $fwd $Prefix)`" -DSPM_ENABLE_SHARED=OFF -DSPM_ENABLE_TCMALLOC=OFF -DSPM_ENABLE_MSVC_MT_BUILD=OFF -DSPM_BUILD_TEST=OFF || exit /b 14"
+# Static CTranslate2 does not install its private static dependencies; copy them.
+$libDir = (Join-Path $Prefix "lib")
+$cmds += "copy /y `"$buildRoot\ctranslate2\third_party\cpu_features\cpu_features.lib`" `"$libDir`" >nul || exit /b 16"
+if ($Backend -eq "dnnl") { $cmds += "copy /y `"$dnnlPrefix\lib\dnnl.lib`" `"$libDir`" >nul || exit /b 17" }
+# SentencePiece: static, static CRT (/MT) like the app; protobuf-lite is built in.
+$cmds += "cmake -S `"$(Join-Path $deps 'sentencepiece-src')`" -B `"$buildRoot\sentencepiece`" $common -DCMAKE_INSTALL_PREFIX=`"$(& $fwd $Prefix)`" -DSPM_ENABLE_SHARED=OFF -DSPM_ENABLE_TCMALLOC=OFF -DSPM_ENABLE_MSVC_MT_BUILD=ON -DSPM_BUILD_TEST=OFF || exit /b 14"
 $cmds += "cmake --build `"$buildRoot\sentencepiece`" --target install || exit /b 15"
 
 $batch = Join-Path $deps "ctranslate2-build\build-$Backend.cmd"
@@ -90,6 +96,6 @@ New-Item -ItemType Directory -Force (Split-Path $batch) | Out-Null
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # Record what was built next to the binaries.
-$info = @("backend=$Backend", "openmp=MSVC (vcomp140.dll)") + ($pins | ForEach-Object { "$($_.Name)=$($_.Commit)" })
+$info = @("backend=$Backend", "linkage=static, /MT", "openmp=MSVC (vcomp140.dll)") + ($pins | ForEach-Object { "$($_.Name)=$($_.Commit)" })
 $info | Set-Content -LiteralPath (Join-Path $Prefix "CRISPPLAY_BUILD.txt") -Encoding ASCII
 Write-Host "Installed to $Prefix"

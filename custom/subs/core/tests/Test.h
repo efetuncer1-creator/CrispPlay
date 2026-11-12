@@ -49,8 +49,8 @@ std::string show(const std::vector<T>& values) {
 
 #define CHECK_EQ(actual, expected)                                                              \
     do {                                                                                        \
-        const auto& a_ = (actual);                                                              \
-        const auto& e_ = (expected);                                                            \
+        const auto a_ = (actual);                                                              \
+        const auto e_ = (expected);                                                            \
         if (!(a_ == e_))                                                                        \
             subtest::fail(__FILE__, __LINE__, std::string(#actual " == " #expected "\n    actual:   ") + \
                           subtest::show(a_) + "\n    expected: " + subtest::show(e_));          \

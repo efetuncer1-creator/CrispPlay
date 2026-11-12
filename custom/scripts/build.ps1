@@ -7,7 +7,7 @@ param(
     [string[]]$Target = @("veyra_qml_ui", "crispplay_branding_tests", "crispplay_i18n_tests", "crispplay_discord_tests",
                           "veyra_update_checker_tests", "veyra_ui_i18n_tests",
                           "crispplay_replay_ring_tests", "crispplay_replay_clip_check", "crispplay_subs_core_tests",
-                          "crispplay_subs_mt_tests", "crispplay_subs_ocr_tests"),
+                          "crispplay_subs_mt_tests", "crispplay_subs_ocr_tests", "crispplay_subs_net_tests"),
     [switch]$Test
 )
 # CrispPlay build wrapper. Upstream scripts/build.ps1 is left untouched; this one
@@ -65,6 +65,7 @@ if ($Test) {
     foreach ($t in @("custom\crispplay_branding_tests.exe", "custom\crispplay_i18n_tests.exe", "custom\crispplay_discord_tests.exe",
                      "custom\crispplay_replay_ring_tests.exe", "custom\subs\core\crispplay_subs_core_tests.exe",
                      "custom\subs\mt\crispplay_subs_mt_tests.exe", "custom\subs\ocr\crispplay_subs_ocr_tests.exe",
+                     "custom\subs\net\crispplay_subs_net_tests.exe",
                      "veyra_update_checker_tests.exe", "veyra_ui_i18n_tests.exe")) {
         $exe = Join-Path $build $t
         if (-not (Test-Path $exe)) { continue }

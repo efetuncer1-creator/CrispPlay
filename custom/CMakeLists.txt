@@ -101,6 +101,7 @@ endif()
 
 # --- Game subtitle translation (Phase 5): text core (AGPL-3.0 port of CouchSubs), engine, OCR ---
 add_subdirectory(subs/core)
+add_subdirectory(subs/net) # Phase 5 model download + optional online engine (custom/subs/net/README.md)
 add_subdirectory(subs/mt) # Phase 5 subtitle translation engine (custom/subs/mt/README.md)
 add_subdirectory(subs/ocr) # Phase 5 OCR readers (custom/subs/ocr/README.md)
 

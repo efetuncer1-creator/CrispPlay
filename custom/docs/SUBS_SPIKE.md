@@ -339,3 +339,10 @@ Toplam 12–17 iş günü; PLAN.md'deki 2–3 haftanın üst ucu. 5e atlanırsa 
 | `real_scan.py`, `real_report.py` | Gerçek klip: kareleri oku, dökümle karşılaştır |
 
 Modeller `deps\models\` altında: `opus-mt-tc-big-en-tr-ct2-int8` (kendi dönüşümümüz), `nllb-200-distilled-600M-ct2-int8` (JustFrederik, `302d78f00e`), `m2m100_418M-ct2-int8` (jncraton, `7c1b2620a4`), `opus-mt-tc-big-en-tr-onnx-int8` (onnx-community, `ce128ea834`). İlk sentetik OCR koşusu etkenleri birbirine karıştıran bir atamayla yapılmıştı; set yeniden üretildi, eski sonuç `winocr_v1_aliased.json` olarak duruyor ve bu raporda kullanılmadı.
+
+## Demo videosundan çıkan gereksinimler (2026-11-12)
+
+Efe'nin izlediği demo (`deps/subs-real/demo_tr.mp4`, gerçek klip + OCR + OPUS-MT çıktısı, İngilizcenin üstünü kapatan bant) iki hatayı gösterdi; uygulamada ikisi de kural olarak bulunmalı ve test edilmeli:
+
+1. **Bilinmeyen karakter (`⁇`, U+2047).** OPUS-MT'nin SentencePiece sözlüğünde olmayan bir harf (ör. İtalyanca "Strùnzu") çıktıda `⁇` olur ve yazı tipinde olmadığı için kutucuk çizilir. Kural: çeviride `⁇` varsa ve `⁇`'sız hâli kaynağa çok benziyorsa (isim/yabancı kelime) satır **orijinal hâliyle** gösterilir; değilse `⁇` silinir. Ekrana çizilen her karakter yazı tipinde (ya da yedek yazı tipinde) bulunmalı. Ayrıca çeviri öncesi, modelin tanımadığı harfler yer tutucuyla korunup çeviriden sonra geri konabilir (isimler bozulmasın).
+2. **Kapatma bandı İngilizceyi tam örtmeli.** Bandın yeri metin eşleştirmesiyle bulunursa (OCR farkı, aksanlı harf) eşleşme kaçar ve İngilizce satır altta görünür. Kural: band, o anki karedeki **altyazı bölgesinde algılanan satır kutularının birleşiminden** (konuma göre, ipucu/görev yazıları hariç) + kenar payıyla hesaplanır ve her OCR okumasında güncellenir; Türkçe metin kısa kalsa bile band İngilizce kutunun tamamını kaplar.

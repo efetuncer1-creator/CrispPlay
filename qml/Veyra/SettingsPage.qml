@@ -49,6 +49,7 @@ VPage {
         { id: "keys",  label: qsTr("快捷键"), icon: "zap" },
         { id: "comp",  label: qsTr("组件与许可"), icon: "box" },
         { id: "about", label: qsTr("关于"), icon: "info" },
+        ...(typeof crispDiscord !== "undefined" ? [{ id: "discord", label: "Discord", icon: "activity" }] : []), // VEYRA_CUSTOM
         // The one entry with a coloured icon, so it can be found.
         { id: "sponsor", label: qsTr("赞助作者"), icon: "heart", tint: "#FF6B81" }
     ]
@@ -1164,7 +1165,6 @@ VPage {
                             VButton { text: qsTr("打开目录"); ghost: true; onClicked: veyra.openDataFolder() }
                         }
                     }
-                    Loader { Layout.fillWidth: true; source: typeof crispDiscord !== "undefined" ? crispDiscord.settingsQml : "" } // VEYRA_CUSTOM
                     // The diagnostics the engine actually reports, shown verbatim.
                     Rectangle {
                         Layout.fillWidth: true
@@ -1191,6 +1191,7 @@ VPage {
                     }
                 }
 
+                Loader { Layout.fillWidth: true; visible: root.section === "discord"; active: visible; source: typeof crispDiscord !== "undefined" ? crispDiscord.settingsQml : "" } // VEYRA_CUSTOM
                 // --- 赞助作者 ------------------------------------------------
                 SponsorPanel {
                     id: secSponsor

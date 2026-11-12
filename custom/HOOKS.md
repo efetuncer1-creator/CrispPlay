@@ -2,7 +2,7 @@
 
 Her satır `VEYRA_CUSTOM` ile işaretli. Upstream sync'te çakışma çıkarsa: upstream'in yeni hâlini al, aşağıdaki kancayı aynı anlamla yeniden ekle.
 
-Kontrol: `git grep -n VEYRA_CUSTOM -- ':!custom'` şu an **43** sonuç vermeli: aşağıdaki tablodaki 42 kanca satırı + `.github/workflows/upstream-sync.yml` içindeki bu komutun kendisini anan 1 satır (`version.rc.in` satırları yorumsuz olduğu için sayılmaz; onlar `@CRISPPLAY_` ile aranır).
+Kontrol: `git grep -n VEYRA_CUSTOM -- ':!custom'` şu an **44** sonuç vermeli: aşağıdaki tablodaki 43 kanca satırı + `.github/workflows/upstream-sync.yml` içindeki bu komutun kendisini anan 1 satır (`version.rc.in` satırları yorumsuz olduğu için sayılmaz; onlar `@CRISPPLAY_` ile aranır).
 
 | Dosya | Satır | Ne yapar |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ Kontrol: `git grep -n VEYRA_CUSTOM -- ':!custom'` şu an **43** sonuç vermeli: 
 | `qml/Veyra/Main.qml` | 1 + 1 | Pencere başlığı `crispBrand.appName`. Anlık tekrar: kayıt `Shortcut` satırının altında `Loader { source: "qrc:/crispplay/ReplayHost.qml" }` (kısayol + bildirim) |
 | `qml/Veyra/HomePage.qml` | 1 | Ana sayfa başlığı `crispBrand.homeTitle` |
 | `qml/Veyra/SettingsPage.qml` | 3 | Hakkında: ad + "Veyra (Likely7) tabanlıdır" GPL atfı; Arayüz dili menüsüne `crispBrand.languages` (Türkçe) eklenir |
-| `qml/Veyra/SettingsPage.qml` | 1 | Hakkında bölümü: `Loader` ile `custom/qml/DiscordSettings.qml` (Discord Rich Presence ayarı; `custom/CMakeLists.txt` dosyayı `qml/CrispPlay/` altına kopyalar) |
+| `qml/Veyra/SettingsPage.qml` | 2 | Discord sekmesi: `sections` listesine Sponsor'dan önce `{ id: "discord" }` girdisi; Sponsor panelinin üstünde `root.section === "discord"` iken `Loader` ile `custom/qml/DiscordSettings.qml` (`custom/CMakeLists.txt` dosyayı `qml/CrispPlay/` altına kopyalar) |
 | `qml/Veyra/SettingsPage.qml` | 2 | Anlık tekrar: `set-recording` grubunun hemen altında `Loader { … "qrc:/crispplay/ReplaySettings.qml" }`; kısayol listesinde `record` satırının altında `{ id: "replay", … }` |
 | `src/ui/UiLanguage.cpp` | 5 | `crispplay/I18n.h` include; `load()` katalog baytlarını `catalogJson(code, …)`'dan geçirir (`tr` için `:/crispplay/i18n/tr.json` upstream kataloğun üstüne birleştirilir, eksikler İngilizce); `；` birleştirmesi Latin dillerde `; ` (`latinScript`); `resolve()` açık `tr` tercihini ve Türkçe Windows dilini `tr`'ye eşler |
 | `src/engine/EngineController.cpp` | 3 | Anlık tekrar: `Hooks.h` include; `presenter.setCapture(crispplay::replay::wrapCapture(recorder_.get()))` (sunum yakalamasını kayıt + tekrar olarak çatallar); oturum sonu `OnExit` içinde `crispplay::replay::sessionEnded()` |

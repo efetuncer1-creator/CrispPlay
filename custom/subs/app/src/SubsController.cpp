@@ -83,6 +83,29 @@ SubsController::SubsController(const QString& dataDirectory, QObject* bridge, QO
     timer_.setInterval(500);
     connect(&timer_, &QTimer::timeout, this, &SubsController::poll);
     apply(false);
+
+    // Regression runs log the playback position with every event: keep it fresh.
+    if (qEnvironmentVariableIsSet("CRISPPLAY_SUBS_EVENT_LOG") && bridge_) {
+        auto* position = new QTimer(this);
+        position->setInterval(40);
+        connect(position, &QTimer::timeout, this, [this] { Service::instance().setPlaybackPosition(bridge_->property("position").toDouble()); });
+        position->start();
+    }
+
+    // Test hook for real-pipeline runs (custom/scripts/subs-test.ps1): switch
+    // effects on through the bridge, e.g. CRISPPLAY_TEST_SUBS_EFFECTS=sr+fg2.
+    if (const QString effects = qEnvironmentVariable("CRISPPLAY_TEST_SUBS_EFFECTS"); !effects.isEmpty() && bridge_)
+        QTimer::singleShot(2500, this, [this, effects] {
+            if (effects.contains(QLatin1String("sr"))) bridge_->setProperty("srEnabled", true);
+            if (const auto at = effects.indexOf(QLatin1String("fg")); at >= 0) {
+                const int multiplier = at + 2 < effects.size() ? effects.at(at + 2).digitValue() : -1;
+                if (multiplier >= 2) bridge_->setProperty("fgMultiplier", multiplier);
+                bridge_->setProperty("fgEnabled", true);
+            }
+            veyra::log::info("subs", std::format("test effects={} sr={} fg={} x{}", effects.toStdString(),
+                bridge_->property("srEnabled").toBool() ? 1 : 0, bridge_->property("fgEnabled").toBool() ? 1 : 0,
+                bridge_->property("fgMultiplier").toInt()));
+        });
 }
 
 SubsController::~SubsController() { Service::instance().shutdown(3000); }

@@ -45,4 +45,4 @@ ve konuşmacı etiketi kuralları eklendi.
 | `TurkishPostEdit.*` | `windows/src/CouchSubs.Core/TurkishPostEdit.cs` |
 | `TranslationCache.*` | `windows/src/CouchSubs.Core/TranslationCache.cs` |
 | `LineTranslator.*` | `windows/src/CouchSubs.Translation/MarianTranslator.cs` (motor dışındaki metin akışı) |
-| `PackText.*` | `windows/src/CouchSubs.Core/GamePacks.cs` (`PackKey`), `PackFuzzy.cs` (imza) |
+| `PackText.*` | `windows/src/CouchSubs.Core/GamePacks.cs` (`PackKey`), `PackFuzzy.cs` (imza), `windows/src/CouchSubs.Translation/PackLookup.cs` (`LooseLabel`) |

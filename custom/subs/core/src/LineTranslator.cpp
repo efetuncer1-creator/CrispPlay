@@ -7,6 +7,7 @@
 // Licensed under the GNU Affero General Public License version 3; see custom/subs/core/NOTICE.md.
 #include "crispplay/subs/LineTranslator.h"
 
+#include "crispplay/subs/PackText.h"
 #include "crispplay/subs/SubtitleSegmenter.h"
 #include "crispplay/subs/TextMatch.h"
 #include "crispplay/subs/TurkishPostEdit.h"
@@ -114,8 +115,48 @@ LineTranslator::LineTranslator(Translator& engine, Options options)
     glossary_ = options_.glossary ? options_.glossary : std::make_shared<GlossaryStore>(options_.glossaryDirectory);
 }
 
+namespace {
+
+std::optional<std::pair<std::string, std::string>> damagedSpeaker(const std::string& line) {
+    if (SubtitleSegmenter::speakerLabel(line)) return std::nullopt;
+    const auto loose = looseLabel(line);
+    if (!loose) return std::nullopt;
+    auto label = uni::trim(uni::decode(loose->first));
+    if (label.empty() || (label.back() != U':' && label.back() != U'•')) return std::nullopt;  // only "NAME:" / "NAME•"
+    label.pop_back();
+    // The name is the trailing run of tokens without lower case letters ("li LUCA" -> "LUCA").
+    std::vector<std::u32string> name;
+    auto tokens = uni::splitWhiteSpace(label);
+    for (auto it = tokens.rbegin(); it != tokens.rend(); ++it) {
+        auto t = *it;
+        while (!t.empty() && !uni::isLetter(t.front()) && !uni::isDigit(t.front())) t.erase(t.begin());
+        while (!t.empty() && !uni::isLetter(t.back()) && !uni::isDigit(t.back()) && t.back() != U'.') t.pop_back();
+        if (t.empty() || !uni::anyLetter(t) || std::any_of(t.begin(), t.end(), [](char32_t c) { return uni::isLower(c); })) break;
+        name.insert(name.begin(), t);
+    }
+    if (name.empty() || name.size() > 3) return std::nullopt;
+    const auto speaker = uni::encode(uni::join(name, U" "));
+    // Accepted only if it would be a clean label ("NOTE", single letters and the like are not).
+    if (SubtitleSegmenter::speakerLabel(speaker + ": x") != speaker) return std::nullopt;
+    return std::make_pair(speaker, loose->second);
+}
+
+}  // namespace
+
 std::optional<TranslatedLine> LineTranslator::translate(const std::string& text) {
     std::lock_guard lock(mutex_);
+    // CrispPlay: an OCR-damaged label ("MİNE GUARD•", "-GAETANO:") is still kept out of the translation.
+    if (auto damaged = damagedSpeaker(text)) {
+        auto out = translateLocked(damaged->second);
+        if (!out) return std::nullopt;
+        out->speaker = damaged->first;
+        out->full = out->speaker + ": " + out->text;
+        return out;
+    }
+    return translateLocked(text);
+}
+
+std::optional<TranslatedLine> LineTranslator::translateLocked(const std::string& text) {
     if (!options_.textPipeline) return translateDirect(text);
 
     // Context of a short sentence: the previous sentence of the line, else the last sentence of

@@ -7,7 +7,8 @@
 // Copyright (C) 2026 Sinan Yorulmaz (original); Copyright (C) 2026 Efe Tuncer / CrispPlay (port).
 // Licensed under the GNU Affero General Public License version 3; see custom/subs/core/NOTICE.md.
 //
-// CrispPlay additions: speaker label returned separately, and the SentencePiece unknown mark
+// CrispPlay additions: speaker label returned separately (an OCR-damaged "NAME:"/"NAME•" label too,
+// via PackLookup's LooseLabel rule), and the SentencePiece unknown mark
 // U+2047 "⁇" handled (original line, restored foreign word, or the mark dropped).
 #pragma once
 
@@ -75,6 +76,7 @@ public:
 private:
     struct Sentence { std::string text; bool original = false; };
     std::optional<Sentence> translateSentence(const std::string& sentence, const std::optional<std::string>& context);
+    std::optional<TranslatedLine> translateLocked(const std::string& line);
     std::optional<TranslatedLine> translateDirect(const std::string& line);
 
     Translator& engine_;

@@ -326,3 +326,27 @@ TEST(UnknownMark_HelperCases) {
     CHECK(!r.keptOriginal);
     CHECK_EQ(r.text, std::string("Kapıyı kapat."));
 }
+
+TEST(LineTranslator_DamagedSpeakerLabelIsStillKeptOut) {
+    const char* cases[][3] = {
+        {"MİNE GUARD• You skimming?", "MİNE GUARD", "You skimming?"},
+        {"-GAETANO: Ah, good, you are here.", "GAETANO", "Ah, good, you are here."},
+        {"li LUCA: hey there, how are you", "LUCA", "hey there, how are you"},
+    };
+    for (auto& c : cases) {
+        FakeEngine engine;
+        engine.map = [](const std::string& s) -> Opt { return "çeviri: " + s; };
+        LineTranslator t(engine, {});
+        auto line = t.translate(c[0]);
+        CHECK(line.has_value());
+        if (!line) continue;
+        CHECK_EQ(line->speaker, std::string(c[1]));
+        CHECK(!engine.calls.empty() && engine.calls[0].find(c[1]) == std::string::npos);
+    }
+    // Not labels: a lower-case word before the colon, a heading word, a lone letter.
+    for (const char* s : {"I told you: no", "NOTE: Press X to continue.", "M]: Any signs of where they went?"}) {
+        FakeEngine engine;
+        LineTranslator t(engine, {});
+        CHECK_EQ(t.translate(s)->speaker, std::string());
+    }
+}

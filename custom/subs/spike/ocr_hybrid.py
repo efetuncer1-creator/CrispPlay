@@ -1,4 +1,4 @@
-"""Hybrid OCR: Windows OCR finds the subtitle lines, a PP-OCR recognition model reads them. (Phase 5 spike)
+r"""Hybrid OCR: Windows OCR finds the subtitle lines, a PP-OCR recognition model reads them. (Phase 5 spike)
 
 Windows OCR is fast and finds lines well but misreads letters (m -> nn, y -> v).
 PP-OCR reads letters well but its text detector costs ~400 ms on the CPU. Here

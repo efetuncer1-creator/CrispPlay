@@ -1,4 +1,4 @@
-"""Read every sampled frame of a real gameplay clip (Phase 5 spike).
+r"""Read every sampled frame of a real gameplay clip (Phase 5 spike).
 
 Frames come from ffmpeg, already cut to the lower part of the picture:
 

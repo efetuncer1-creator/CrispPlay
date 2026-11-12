@@ -99,6 +99,8 @@ if(TARGET Qt6::Test)
   set_target_properties(crispplay_replay_ring_tests PROPERTIES AUTOMOC ON)
 endif()
 
+add_subdirectory(subs/ocr)
+
 # --- CrispPlay logo -------------------------------------------------------------
 # No upstream hook: this file runs after the root CMakeLists has copied
 # assets/veyra.ico and qml/Veyra/logo.png into the build tree, so ours are

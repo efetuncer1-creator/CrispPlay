@@ -20,6 +20,7 @@
 #include "crispplay/Branding.h" // VEYRA_CUSTOM
 #include "crispplay/discord/Controller.h" // VEYRA_CUSTOM
 #include "crispplay/replay/ReplayQml.h" // VEYRA_CUSTOM
+#include "crispplay/subs/app/Hooks.h" // VEYRA_CUSTOM
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -760,6 +761,7 @@ static int runApplication(int argc, char** argv, QString& restartProgram, QStrin
     engine.rootContext()->setContextProperty(QStringLiteral("crispBrand"), crispplay::branding::qmlProperties()); // VEYRA_CUSTOM
     crispplay::discord::install(engine.rootContext(), &bridge, QString::fromStdWString(dataDirectory.wstring()), &app); // VEYRA_CUSTOM
     crispplay::replay::installQml(engine, dataDirectory); // VEYRA_CUSTOM
+    crispplay::subs::installQml(engine, &bridge, dataDirectory); // VEYRA_CUSTOM
     bridge.setQmlEngine(&engine);   // Qt.uiLanguage drives the per-language font (Theme.qml)
 
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,

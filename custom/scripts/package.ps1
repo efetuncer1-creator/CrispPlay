@@ -96,7 +96,34 @@ foreach ($dll in @("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")) {
     Copy-Item (Join-Path $crt.FullName "x64\Microsoft.VC143.CRT\$dll") $stage
 }
 
+# Game subtitle translation (custom/docs/SUBS.md): ONNX Runtime for the second OCR
+# reader and the MSVC OpenMP runtime for CTranslate2 / oneDNN (linked statically
+# into the EXE). Both are optional at build time; the models are downloaded by
+# the app and are not part of the package.
+$subsLicenses = Join-Path $stage "licenses\crispplay-subs"
+New-Item -ItemType Directory -Force $subsLicenses | Out-Null
+$ort = Join-Path $deps "onnxruntime-1.31.1"
+if (Test-Path (Join-Path $build "onnxruntime.dll")) {
+    Copy-Item (Join-Path $build "onnxruntime.dll") $stage
+    foreach ($f in @("LICENSE", "ThirdPartyNotices.txt")) {
+        if (Test-Path (Join-Path $ort $f)) { Copy-Item (Join-Path $ort $f) (Join-Path $subsLicenses "onnxruntime-$f") }
+    }
+} else { Write-Warning "onnxruntime.dll is not in the build: the package reads subtitles with Windows OCR only" }
+if ($cache -match '(?m)^CRISPPLAY_VCOMP_DLL:FILEPATH=(.+)$' -and (Test-Path $Matches[1].Trim())) {
+    # Same redistributable folder family as the CRT below (Microsoft.VC143.OpenMP).
+    Copy-Item $Matches[1].Trim() $stage
+    foreach ($pair in @(@("ctranslate2-src\LICENSE", "ctranslate2-LICENSE"), @("ctranslate2-src\third_party\cpu_features\LICENSE", "cpu_features-LICENSE"),
+                        @("onednn-src\LICENSE", "oneDNN-LICENSE"), @("onednn-src\THIRD-PARTY-PROGRAMS", "oneDNN-THIRD-PARTY-PROGRAMS"),
+                        @("sentencepiece-src\LICENSE", "sentencepiece-LICENSE"), @("ctranslate2-install\CRISPPLAY_BUILD.txt", "ctranslate2-build-pins.txt"))) {
+        $from = Join-Path $deps $pair[0]
+        if (Test-Path $from) { Copy-Item $from (Join-Path $subsLicenses $pair[1]) } else { Write-Warning "License file missing: $from" }
+    }
+} else { Write-Warning "vcomp140.dll is not configured (no CTranslate2 in this build): the package has no local translator" }
+Copy-Item (Join-Path $root "custom\subs\core\NOTICE.md") (Join-Path $subsLicenses "couchsubs-NOTICE.md")
+Get-ChildItem (Join-Path $root "custom\subs\net\model-licenses") -File | ForEach-Object { Copy-Item $_.FullName (Join-Path $subsLicenses ("models-" + $_.Name)) }
+
 foreach ($f in @("LICENSE", "THIRD_PARTY_NOTICES.md")) { Copy-Item (Join-Path $root $f) $stage }
+Copy-Item (Join-Path $root "custom\THIRD_PARTY_NOTICES_CRISPPLAY.md") $stage
 @"
 CrispPlay $version (Windows x64, taşınabilir)
 Kaynak: https://github.com/efetuncer1-creator/CrispPlay (commit $commit)
@@ -105,6 +132,9 @@ Veyra (Likely7) tabanlıdır: https://github.com/Likely7/Veyra-NRVideo · GPL-3.
 Kurulum yok: klasörü istediğin yere çıkar, CrispPlay.exe'yi çalıştır.
 Ayarlar ve günlükler bu klasörün içinde kalır (runtime_local\user-data-2.0.0, logs).
 Bir videoyu CrispPlay.exe'nin üzerine sürükleyip bırakarak da açabilirsin.
+
+Oyun altyazısı çevirisi (F10, Ayarlar → Altyazı çevirisi): ilk açılışta çeviri
+modeli (~226 MB) indirilir; ayrıntı ve gizlilik: custom/docs/SUBS.md (kaynak zip'i).
 
 SR / NR / FG için NVIDIA RTX ekran kartı ve güncel sürücü gerekir. Anlık tekrar
 (F9) yalnız NVIDIA'da çalışır. NVIDIA, AMD ve Intel bileşenlerinin lisansları

@@ -50,6 +50,7 @@ VPage {
         { id: "comp",  label: qsTr("组件与许可"), icon: "box" },
         { id: "about", label: qsTr("关于"), icon: "info" },
         ...(typeof crispDiscord !== "undefined" ? [{ id: "discord", label: "Discord", icon: "activity" }] : []), // VEYRA_CUSTOM
+        ...(typeof crispSubs !== "undefined" ? [{ id: "subs", label: "Altyazı çevirisi", icon: "cc" }] : []), // VEYRA_CUSTOM
         // The one entry with a coloured icon, so it can be found.
         { id: "sponsor", label: qsTr("赞助作者"), icon: "heart", tint: "#FF6B81" }
     ]
@@ -975,6 +976,7 @@ VPage {
                                 { id: "screenshot", a: qsTr("截图"), note: qsTr("游戏模式下在游戏里也能用") },
                                 { id: "record", a: qsTr("开始 / 停止录制"), note: qsTr("游戏模式下在游戏里也能用") },
                                 { id: "replay", a: "Anlık tekrarı kaydet", note: "Ayarlar → Oynatma'da açıkken çalışır" }, // VEYRA_CUSTOM
+                                { id: "subs", a: "Altyazı çevirisini aç / kapat", note: "Oyun altyazısı: İngilizce → Türkçe" }, // VEYRA_CUSTOM
                                 { id: "toggleMode", a: qsTr("切换极简 / 专业") },
                                 { id: "gamePanel", a: qsTr("游戏模式：调整画面"), note: qsTr("仅在游戏模式中接管按键；支持 Ctrl、Alt、Shift 组合") },
                                 { id: "gameExit", a: qsTr("游戏模式：退出鼠标穿透"), note: qsTr("退出全屏，恢复普通窗口操作") }
@@ -1192,6 +1194,7 @@ VPage {
                 }
 
                 Loader { Layout.fillWidth: true; visible: root.section === "discord"; active: visible; source: typeof crispDiscord !== "undefined" ? crispDiscord.settingsQml : "" } // VEYRA_CUSTOM
+                Loader { Layout.fillWidth: true; visible: root.section === "subs"; active: visible; source: typeof crispSubs !== "undefined" ? "qrc:/crispplay/SubsSettings.qml" : "" } // VEYRA_CUSTOM
                 // --- 赞助作者 ------------------------------------------------
                 SponsorPanel {
                     id: secSponsor

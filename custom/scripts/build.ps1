@@ -6,7 +6,9 @@ param(
     # Default: the app plus the tests that need only Qt.
     [string[]]$Target = @("veyra_qml_ui", "crispplay_branding_tests", "crispplay_i18n_tests", "crispplay_discord_tests",
                           "veyra_update_checker_tests", "veyra_ui_i18n_tests",
-                          "crispplay_replay_ring_tests", "crispplay_replay_clip_check"),
+                          "crispplay_replay_ring_tests", "crispplay_replay_clip_check", "crispplay_subs_core_tests",
+                          "crispplay_subs_mt_tests", "crispplay_subs_ocr_tests", "crispplay_subs_net_tests",
+                          "crispplay_subs_app_tests"),
     [switch]$Test
 )
 # CrispPlay build wrapper. Upstream scripts/build.ps1 is left untouched; this one
@@ -37,6 +39,14 @@ $dlssArgs = if (Test-Path -LiteralPath "$dlss\include\nvsdk_ngx.h") {
     "-DVEYRA_ENABLE_EXPERIMENTAL_DLSSNR=ON -DVEYRA_DLSS_SDK_ROOT=`"$($dlss -replace '\\', '/')`""
 } else { "-DVEYRA_ENABLE_EXPERIMENTAL_DLSSNR=OFF" }
 $ffmpegCMake = $ffmpeg -replace '\\', '/'
+# MKL-free CTranslate2 + SentencePiece (custom/scripts/build-ctranslate2.ps1); without it
+# the subtitle translator is skipped and the rest of the app builds as before.
+$ct2 = Join-Path $deps "ctranslate2-install"
+$ct2Args = ""
+if (Test-Path -LiteralPath "$ct2\lib\ctranslate2.lib") {
+    $ct2Args = "-DCRISPPLAY_CT2_ROOT=`"$($ct2 -replace '\\', '/')`""
+    if (-not $PSBoundParameters.ContainsKey("Target")) { $Target += "crispplay_mt_bench" }
+}
 $batch = Join-Path $root "out\crispplay-build.cmd"
 New-Item -ItemType Directory -Force (Split-Path $batch) | Out-Null
 @(
@@ -44,7 +54,7 @@ New-Item -ItemType Directory -Force (Split-Path $batch) | Out-Null
     "call `"$vs\VC\Auxiliary\Build\vcvars64.bat`" >nul 2>&1 || exit /b 4",
     'chcp 65001 >nul',
     "cd /d `"$root`"",
-    "cmake --preset $Preset -B `"$build`" -DVEYRA_BUILD_QML_UI=ON -DVEYRA_ENABLE_DEINTERLACE=OFF $dlssArgs -DCMAKE_PREFIX_PATH=`"$qt`" -DVEYRA_FFMPEG_ROOT=`"$ffmpegCMake`" || exit /b 5",
+    "cmake --preset $Preset -B `"$build`" -DVEYRA_BUILD_QML_UI=ON -DVEYRA_ENABLE_DEINTERLACE=OFF $dlssArgs -DCMAKE_PREFIX_PATH=`"$qt`" -DVEYRA_FFMPEG_ROOT=`"$ffmpegCMake`" $ct2Args || exit /b 5",
     "cmake --build `"$build`" --target $($Target -join ' ') || exit /b 6"
 ) | Set-Content -LiteralPath $batch -Encoding ASCII
 & cmd.exe /c "`"$batch`""
@@ -54,7 +64,11 @@ if ($Test) {
     $env:PATH = "$qt\bin;$ffmpeg\bin;$env:PATH"
     $failed = 0
     foreach ($t in @("custom\crispplay_branding_tests.exe", "custom\crispplay_i18n_tests.exe", "custom\crispplay_discord_tests.exe",
-                     "custom\crispplay_replay_ring_tests.exe", "veyra_update_checker_tests.exe", "veyra_ui_i18n_tests.exe")) {
+                     "custom\crispplay_replay_ring_tests.exe", "custom\subs\core\crispplay_subs_core_tests.exe",
+                     "custom\subs\mt\crispplay_subs_mt_tests.exe", "custom\subs\ocr\crispplay_subs_ocr_tests.exe",
+                     "custom\subs\app\crispplay_subs_app_tests.exe",
+                     "custom\subs\net\crispplay_subs_net_tests.exe", "custom\subs\app\crispplay_subs_app_tests.exe",
+                     "veyra_update_checker_tests.exe", "veyra_ui_i18n_tests.exe")) {
         $exe = Join-Path $build $t
         if (-not (Test-Path $exe)) { continue }
         & $exe | Select-Object -Last 2

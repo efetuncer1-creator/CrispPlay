@@ -1,0 +1,16 @@
+Creative Commons Attribution 4.0 International Public License (CC BY 4.0)
+
+The OPUS-MT model files in this folder (model.bin, config.json,
+shared_vocabulary.json, source.spm, target.spm) are licensed under the Creative
+Commons Attribution 4.0 International Public License.
+
+Full legal code:   https://creativecommons.org/licenses/by/4.0/legalcode
+Human-readable:    https://creativecommons.org/licenses/by/4.0/
+
+As allowed by Section 3(a)(1)(C) of the license, this file gives the URI of the
+license instead of a full copy. Attribution and the list of changes are in
+ATTRIBUTION.txt next to this file.
+
+The licensed material is provided as-is and as-available; the licensor makes no
+representations or warranties of any kind concerning it (Section 5 of the
+license).

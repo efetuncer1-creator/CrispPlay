@@ -10,6 +10,7 @@
 - Aşama 1: derleme ortamı kuruldu, uygulama derleniyor ve açılıyor; ayrıntı ve eksikler `custom/BUILD.md`. Açık kalan: paketleme (windeployqt + çalışma zamanı DLL'leri), PS5 slice yamalı FFmpeg, FidelityFX 1.1.4 optical flow kitaplığı.
 - Aşama 2 (Türkçe) tamam: `custom/i18n/tr.json` upstream kataloğun 2808 girdisinin tamamını kapsıyor, Ayarlar → Arayüz dili'nde "Türkçe" var, Türkçe Windows'ta "Sistemi izle" Türkçeyi seçer. Upstream'e 7 yeni kanca satırı (toplam 27, liste `custom/HOOKS.md`). Terimler `custom/i18n/GLOSSARY.md`; her sync'te `python custom/scripts/i18n_check.py`.
 - Test GPU'su: NVIDIA GeForce RTX 3060 Ti (+ AMD tümleşik grafik).
+- Aşama 5 denemesi (2026-11-12, dal `feature/subs`): OCR + çeviri hattı gerçek bir oyun klibinde ölçüldü, sonuç "devam, üç değişiklikle" (ikinci OCR okuyucusu, CTranslate2, çeviri kalitesi beklentisi). Rapor ve uygulama planı `custom/docs/SUBS_SPIKE.md`.
 
 ## Amaç ve temel ilke
 
@@ -73,7 +74,12 @@ Toplam tahmini süre yaklaşık 7–9 hafta; kodu Claude yazar, Windows'ta derle
 - **Taşınmayacaklar:** TV kurulumu (LG/Samsung/Android), ikinci hesapla Remote Play, altyazı sunucusu, seslendirme.
 - **Çalışma yeri:** OCR ve çeviri CPU'da (int8 model, ~530 MB ilk indirme); SR/NR/FG ile VRAM için yarışmaz.
 - **Lisans:** CouchSubs AGPL-3.0; taşınan dosyalar `custom/subs/` altında AGPL başlığı ve atıfla durur, `THIRD_PARTY_NOTICES`'e eklenir.
-- **Önce deneme (1–2 gün):** taşımaya başlamadan, birkaç gerçek oyun karesiyle OCR + OPUS-MT hattını tek başına çalıştırıp çeviri kalitesine ve gecikmeye bak. Sonuç kötüyse çeviri motoru seçimi baştan konuşulur.
+- **Önce deneme (1–2 gün):** taşımaya başlamadan, birkaç gerçek oyun karesiyle OCR + OPUS-MT hattını tek başına çalıştırıp çeviri kalitesine ve gecikmeye bak. Sonuç kötüyse çeviri motoru seçimi baştan konuşulur. *Yapıldı, sonuç ve ölçümler `custom/docs/SUBS_SPIKE.md`.*
+- **Efe'nin kararları (2026-11-12):**
+  - Varsayılan çeviri yerel OPUS-MT (CTranslate2 int8); ayarlardan açılan **isteğe bağlı çevrimiçi motor** da eklenecek (kullanıcının kendi API anahtarıyla; varsayılan kapalı, kapalıyken ağa hiçbir şey gitmez). Çevirmen arayüzü değiştirilebilir tasarlanır.
+  - Türkçe satır İngilizce altyazının **üstünü kapatan** bir bantta gösterilir.
+  - CouchSubs kuralları **AGPL başlığı ve atıfla** `custom/subs/` altına taşınır, test vakalarıyla birlikte; `THIRD_PARTY_NOTICES`'e eklenir.
+  - OCR ve çeviri modelleri pakete gömülmez: **özellik ilk açıldığında** CrispPlay GitHub release'indeki model dosyasından indirilir (SHA-256 doğrulamalı).
 
 Arayüzde büyük yeniden tasarım yok; yeni ekranlar `custom/qml` altında ayrı bileşenler olarak eklenir.
 

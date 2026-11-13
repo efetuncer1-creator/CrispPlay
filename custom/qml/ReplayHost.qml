@@ -12,6 +12,8 @@ Item {
     }
     // The stream codec follows the recording setting (H.264 / HEVC).
     Binding { target: crispReplay; property: "hevc"; value: veyra.recordingHevc }
+    // Subtitle translation's shortcut and notice ride on this host (no extra Main.qml hook).
+    Loader { source: typeof crispSubs !== "undefined" ? "qrc:/crispplay/SubsHost.qml" : "" }
     Connections {
         target: crispReplay
         // The bridge's notice signal is what Main.qml shows as a toast.

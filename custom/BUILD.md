@@ -8,6 +8,7 @@ Kurulum bir kez yapılır. Bağımlılıklar repo dışında, repo ile aynı sev
 | Qt | 6.8.3 `win64_msvc2022_64` | `pip install aqtinstall`, sonra `aqt install-qt windows desktop 6.8.3 win64_msvc2022_64 -O deps\qt` |
 | FFmpeg | 9.0.1#1 (vcpkg, `vcpkg.json` temeli `30ef65c`) | `git clone https://github.com/microsoft/vcpkg deps\vcpkg`, `bootstrap-vcpkg.bat`, sonra repo kökünden `deps\vcpkg\vcpkg.exe install --x-manifest-root=. --x-install-root=..\deps\vcpkg_installed --triplet x64-windows` (~12 dk) |
 | nv-codec-headers | n13.0.19.0 (`e844e5b`) | `git clone --depth 1 --branch n13.0.19.0 https://github.com/FFmpeg/nv-codec-headers third_party_local\nvidia\nv-codec-headers-13.0` |
+| CTranslate2 + oneDNN + SentencePiece (isteğe bağlı, altyazı çevirisi) | 4.9.0 / 3.1.1 / 0.2.1, MKL'siz, statik /MT | `powershell -ExecutionPolicy Bypass -File custom\scripts\build-ctranslate2.ps1` (~15 dk) → `deps\ctranslate2-install`; ayrıntı `custom/subs/mt/README.md`. Yoksa çevirmen atlanır |
 
 Derleme ve testler:
 
@@ -15,7 +16,7 @@ Derleme ve testler:
 powershell -ExecutionPolicy Bypass -File custom\scripts\build.ps1 -Test
 ```
 
-Çıktı `out\build\x64-release\` altında (`veyra_qml_ui.exe`).
+Çıktı `out\build\x64-release\` altında (`veyra_qml_ui.exe`). Altyazı çevirisi için derleme `onnxruntime.dll` (`deps\onnxruntime-1.31.1`, isteğe bağlı) ve `vcomp140.dll` dosyalarını EXE'nin yanına kopyalar; gerçek oynatma testi `custom\scripts\subs-test.ps1` (ayrıntı `custom/docs/SUBS.md`).
 
 Taşınabilir paket: `powershell -ExecutionPolicy Bypass -File custom\scripts\package.ps1 [-Force] [-NoZip]` → `..\dist\CrispPlay-<sürüm>-win64-portable\` (+ `.zip`, + GPL-3 kaynak zip'i `CrispPlay-<sürüm>-source.zip` = `git archive HEAD`). İçerik: `CrispPlay.exe`, QML, `*.dxil` shader'lar, `windeployqt` Qt'si, vcpkg FFmpeg, MSVC CRT, `runtime\`/`runtime_local\` (kullanıcı verisi hariç), lisanslar, `BENIOKU.txt`. Ayarlar paketin içinde kalır (`runtime_local\user-data-2.0.0`). 2026-11-12: 1631 dosya, 1000 MB, zip 679 MB; zip'ten açılıp yalnız `C:\Windows\System32` PATH'iyle çalıştırıldı, Türkçe açıldı, hta.mp4 30 fps oynadı, çıkış 0.
 

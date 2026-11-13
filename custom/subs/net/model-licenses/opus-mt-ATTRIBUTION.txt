@@ -1,0 +1,27 @@
+CrispPlay subtitle translation model
+====================================
+
+Model:    OPUS-MT opus-mt-tc-big-en-tr (English -> Turkish)
+Authors:  Helsinki-NLP / Language Technology Research Group, University of Helsinki
+Source:   https://huggingface.co/Helsinki-NLP/opus-mt-tc-big-en-tr (revision e539fc16a8)
+License:  Creative Commons Attribution 4.0 International (CC BY 4.0),
+          https://creativecommons.org/licenses/by/4.0/ (see LICENSE-CC-BY-4.0.txt)
+
+Papers:
+  Tiedemann, J. and Thottingal, S. (2020). OPUS-MT - Building open translation
+  services for the World. Proceedings of EAMT 2020.
+  Tiedemann, J. et al. (2023). Democratizing neural machine translation with
+  OPUS-MT. Language Resources and Evaluation.
+
+Changes made by CrispPlay: the model was converted to the CTranslate2 format with
+int8 quantization (ct2-transformers-converter --quantization int8). The weights
+were not otherwise modified. source.spm and target.spm are the original
+SentencePiece models of the same release.
+
+Turkish / Türkçe:
+Çeviri modeli: OPUS-MT opus-mt-tc-big-en-tr, Helsinki-NLP / Language Technology
+Research Group, University of Helsinki (Tiedemann & Thottingal 2020; Tiedemann
+vd. 2023), CC BY 4.0. CrispPlay bu modeli CTranslate2 int8 biçimine
+dönüştürmüştür; dönüştürme dışında değişiklik yoktur.
+
+No warranties are given. The licensor does not endorse CrispPlay.

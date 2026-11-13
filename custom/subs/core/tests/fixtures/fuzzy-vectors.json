@@ -1,0 +1,233 @@
+{
+ "signatures": [
+  {
+   "input": "All this will be behind us soon. Until then don’t let any of these bastards get to you, alright?",
+   "folded": "aiithiswiiibebehindussoonuntiithendontietanyofthesebastardsgettoyouairight",
+   "damaged": false,
+   "length": 74,
+   "bits": 256,
+   "bloom": "20040100b02884106103001004400a9384c02044120131404875a01f28508043"
+  },
+  {
+   "input": "GAETANO: All this will bébehind u soon: Uötil'then don't let any of these båétards getpyou, alrightiz:t",
+   "folded": "gaetanoaiithiswiiibebehindusoonuotiithendontietanyofthesebaetardsgetpyouairightizt",
+   "damaged": true,
+   "length": 82,
+   "bits": 256,
+   "bloom": "24048100b02884187113001006480a9204902004020131004871a11528508043"
+  },
+  {
+   "input": "Trust me, Iknow this place.",
+   "folded": "trustmeiknowthispiace",
+   "damaged": false,
+   "length": 21,
+   "bits": 64,
+   "bloom": "012790a2040d8020"
+  },
+  {
+   "input": "Ah, good, Ignaziobhas 't packed up yet.",
+   "folded": "ahgoodignaziobhastpackedupyet",
+   "damaged": true,
+   "length": 29,
+   "bits": 128,
+   "bloom": "04080008600802490c22420820103006"
+  },
+  {
+   "input": "Who the hell was that?",
+   "folded": "whotheheiiwasthat",
+   "damaged": false,
+   "length": 17,
+   "bits": 64,
+   "bloom": "8480100845200555"
+  },
+  {
+   "input": "MİNER: Not even close. Shifts are•getting longer.",
+   "folded": "minernotevencioseshiftsaregettingionger",
+   "damaged": true,
+   "length": 39,
+   "bits": 128,
+   "bloom": "0008224006242208203560006900d901"
+  },
+  {
+   "input": "Caffè, per favore, signora mia.",
+   "folded": "caffeperfavoresignoramia",
+   "damaged": true,
+   "length": 24,
+   "bits": 128,
+   "bloom": "00400801000001874990002115012800"
+  },
+  {
+   "input": "Ｆｕｌｌ　ｗｉｄｔｈ ｌｉｎｅ ５０ ｃｈａｒｓ",
+   "folded": "fuiiwidthiinesochars",
+   "damaged": true,
+   "length": 20,
+   "bits": 64,
+   "bloom": "0001c138030a8420"
+  },
+  {
+   "input": "Look at the l1ght 0n the h1ll, my friend!",
+   "folded": "iookattheiightonthehiiimyfriend",
+   "damaged": true,
+   "length": 31,
+   "bits": 128,
+   "bloom": "00443104c0224040889400850c010014"
+  },
+  {
+   "input": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "folded": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "damaged": true,
+   "length": 255,
+   "bits": 256,
+   "bloom": "0000000000000000000000000000000000800000000000000000000000000000"
+  },
+  {
+   "input": "short line",
+   "folded": "shortiine",
+   "damaged": false,
+   "length": null,
+   "bits": null,
+   "bloom": null
+  },
+  {
+   "input": "I see it in his Hels crazy.",
+   "folded": "iseeitinhisheiscrazy",
+   "damaged": false,
+   "length": 20,
+   "bits": 64,
+   "bloom": "07014d0086280908"
+  },
+  {
+   "input": "Mount youtdi, now!",
+   "folded": "mountyoutdinow",
+   "damaged": false,
+   "length": null,
+   "bits": null,
+   "bloom": null
+  },
+  {
+   "input": "æsir øre straße œuvre jjjj",
+   "folded": "asirorestraseouvreiiii",
+   "damaged": true,
+   "length": 22,
+   "bits": 128,
+   "bloom": "8000000a401010420100802420100901"
+  }
+ ],
+ "similarities": [
+  {
+   "query": "All this will be behind us soon. Until then don’t let any of these bastards get to you, alright?",
+   "entry": "GAETANO: All this will bébehind u soon: Uötil'then don't let any of these båétards getpyou, alrightiz:t",
+   "bits": 256,
+   "similarity": 80.63051702395964
+  },
+  {
+   "query": "All this will be behind us soon. Until then don’t let any of these bastards get to you, alright?",
+   "entry": "Who the hell was that?",
+   "bits": 64,
+   "similarity": 1.3151927437641713
+  },
+  {
+   "query": "Trust me, Iknow this place.",
+   "entry": "Trust me, I know this place.",
+   "bits": 64,
+   "similarity": 100.0
+  },
+  {
+   "query": "MİNER: Not even close. Shifts are•getting longer.",
+   "entry": "Not even close. Shifts are getting longer.",
+   "bits": 128,
+   "similarity": 91.03641456582633
+  },
+  {
+   "query": "Who the hell was that?",
+   "entry": "What the hell was that?",
+   "bits": 64,
+   "similarity": 82.58503401360544
+  }
+ ],
+ "looseLabels": [
+  {
+   "input": "-GAETANO: Ah, good",
+   "label": "-GAETANO: ",
+   "body": "Ah, good"
+  },
+  {
+   "input": "M]: Any signs of where they went?",
+   "label": "M]: ",
+   "body": "Any signs of where they went?"
+  },
+  {
+   "input": "li LUCA: hey there",
+   "label": "li LUCA: ",
+   "body": "hey there"
+  },
+  {
+   "input": "\\ tilv„.. CESARE: In fact, I",
+   "label": "\\ tilv„.. CESARE: ",
+   "body": "In fact, I"
+  },
+  {
+   "input": "SEBASTIAN Where were you",
+   "label": "SEBASTIAN ",
+   "body": "Where were you"
+  },
+  {
+   "input": "O'NEAL Suit yourself.",
+   "label": "O'NEAL ",
+   "body": "Suit yourself."
+  },
+  {
+   "input": "I told you: no",
+   "label": null,
+   "body": null
+  },
+  {
+   "input": "MİNE GUARD• You skimming?",
+   "label": "MİNE GUARD• ",
+   "body": "You skimming?"
+  },
+  {
+   "input": "-, • RUSU: hi there",
+   "label": "-, • RUSU: ",
+   "body": "hi there"
+  },
+  {
+   "input": "Get down!",
+   "label": null,
+   "body": null
+  },
+  {
+   "input": "OK Thanks",
+   "label": "OK ",
+   "body": "Thanks"
+  }
+ ],
+ "thresholds": {
+  "clean": [
+   [
+    24,
+    90
+   ],
+   [
+    256,
+    80
+   ]
+  ],
+  "damaged": [
+   [
+    24,
+    70
+   ],
+   [
+    40,
+    60
+   ],
+   [
+    256,
+    55
+   ]
+  ],
+  "margin": 5,
+  "minLength": 16
+ }
+}

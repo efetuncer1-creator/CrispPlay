@@ -99,6 +99,13 @@ if(TARGET Qt6::Test)
   set_target_properties(crispplay_replay_ring_tests PROPERTIES AUTOMOC ON)
 endif()
 
+# --- Game subtitle translation (Phase 5): text core (AGPL-3.0 port of CouchSubs), engine, OCR ---
+add_subdirectory(subs/core)
+add_subdirectory(subs/net) # Phase 5 model download + optional online engine (custom/subs/net/README.md)
+add_subdirectory(subs/mt) # Phase 5 subtitle translation engine (custom/subs/mt/README.md)
+add_subdirectory(subs/ocr) # Phase 5 OCR readers (custom/subs/ocr/README.md)
+add_subdirectory(subs/app) # Phase 5 app integration: capture, overlay, settings (keep last: uses the targets above)
+
 # --- CrispPlay logo -------------------------------------------------------------
 # No upstream hook: this file runs after the root CMakeLists has copied
 # assets/veyra.ico and qml/Veyra/logo.png into the build tree, so ours are

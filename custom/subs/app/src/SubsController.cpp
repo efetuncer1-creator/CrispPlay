@@ -566,12 +566,20 @@ void SubsController::captureFrame() {
     frameNote_ = QStringLiteral("Görüntü alınıyor…");
     emit frameChanged();
     Service::instance().requestSnapshot();
+    // A paused source presents nothing, so nothing would be copied: show the
+    // same position once more (a seek to where it stands) to present that frame.
+    const bool paused = bridge_ && bridge_->property("hasSource").toBool() && bridge_->property("paused").toBool();
+    if (paused) {
+        const double at = bridge_->property("position").toDouble();
+        QMetaObject::invokeMethod(bridge_, "seekTo", Q_ARG(double, at));
+        veyra::log::info("subs", std::format("snapshot: paused, presenting {:.3f} s again", at));
+    }
     QPointer<SubsController> self(this);
     std::shared_ptr<FrameStore> store = frameStore_;
     // Waiting for the GPU and converting a whole frame: off the UI thread.
-    std::thread([self, store] {
+    std::thread([self, store, paused] {
         FrameSnapshot snap;
-        const bool ok = Service::instance().takeSnapshot(snap, 1500);
+        const bool ok = Service::instance().takeSnapshot(snap, paused ? 3000 : 1500);
         QImage image;
         if (ok) {
             const auto& b = snap.image;

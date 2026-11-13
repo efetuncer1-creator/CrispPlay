@@ -49,7 +49,8 @@ endif()
 
 target_link_libraries(veyra_qml_ui PRIVATE crispplay_subs_app)
 qt_add_resources(veyra_qml_ui "crispplay_subs_qml" PREFIX "/crispplay" BASE "${PROJECT_SOURCE_DIR}/custom/qml"
-  FILES "${PROJECT_SOURCE_DIR}/custom/qml/SubsHost.qml" "${PROJECT_SOURCE_DIR}/custom/qml/SubsSettings.qml")
+  FILES "${PROJECT_SOURCE_DIR}/custom/qml/SubsHost.qml" "${PROJECT_SOURCE_DIR}/custom/qml/SubsSettings.qml"
+        "${PROJECT_SOURCE_DIR}/custom/qml/SubsRegionPicker.qml")
 
 # Run-time files next to the EXE: ONNX Runtime (second OCR reader, loaded with
 # LoadLibraryEx) and the MSVC OpenMP runtime (CTranslate2 / oneDNN; the CRT is

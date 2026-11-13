@@ -119,30 +119,23 @@ Item {
                         { id: "top", label: "Üst" },
                         { id: "custom", label: "Özel" }
                     ]
-                    current: crispSubs.regionPreset
-                    onPicked: id => crispSubs.regionPreset = id
+                    // Presets only the picker offers (Alt yarı, Tüm ekran) show as "Özel" here.
+                    current: ["default", "wide", "low", "top"].indexOf(crispSubs.regionPreset) >= 0 ? crispSubs.regionPreset : "custom"
+                    onPicked: id => { if (id === "custom") crispSubs.openRegionPicker(); else crispSubs.regionPreset = id }
                 }
             }
             VRow {
-                label: "Bölge sınırları"
-                hint: "Görüntünün yüzdesi: sol %" + crispSubs.regionLeft + " · üst %" + crispSubs.regionTop
-                      + " · sağ %" + crispSubs.regionRight + " · alt %" + crispSubs.regionBottom
+                label: "Bölgeyi görüntü üzerinde seç"
+                hint: "Şu an: " + crispSubs.regionLabel
+                      + (crispSubs.regionPreset === "custom" ? "" : " · sol %" + crispSubs.regionLeft + " · üst %" + crispSubs.regionTop
+                         + " · sağ %" + crispSubs.regionRight + " · alt %" + crispSubs.regionBottom)
+                      + ". Oynatılan videonun o anki karesi üzerinde alanı çizin, taşıyın ya da boyutlandırın."
                 hintBelow: true
-            }
-            VRow {
-                visible: crispSubs.regionPreset === "custom"
-                label: "Özel bölge (sol, üst, sağ, alt · %)"
-                RowLayout {
-                    spacing: 6
-                    Field { id: rl; implicitWidth: 52; text: String(crispSubs.regionLeft) }
-                    Field { id: rt; implicitWidth: 52; text: String(crispSubs.regionTop) }
-                    Field { id: rr; implicitWidth: 52; text: String(crispSubs.regionRight) }
-                    Field { id: rb; implicitWidth: 52; text: String(crispSubs.regionBottom) }
-                    VButton {
-                        objectName: "set-subs-region-apply"
-                        text: "Uygula"
-                        onClicked: crispSubs.setRegion(Number(rl.text) || 0, Number(rt.text) || 0, Number(rr.text) || 100, Number(rb.text) || 100)
-                    }
+                VButton {
+                    objectName: "set-subs-region-pick"
+                    text: "Alanı seç…"
+                    iconName: "scan"
+                    onClicked: crispSubs.openRegionPicker()
                 }
             }
         }

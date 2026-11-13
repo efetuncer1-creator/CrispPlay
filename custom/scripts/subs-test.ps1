@@ -20,7 +20,19 @@ param(
     [switch]$Settings,
     # Initial contents of crispplay-subs.v1.json besides "enabled" (e.g. @{ online = $true }).
     [hashtable]$Options = @{},
-    [string]$Name = ""
+    [string]$Name = "",
+    # UI test hook (custom/qml/SubsHost.qml): "menu" opens the player bar's subtitle menu
+    # again and again and logs where our items are; "picker" opens the region picker.
+    [string]$UiTest = "",
+    # Real mouse clicks on logged menu items / picker buttons: "<ms>:<name>", e.g.
+    # "9000:item:Türkçe_çeviri" or "12000:button:subs-region-save".
+    [string[]]$Clicks = @(),
+    # Real mouse drags on the picker's picture, percent of the frame: "<ms>:x0,y0,x1,y1".
+    [string[]]$Drags = @(),
+    # Extra screenshots shortly after each click / drag.
+    [switch]$ShotAfterInput,
+    # Open the clip paused (the picker's still then comes from a paused source).
+    [switch]$NoMedia
 )
 # Subtitle translation real-pipeline run (custom/docs/SUBS.md): plays a clip in
 # the real app with an isolated --data-dir, samples the process's CPU / RAM /
@@ -53,17 +65,19 @@ $env:PATH = "$deps\qt\6.8.3\msvc2022_64\bin;$deps\vcpkg_installed\x64-windows\bi
 # model package unzipped into out\subs-models (..\dist\crispplay-subs-models-v1.zip,
 # custom/subs/net/README.md). ModelStore verifies every file of it.
 $models = Join-Path $root "out\subs-models"
-if (-not (Test-Path (Join-Path $models "ppocr-rec"))) {
+if (-not ($env:CRISPPLAY_SUBS_MODEL_ROOT -and (Test-Path (Join-Path $env:CRISPPLAY_SUBS_MODEL_ROOT "ppocr-rec"))) -and -not (Test-Path (Join-Path $models "ppocr-rec"))) {
     $zip = Join-Path $root "..\dist\crispplay-subs-models-v1.zip"
     if (-not (Test-Path $zip)) { throw "Model package not found: $zip (custom\scripts\package-subs-models.ps1)" }
     Expand-Archive -LiteralPath $zip -DestinationPath $models -Force
 }
-$env:CRISPPLAY_SUBS_MODEL_ROOT = $models
+# An installed model folder wins (e.g. %APPDATA%\CrispPlay\models, with its attribution files).
+if (-not $env:CRISPPLAY_SUBS_MODEL_ROOT -or -not (Test-Path (Join-Path $env:CRISPPLAY_SUBS_MODEL_ROOT "ppocr-rec"))) { $env:CRISPPLAY_SUBS_MODEL_ROOT = $models }
 $env:CRISPPLAY_SUBS_TRACE = "1"
 $events = Join-Path $work "events.jsonl"
 $env:CRISPPLAY_SUBS_EVENT_LOG = $events
 if ($Effects -ne "none") { $env:CRISPPLAY_TEST_SUBS_EFFECTS = $Effects } else { Remove-Item Env:CRISPPLAY_TEST_SUBS_EFFECTS -ErrorAction SilentlyContinue }
 if ($Settings) { $env:CRISPPLAY_TEST_SUBS_SETTINGS = "1" } else { Remove-Item Env:CRISPPLAY_TEST_SUBS_SETTINGS -ErrorAction SilentlyContinue }
+if ($UiTest) { $env:CRISPPLAY_TEST_SUBS_UI = $UiTest } else { Remove-Item Env:CRISPPLAY_TEST_SUBS_UI -ErrorAction SilentlyContinue }
 $log = Join-Path $build "logs\veyra-qml.log"
 if (Test-Path $log) { Remove-Item -Force $log }
 
@@ -77,6 +91,11 @@ public static class CrispShot {
     [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr dc, uint flags);
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+    [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr h);
+    [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+    [DllImport("user32.dll")] public static extern void mouse_event(uint flags, int dx, int dy, uint data, UIntPtr extra);
+    public static void Down() { mouse_event(0x0002, 0, 0, 0, UIntPtr.Zero); }
+    public static void Up() { mouse_event(0x0004, 0, 0, 0, UIntPtr.Zero); }
 }
 "@
 [void][CrispShot]::SetProcessDPIAware()
@@ -96,8 +115,42 @@ function Save-Window($handle, $path) {
     return $true
 }
 
+# Where the test hook says things are (QML logical pixels -> screen pixels).
+function Find-Logged($kind, $name) {
+    if (-not (Test-Path $log)) { return $null }
+    $lines = @(Get-Content -LiteralPath $log -Encoding UTF8 -ErrorAction SilentlyContinue | Where-Object { $_ -match "\[subs-ui\] $kind $([regex]::Escape($name)) (-?\d+) (-?\d+) (\d+) (\d+)" })
+    if (-not $lines.Count) { return $null }
+    [void]($lines[-1] -match "\[subs-ui\] $kind $([regex]::Escape($name)) (-?\d+) (-?\d+) (\d+) (\d+)")
+    $process.Refresh()
+    $scale = [CrispShot]::GetDpiForWindow($process.MainWindowHandle) / 96.0
+    if ($scale -le 0) { $scale = 1.0 }
+    return @{ x = [double]$Matches[1] * $scale; y = [double]$Matches[2] * $scale; w = [double]$Matches[3] * $scale; h = [double]$Matches[4] * $scale }
+}
+function Invoke-Click($kind, $name) {
+    $r = Find-Logged $kind $name
+    if (-not $r) { Write-Host "not logged: $kind $name"; return }
+    [void][CrispShot]::SetCursorPos([int]($r.x + $r.w / 2), [int]($r.y + $r.h / 2)); Start-Sleep -Milliseconds 120
+    [CrispShot]::Down(); Start-Sleep -Milliseconds 60; [CrispShot]::Up()
+    Write-Host "clicked $kind $name at $([int]($r.x + $r.w / 2)),$([int]($r.y + $r.h / 2))"
+}
+function Invoke-Drag($spec) {
+    $r = Find-Logged "picker" "stage"
+    if (-not $r) { Write-Host "picker not logged"; return }
+    $v = $spec.Split(",") | ForEach-Object { [double]$_ }
+    $x0 = [int]($r.x + $r.w * $v[0] / 100); $y0 = [int]($r.y + $r.h * $v[1] / 100)
+    $x1 = [int]($r.x + $r.w * $v[2] / 100); $y1 = [int]($r.y + $r.h * $v[3] / 100)
+    [void][CrispShot]::SetCursorPos($x0, $y0); Start-Sleep -Milliseconds 120
+    [CrispShot]::Down()
+    for ($i = 1; $i -le 12; $i++) {
+        [void][CrispShot]::SetCursorPos([int]($x0 + ($x1 - $x0) * $i / 12), [int]($y0 + ($y1 - $y0) * $i / 12)); Start-Sleep -Milliseconds 25
+    }
+    [CrispShot]::Up()
+    Write-Host "dragged $x0,$y0 -> $x1,$y1"
+}
+
 $process = Start-Process -FilePath $exe -WorkingDirectory $build -PassThru -RedirectStandardOutput (Join-Path $work "stdout.txt") -RedirectStandardError (Join-Path $work "stderr.txt") `
     -ArgumentList $(if ($Settings) { @("--data-dir", "`"$data`"", "--size", $Size, "--exit-after", "$RunMs", "--page", "set") }
+                    elseif ($NoMedia) { @("--data-dir", "`"$data`"", "--size", $Size, "--exit-after", "$RunMs") }
                     else { @("--data-dir", "`"$data`"", "--size", $Size, "--exit-after", "$RunMs", "`"$media`"") })
 $null = $process.Handle
 $started = Get-Date
@@ -105,6 +158,9 @@ $shots = @($ShotsAtMs | Sort-Object)
 $toggles = @($ToggleAtMs | Sort-Object); $toggleIndex = 0
 $shell = if ($toggles.Count) { New-Object -ComObject WScript.Shell } else { $null }
 $shotIndex = 0
+$inputs = @(@($Clicks | ForEach-Object { $p = $_.Split(":", 2); [pscustomobject]@{ ms = [int]$p[0]; kind = "click"; arg = $p[1] } }) +
+            @($Drags | ForEach-Object { $p = $_.Split(":", 2); [pscustomobject]@{ ms = [int]$p[0]; kind = "drag"; arg = $p[1] } }) | Sort-Object ms)
+$inputIndex = 0
 $samples = @()
 $cores = [Environment]::ProcessorCount
 $lastCpu = $null; $lastAt = $null
@@ -114,6 +170,17 @@ while (-not $process.HasExited) {
         if ($shell.AppActivate($process.Id)) { Start-Sleep -Milliseconds 150; $shell.SendKeys("{F10}"); Write-Host "sent F10 at $([int]$elapsed) ms" }
         else { Write-Host "could not activate the window for F10" }
         $toggleIndex++
+    }
+    while ($inputIndex -lt $inputs.Count -and $elapsed -ge $inputs[$inputIndex].ms) {
+        $in = $inputs[$inputIndex]
+        if ($in.kind -eq "click") { $k = $in.arg.Split(":", 2); Invoke-Click $k[0] $k[1] } else { Invoke-Drag $in.arg }
+        if ($ShotAfterInput) {
+            Start-Sleep -Milliseconds 900
+            $process.Refresh()
+            $file = Join-Path $work ("input-{0:D6}.png" -f $in.ms)
+            if (Save-Window $process.MainWindowHandle $file) { Write-Host "screenshot $file" }
+        }
+        $inputIndex++
     }
     while ($shotIndex -lt $shots.Count -and $elapsed -ge $shots[$shotIndex]) {
         $process.Refresh()

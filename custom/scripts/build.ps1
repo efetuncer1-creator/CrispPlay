@@ -66,7 +66,6 @@ if ($Test) {
     foreach ($t in @("custom\crispplay_branding_tests.exe", "custom\crispplay_i18n_tests.exe", "custom\crispplay_discord_tests.exe",
                      "custom\crispplay_replay_ring_tests.exe", "custom\subs\core\crispplay_subs_core_tests.exe",
                      "custom\subs\mt\crispplay_subs_mt_tests.exe", "custom\subs\ocr\crispplay_subs_ocr_tests.exe",
-                     "custom\subs\app\crispplay_subs_app_tests.exe",
                      "custom\subs\net\crispplay_subs_net_tests.exe", "custom\subs\app\crispplay_subs_app_tests.exe",
                      "veyra_update_checker_tests.exe", "veyra_ui_i18n_tests.exe")) {
         $exe = Join-Path $build $t

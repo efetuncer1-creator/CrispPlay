@@ -212,3 +212,43 @@ std::shared_ptr<const veyra::engine::SubtitleBitmapFrame> renderLine(const Shown
 }
 
 } // namespace crispplay::subs::app
+
+namespace crispplay::subs::app {
+
+std::shared_ptr<const veyra::engine::SubtitleBitmapFrame> renderOutline(const Region& requested, int canvasWidth, int canvasHeight) {
+    if (canvasWidth < 32 || canvasHeight < 32) return nullptr;
+    const Region region = sanitized(requested);
+    // Whole pixels, kept inside the canvas so all four sides show.
+    const int left = std::clamp(int(std::lround(region.left * canvasWidth)), 0, canvasWidth - 8);
+    const int top = std::clamp(int(std::lround(region.top * canvasHeight)), 0, canvasHeight - 8);
+    const int right = std::clamp(int(std::lround(region.right * canvasWidth)), left + 8, canvasWidth);
+    const int bottom = std::clamp(int(std::lround(region.bottom * canvasHeight)), top + 8, canvasHeight);
+    const int w = right - left, h = bottom - top;
+    const int line = std::max(2, canvasHeight / 360);
+
+    QImage image(w, h, QImage::Format_ARGB32_Premultiplied);
+    image.fill(Qt::transparent);
+    {
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing, false);
+        // Dark rim around the accent line: visible on bright and dark pictures alike.
+        painter.fillRect(QRect(0, 0, w, h), QColor(0, 0, 0, 150));
+        painter.setCompositionMode(QPainter::CompositionMode_Source);
+        painter.fillRect(QRect(line * 2, line * 2, w - line * 4, h - line * 4), Qt::transparent);
+        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        const QColor accent(0xFF, 0x8A, 0x3D);   // Theme.accent
+        painter.fillRect(QRect(line / 2, line / 2, w - line, line), accent);
+        painter.fillRect(QRect(line / 2, h - line - line / 2, w - line, line), accent);
+        painter.fillRect(QRect(line / 2, line / 2, line, h - line), accent);
+        painter.fillRect(QRect(w - line - line / 2, line / 2, line, h - line), accent);
+    }
+    auto frame = std::make_shared<veyra::engine::SubtitleBitmapFrame>();
+    frame->width = canvasWidth; frame->height = canvasHeight;
+    veyra::engine::SubtitleBitmap bitmap;
+    if (!encode(image, bitmap)) return nullptr;
+    bitmap.x = left; bitmap.y = top;
+    frame->images.push_back(std::move(bitmap));
+    return frame;
+}
+
+} // namespace crispplay::subs::app

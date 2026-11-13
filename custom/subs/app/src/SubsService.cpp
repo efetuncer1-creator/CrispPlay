@@ -112,6 +112,11 @@ struct Service::Impl {
     Settings settings;
     Paths paths;
     uint64_t generation = 0;        // bumped when the pipeline must be rebuilt
+    std::atomic<uint64_t> regionSerial{0};   // bumped when the read region changes
+
+    // Region picker: outline of the edited region on the video (drawMutex).
+    bool outlineOn = false;
+    Region outline;
     bool quit = false, started = false, finished = false;
     std::thread thread;
 
@@ -347,12 +352,28 @@ struct Service::Impl {
                 setState(State::Running);
 
                 uint64_t session = capture.session();
+                uint64_t regionSeen = regionSerial.load();
                 uint64_t lastFingerprint = 0;
                 OcrFrame lastFrame;
                 int64_t lastSummaryUs = steadyUs(), lastSampleUs = 0;
                 BandSample sample;
                 while (!changed()) {
-                    const bool got = capture.next(sample, 300);
+                    bool got = capture.next(sample, 300);
+                    if (const uint64_t now = regionSerial.load(); now != regionSeen) {
+                        // A new region: what was read in the old one says nothing about the new one.
+                        regionSeen = now;
+                        pipeline.reset(); clearDrawn();
+                        lastFingerprint = 0;
+                        { std::lock_guard lock(seenMutex); seen.clear(); }
+                    }
+                    if (got) {
+                        // A copy of the old band can still be in flight: drop it.
+                        Region wanted;
+                        { std::lock_guard lock(m); wanted = settings.region; }
+                        const BandBox expected = bandBox(wanted, sample.frameWidth, sample.frameHeight);
+                        if (expected.x != sample.box.x || expected.y != sample.box.y || expected.width != sample.box.width
+                            || expected.height != sample.box.height) got = false;
+                    }
                     if (capture.session() != session) {
                         // The engine session ended: nothing of it may stay on screen.
                         session = capture.session();
@@ -486,7 +507,7 @@ void Service::configure(const Settings& requested, const Paths& paths) {
     const bool rebuild = next.enabled != p.settings.enabled || next.online != p.settings.online || !(paths == p.paths);
     const bool region = !(next.region == p.settings.region);
     p.settings = next; p.paths = paths;
-    if (region) p.capture.setRegion(next.region);
+    if (region) { p.capture.setRegion(next.region); p.regionSerial.fetch_add(1); }
     if (rebuild) { ++p.generation; p.capture.wake(); }
     if (next.enabled && !p.started) { p.started = true; p.thread = std::thread([&p] { p.run(); }); }
     p.cv.notify_all();
@@ -534,6 +555,20 @@ bool Service::current(DrawnLine& out) {
 }
 
 void Service::setPlaybackPosition(double seconds) { p_->position.store(seconds); }
+
+void Service::requestSnapshot() { p_->capture.requestSnapshot(); }
+bool Service::takeSnapshot(FrameSnapshot& out, uint32_t timeoutMs) { return p_->capture.takeSnapshot(out, timeoutMs); }
+
+void Service::setOutline(bool on, const Region& region) {
+    std::lock_guard lock(p_->drawMutex);
+    p_->outlineOn = on; p_->outline = sanitized(region);
+}
+bool Service::outline(Region& out) {
+    std::lock_guard lock(p_->drawMutex);
+    if (!p_->outlineOn) return false;
+    out = p_->outline;
+    return true;
+}
 
 void Service::shutdown(uint32_t timeoutMs) {
     auto& p = *p_;

@@ -15,6 +15,7 @@ set(_subs_app_sources
   src/BandCapture.cpp src/BandCapture.h
   src/SubsService.cpp src/SubsService.h
   src/OverlayRender.cpp src/OverlayRender.h
+  src/RegionEdit.cpp src/RegionEdit.h
   src/SubsController.cpp src/SubsController.h)
 if(NOT TARGET crispplay_subs_net)
   # Contract headers only: a stand-in without download and online engines.
@@ -30,7 +31,7 @@ target_compile_features(crispplay_subs_app PRIVATE cxx_std_20)
 target_compile_options(crispplay_subs_app PRIVATE /utf-8)
 target_compile_definitions(crispplay_subs_app PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 target_include_directories(crispplay_subs_app PUBLIC src PRIVATE "${PROJECT_SOURCE_DIR}/apps/veyra/ui")
-target_link_libraries(crispplay_subs_app PUBLIC crispplay_subs_core crispplay_subs_ocr veyra_engine Qt6::Core Qt6::Gui Qt6::Qml)
+target_link_libraries(crispplay_subs_app PUBLIC crispplay_subs_core crispplay_subs_ocr veyra_engine Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick)
 if(TARGET crispplay_subs_net)
   target_link_libraries(crispplay_subs_app PUBLIC crispplay_subs_net)
   target_compile_definitions(crispplay_subs_app PUBLIC CRISPPLAY_SUBS_HAVE_NET=1)
@@ -86,6 +87,6 @@ if(TARGET Qt6::Test)
   target_compile_options(crispplay_subs_app_tests PRIVATE /utf-8)
   target_compile_definitions(crispplay_subs_app_tests PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
   target_include_directories(crispplay_subs_app_tests PRIVATE "${PROJECT_SOURCE_DIR}/apps/veyra/ui")
-  target_link_libraries(crispplay_subs_app_tests PRIVATE crispplay_subs_app Qt6::Gui Qt6::Test)
+  target_link_libraries(crispplay_subs_app_tests PRIVATE crispplay_subs_app Qt6::Gui Qt6::Test d3d12 dxgi)
   set_target_properties(crispplay_subs_app_tests PROPERTIES AUTOMOC ON)
 endif()

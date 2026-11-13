@@ -16,7 +16,7 @@ Derleme ve testler:
 powershell -ExecutionPolicy Bypass -File custom\scripts\build.ps1 -Test
 ```
 
-Çıktı `out\build\x64-release\` altında (`veyra_qml_ui.exe`).
+Çıktı `out\build\x64-release\` altında (`veyra_qml_ui.exe`). Altyazı çevirisi için derleme `onnxruntime.dll` (`deps\onnxruntime-1.31.1`, isteğe bağlı) ve `vcomp140.dll` dosyalarını EXE'nin yanına kopyalar; gerçek oynatma testi `custom\scripts\subs-test.ps1` (ayrıntı `custom/docs/SUBS.md`).
 
 Taşınabilir paket: `powershell -ExecutionPolicy Bypass -File custom\scripts\package.ps1 [-Force] [-NoZip]` → `..\dist\CrispPlay-<sürüm>-win64-portable\` (+ `.zip`, + GPL-3 kaynak zip'i `CrispPlay-<sürüm>-source.zip` = `git archive HEAD`). İçerik: `CrispPlay.exe`, QML, `*.dxil` shader'lar, `windeployqt` Qt'si, vcpkg FFmpeg, MSVC CRT, `runtime\`/`runtime_local\` (kullanıcı verisi hariç), lisanslar, `BENIOKU.txt`. Ayarlar paketin içinde kalır (`runtime_local\user-data-2.0.0`). 2026-11-12: 1631 dosya, 1000 MB, zip 679 MB; zip'ten açılıp yalnız `C:\Windows\System32` PATH'iyle çalıştırıldı, Türkçe açıldı, hta.mp4 30 fps oynadı, çıkış 0.
 

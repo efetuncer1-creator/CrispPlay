@@ -14,6 +14,8 @@ param(
     # Transcript to compare the shown lines with (tab separated: seconds, speaker, English, Turkish reference).
     [string]$Transcript = "",
     [string]$Size = "1600x900",
+    # Press the toggle shortcut (F10) at these times, ms after start (the script activates the window).
+    [int[]]$ToggleAtMs = @(),
     # Open Ayarlar -> Altyazı çevirisi instead of playing (screenshot of the settings tab).
     [switch]$Settings,
     # Initial contents of crispplay-subs.v1.json besides "enabled" (e.g. @{ online = $true }).
@@ -100,12 +102,19 @@ $process = Start-Process -FilePath $exe -WorkingDirectory $build -PassThru -Redi
 $null = $process.Handle
 $started = Get-Date
 $shots = @($ShotsAtMs | Sort-Object)
+$toggles = @($ToggleAtMs | Sort-Object); $toggleIndex = 0
+$shell = if ($toggles.Count) { New-Object -ComObject WScript.Shell } else { $null }
 $shotIndex = 0
 $samples = @()
 $cores = [Environment]::ProcessorCount
 $lastCpu = $null; $lastAt = $null
 while (-not $process.HasExited) {
     $elapsed = ((Get-Date) - $started).TotalMilliseconds
+    while ($toggleIndex -lt $toggles.Count -and $elapsed -ge $toggles[$toggleIndex]) {
+        if ($shell.AppActivate($process.Id)) { Start-Sleep -Milliseconds 150; $shell.SendKeys("{F10}"); Write-Host "sent F10 at $([int]$elapsed) ms" }
+        else { Write-Host "could not activate the window for F10" }
+        $toggleIndex++
+    }
     while ($shotIndex -lt $shots.Count -and $elapsed -ge $shots[$shotIndex]) {
         $process.Refresh()
         if ($process.MainWindowHandle -ne [IntPtr]::Zero) {

@@ -83,7 +83,10 @@ def main() -> int:
         delays.append(show["pos"] - line["t"])
         if show["durationMs"] < 15000:
             late += 1
-        if norm(show["source"]) == want:
+        got = norm(show["source"])
+        # The app's source line carries the speaker label; the transcript keeps it in its own column.
+        label = norm(line["speaker"])
+        if got == want or (label and got == (label + " " + want)):
             exact += 1
         if not line["speaker"] or norm(line["speaker"]) == norm(show.get("speaker", "")):
             speaker_ok += 1

@@ -115,7 +115,8 @@ Fork'u kendin kullanırken yükümlülük yok; dağıttığın anda kaynak kodun
 - [x] Test GPU'su: NVIDIA GeForce RTX 3060 Ti
 - [x] Discord uygulama kimliği `Branding.h`'de
 - [x] Aşama 0–5 tamamlandı ve `main`'de
-- [ ] Efe: `SYNC_TOKEN` secret'ı ve Actions'ın PR açma izni (repo ayarları)
+- [x] `SYNC_TOKEN` secret'ı ve Actions'ın PR açma izni (2026-11-13, Efe)
+- [x] Discord Developer Portal: ikon ve `crispplay` art asset'i (2026-11-13, Efe)
 - [x] CrispPlay ikonu (Gemini, `custom/branding/`)
 - [x] İlk sürüm: `v2.1.5-crispplay.1` (latest) ve `subs-models-v1` (ön sürüm, altyazı modelleri) 2026-11-13'te yayınlandı
 - [ ] Veri/ayar klasörü: `setApplicationName("Veyra")` değişsin mi? Değişirse orijinal Veyra ile ayarlar ayrılır ama mevcut ayarlar taşınmaz.

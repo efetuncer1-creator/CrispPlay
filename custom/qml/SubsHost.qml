@@ -30,7 +30,6 @@ Item {
         if (picker.item) picker.item.openPicker()
     }
     function openSettings() {
-        veyra.logUi("subs-ui", "open settings root=" + (typeof root) + " goPage=" + (typeof root !== "undefined" ? typeof root.goPage : "-") + " settingsPage=" + (typeof settingsPage))
         if (typeof settingsPage !== "undefined") settingsPage.section = "subs"
         if (typeof root !== "undefined" && root.goPage) {
             if (root.fullscreen) root.toggleFullscreen()

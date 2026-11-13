@@ -175,6 +175,7 @@ Doğrulandı (bu makinede, gerçek uygulamayla):
 - Klip oynarken Türkçe satır İngilizcenin üstünde, konuşmacı adı sarı; kutu İngilizce satırı tam kapatıyor (ekran görüntüleri `out\subs-test\full\shot-*.png`, `out\subs-test\first\`).
 - Tam klipte dökümle karşılaştırma (yukarıdaki tablo); ayar sekmesi (`out\subs-test\settings-on\shot-006000.png`).
 - Efektsiz, SR açık ve FG×2 açıkken sunum süreleri (yukarıda).
+- Zincir değişikliğinden sonra anlık tekrar: `custom\scriptseplay-test.ps1` VALID (8,7 sn, 522 kare, ses + görüntü, 0 atlanan kare).
 - Model paketi `ModelStore` üzerinden (geliştirici klasörü olarak açılmış zip, özet denetimiyle).
 
 Doğrulanmadı:

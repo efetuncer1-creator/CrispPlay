@@ -15,7 +15,7 @@ Amaç: oynatıcının gösterdiği işlenmiş görüntünün (SR/NR/FG sonrası,
 ## Veri yolu
 
 ```
-VideoPresenter ──record()──> CaptureFanout ──> LiveRecorder (upstream, değişmedi)
+VideoPresenter ──record()──> present::Chain ──> LiveRecorder (upstream, değişmedi)
                                    │
                                    └─> ReplayCapture: RgbToNv12 → NV12/P010 yuvası (6 adet)
                                           │ fence + yuva no (CPU beklemesi yok)
@@ -44,7 +44,7 @@ Tümü `crispplay/replay/Hooks.h` içindeki başlık-içi (header-only) dağıt�
 
 | Dosya | Satır | İş |
 | --- | --- | --- |
-| `src/engine/EngineController.cpp` | 3 | include; `presenter.setCapture(wrapCapture(recorder_))`; oturum sonunda `sessionEnded()` |
+| `src/engine/EngineController.cpp` | 3 | include; `presenter.setCapture(crispplay::present::wrapCapture(recorder_))`; oturum sonunda `crispplay::present::sessionEnded()` (2026-11-12'den beri ortak zincir `custom/include/crispplay/present/Hooks.h`; tekrar ona `addTap` ile eklenir, altyazı bandı da aynı zinciri kullanır) |
 | `src/sink/WasapiAudioSink.cpp` | 3 | include; ses musluğu koşuluna `audioWanted()`; musluğu `audioTap()` ile çatallama |
 | `apps/veyra-qml/main.cpp` | 2 | include; `installQml(engine, dataDirectory)` |
 | `qml/Veyra/Main.qml` | 1 | `ReplayHost.qml` yükleyicisi (kısayol + bildirim) |

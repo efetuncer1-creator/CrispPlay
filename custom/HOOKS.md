@@ -2,7 +2,7 @@
 
 Her satır `VEYRA_CUSTOM` ile işaretli. Upstream sync'te çakışma çıkarsa: upstream'in yeni hâlini al, aşağıdaki kancayı aynı anlamla yeniden ekle.
 
-Kontrol: `git grep -n VEYRA_CUSTOM -- ':!custom'` şu an **44** sonuç vermeli: aşağıdaki tablodaki 43 kanca satırı + `.github/workflows/upstream-sync.yml` içindeki bu komutun kendisini anan 1 satır (`version.rc.in` satırları yorumsuz olduğu için sayılmaz; onlar `@CRISPPLAY_` ile aranır).
+Kontrol: `git grep -n VEYRA_CUSTOM -- ':!custom'` şu an **51** sonuç vermeli: aşağıdaki tablodaki 50 kanca satırı + `.github/workflows/upstream-sync.yml` içindeki bu komutun kendisini anan 1 satır (`version.rc.in` satırları yorumsuz olduğu için sayılmaz; onlar `@CRISPPLAY_` ile aranır).
 
 | Dosya | Satır | Ne yapar |
 | --- | --- | --- |
@@ -11,23 +11,28 @@ Kontrol: `git grep -n VEYRA_CUSTOM -- ':!custom'` şu an **44** sonuç vermeli: 
 | `apps/veyra/version.rc.in` | 2 (yorumsuz) | EXE `FileDescription` / `ProductName` → `@CRISPPLAY_FILE_DESCRIPTION@` / `@CRISPPLAY_PRODUCT_NAME@` |
 | `include/veyra/ui/UpdateChecker.h` | 2 | Branding include; varsayılan endpoint `crispplay::branding::releaseApiUrl()` |
 | `src/ui/UpdateChecker.cpp` | 5 | Include; `versionNumber` → `releaseVersion` (4 parçalı sürüm, `-crispplay.N`); URL doğrulama → `isReleaseUrl`; parça sayısı kontrolü → `isNull()`; gösterilen sürüm → `displayVersion` |
-| `src/ui/bridge/Preferences.cpp` | 5 + 1 | Include; README / Issues / Releases adresleri branding'den; `language` tercihi `crispplay::i18n::extraLanguages()` dillerini de kabul eder (Türkçe). Anlık tekrar: `shortcutDefaults()` tablosuna `{"replay", "F9"}` (bir önceki satırın sonu `}};` → `},` oldu) |
+| `src/ui/bridge/Preferences.cpp` | 5 + 1 | Include; README / Issues / Releases adresleri branding'den; `language` tercihi `crispplay::i18n::extraLanguages()` dillerini de kabul eder (Türkçe). Anlık tekrar ve altyazı çevirisi: `shortcutDefaults()` tablosuna tek satırda `{"replay", "F9"}, {"subs", "F10"}` (bir önceki satırın sonu `}};` → `},` oldu) |
 | `apps/veyra-qml/main.cpp` | 2 | Include; QML'e `crispBrand` bağlam özelliği |
 | `apps/veyra-qml/main.cpp` | 2 | Discord Rich Presence: include + `crispplay::discord::install(...)` (`crispDiscord` bağlam özelliği, köprüye Qt sinyaliyle bağlanır, çıkışta temizler) |
 | `apps/veyra-qml/main.cpp` | 2 | Anlık tekrar: `ReplayQml.h` include + `crispplay::replay::installQml(engine, dataDirectory)` (`crispReplay` bağlam nesnesi) |
+| `apps/veyra-qml/main.cpp` | 2 | Altyazı çevirisi: `crispplay/subs/app/Hooks.h` include + `crispplay::subs::installQml(engine, &bridge, dataDirectory)` (`crispSubs` bağlam nesnesi, katman arka ucu; köprüden yalnız oynatma konumu okunur) |
 | `qml/Veyra/Main.qml` | 1 + 1 | Pencere başlığı `crispBrand.appName`. Anlık tekrar: kayıt `Shortcut` satırının altında `Loader { source: "qrc:/crispplay/ReplayHost.qml" }` (kısayol + bildirim) |
 | `qml/Veyra/HomePage.qml` | 1 | Ana sayfa başlığı `crispBrand.homeTitle` |
 | `qml/Veyra/SettingsPage.qml` | 3 | Hakkında: ad + "Veyra (Likely7) tabanlıdır" GPL atfı; Arayüz dili menüsüne `crispBrand.languages` (Türkçe) eklenir |
 | `qml/Veyra/SettingsPage.qml` | 2 | Discord sekmesi: `sections` listesine Sponsor'dan önce `{ id: "discord" }` girdisi; Sponsor panelinin üstünde `root.section === "discord"` iken `Loader` ile `custom/qml/DiscordSettings.qml` (`custom/CMakeLists.txt` dosyayı `qml/CrispPlay/` altına kopyalar) |
 | `qml/Veyra/SettingsPage.qml` | 2 | Anlık tekrar: `set-recording` grubunun hemen altında `Loader { … "qrc:/crispplay/ReplaySettings.qml" }`; kısayol listesinde `record` satırının altında `{ id: "replay", … }` |
+| `qml/Veyra/SettingsPage.qml` | 3 | Altyazı çevirisi sekmesi: `sections` listesinde Discord'un altında `{ id: "subs", label: "Altyazı çevirisi", icon: "cc" }`; Discord `Loader`'ının altında `root.section === "subs"` iken `Loader { … "qrc:/crispplay/SubsSettings.qml" }`; kısayol listesinde `replay` satırının altında `{ id: "subs", … }` |
+| `src/ui/bridge/Subtitles.cpp` | 2 | Altyazı çevirisi: `crispplay/subs/app/Hooks.h` include; `tickSubtitles()` içinde `updateSubtitleOverlay`'den hemen önce `crispplay::subs::appendLines(draw, view, client)` (Türkçe satırı `draw`'a resim olarak ekler; `!s.capture` koşulunun dışında, yani yakalama kaynaklarında da çalışır) |
 | `src/ui/UiLanguage.cpp` | 5 | `crispplay/I18n.h` include; `load()` katalog baytlarını `catalogJson(code, …)`'dan geçirir (`tr` için `:/crispplay/i18n/tr.json` upstream kataloğun üstüne birleştirilir, eksikler İngilizce); `；` birleştirmesi Latin dillerde `; ` (`latinScript`); `resolve()` açık `tr` tercihini ve Türkçe Windows dilini `tr`'ye eşler |
-| `src/engine/EngineController.cpp` | 3 | Anlık tekrar: `Hooks.h` include; `presenter.setCapture(crispplay::replay::wrapCapture(recorder_.get()))` (sunum yakalamasını kayıt + tekrar olarak çatallar); oturum sonu `OnExit` içinde `crispplay::replay::sessionEnded()` |
+| `src/engine/EngineController.cpp` | 3 | Sunum yakalama zinciri (anlık tekrar + altyazı bandı): `crispplay/present/Hooks.h` include; `presenter.setCapture(crispplay::present::wrapCapture(recorder_.get()))` (sunum yakalamasını kayıt + kurulu dinleyiciler olarak çatallar); oturum sonu `OnExit` içinde `crispplay::present::sessionEnded()` |
 | `src/sink/WasapiAudioSink.cpp` | 3 | Anlık tekrar: `Hooks.h` include; ses musluğu koşulu `recordingAudioActive() \|\| crispplay::replay::audioWanted()`; musluk `crispplay::replay::audioTap(recordingAudioSink())` |
 | `tests/unit/UpdateCheckerTests.cpp` | 1 | Test release adresi branding'den (upstream testleri bizim repoyla geçsin) |
 
-Anlık tekrar kancalarının hepsi `custom/include/crispplay/replay/Hooks.h` (başlık-içi dağıtıcı) ve `ReplayQml.h` üzerinden geçer; arka uç kurulmadıysa (araçlar, testler) upstream davranışı aynen kalır. Tasarım: `custom/docs/REPLAY.md`.
+Görüntü kancası ortak: `custom/include/crispplay/present/Hooks.h` (başlık-içi zincir; `addTap` ile anlık tekrar ve altyazı bandı eklenir). Anlık tekrarın ses kancaları `custom/include/crispplay/replay/Hooks.h`, arayüzü `ReplayQml.h` üzerinden geçer; dinleyici/arka uç kurulmadıysa (araçlar, testler) upstream davranışı aynen kalır. Tasarım: `custom/docs/REPLAY.md`.
 
-QML kancaları `typeof crispBrand !== "undefined"` / `typeof crispReplay !== "undefined"` korumalı; bağlam özelliği olmadan yüklenen QtQuick testleri eski metinle çalışır.
+Altyazı çevirisi kancaları `custom/include/crispplay/subs/app/Hooks.h` üzerinden geçer (`appendLines` başlık-içi dağıtıcı, arka uç `installQml` ile kurulur). Kısayol ve bildirim için `Main.qml`'e yeni satır eklenmedi: `custom/qml/ReplayHost.qml` kendi içinden `SubsHost.qml`'i yükler. Tasarım: `custom/docs/SUBS.md`.
+
+QML kancaları `typeof crispBrand !== "undefined"` / `typeof crispReplay !== "undefined"` / `typeof crispSubs !== "undefined"` korumalı; bağlam özelliği olmadan yüklenen QtQuick testleri eski metinle çalışır.
 
 ## Bilinçli olarak dokunulmayanlar
 

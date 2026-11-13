@@ -1,6 +1,7 @@
 #include "SubsController.h"
 
 #include "OverlayRender.h"
+#include "RegionEdit.h"
 #include "SubtitleOverlay.h"
 #include "crispplay/subs/app/Hooks.h"
 
@@ -10,6 +11,10 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QFont>
+#include <QFontDatabase>
+#include <QMetaProperty>
+#include <QQuickImageProvider>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QPointer>
@@ -19,6 +24,7 @@
 #include <QVariant>
 
 #include <algorithm>
+#include <optional>
 #include <cmath>
 #include <format>
 #include <thread>
@@ -26,17 +32,53 @@
 namespace crispplay::subs::app {
 namespace {
 
-struct Preset { const char* id; Region region; };
-// The band that is copied and read. Smaller is cheaper and picks up less HUD text.
-const Preset kPresets[] = {
-    {"default", {0.14f, 0.62f, 0.86f, 0.97f}},   // lower third, centre
-    {"wide",    {0.05f, 0.58f, 0.95f, 0.98f}},   // lower part, almost full width
-    {"low",     {0.14f, 0.76f, 0.86f, 0.98f}},   // only the bottom edge
-    {"top",     {0.14f, 0.03f, 0.86f, 0.30f}},   // subtitles at the top
+// The band that is copied and read (RegionEdit.cpp: default, wide, low, top,
+// half, full). Smaller is cheaper and picks up less HUD text.
+std::optional<Region> presetRegion(const QString& id) {
+    if (const RegionPreset* preset = findRegionPreset(id.toLatin1().constData())) return toFraction(preset->region);
+    return std::nullopt;
+}
+
+RegionPct pctOf(const QVariantMap& m) {
+    return RegionPct{m.value(QStringLiteral("left"), 14).toDouble(), m.value(QStringLiteral("top"), 62).toDouble(),
+                     m.value(QStringLiteral("right"), 86).toDouble(), m.value(QStringLiteral("bottom"), 97).toDouble()};
+}
+QVariantMap mapOf(const RegionPct& r) {
+    return QVariantMap{{QStringLiteral("left"), r.left}, {QStringLiteral("top"), r.top},
+                       {QStringLiteral("right"), r.right}, {QStringLiteral("bottom"), r.bottom}};
+}
+RegionPct pctOf(const RegionInt& r) { return RegionPct{double(r.left), double(r.top), double(r.right), double(r.bottom)}; }
+
+// image://crispsubs/frame?<serial>
+class FrameProvider final : public QQuickImageProvider {
+public:
+    explicit FrameProvider(std::shared_ptr<FrameStore> store) : QQuickImageProvider(QQuickImageProvider::Image), store_(std::move(store)) {}
+    QImage requestImage(const QString&, QSize* size, const QSize& requested) override {
+        QImage image;
+        { std::lock_guard lock(store_->mutex); image = store_->image; }
+        if (image.isNull()) { image = QImage(16, 9, QImage::Format_RGB32); image.fill(QColor(0x16, 0x16, 0x1A)); }
+        if (size) *size = image.size();
+        if (requested.width() > 0 && requested.height() > 0 && requested != image.size())
+            image = image.scaled(requested, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        return image;
+    }
+private:
+    std::shared_ptr<FrameStore> store_;
 };
-const Region* presetRegion(const QString& id) {
-    for (const auto& preset : kPresets) if (id == QLatin1String(preset.id)) return &preset.region;
-    return nullptr;
+
+// Theme.fontUi is "Noto Sans SC" for every language but ja / zh-TW. Windows
+// does not ship it, and for a missing family Qt falls back to the default GUI
+// font, MS Shell Dlg 2 = Tahoma. Tahoma's hinted 11 px "l" carries a wide right
+// bearing, so with the menu headers' 0.44 px letter spacing "Altyazı" reads
+// "Al tyazı" (and the same gap shows in other small text). Segoe UI is
+// Windows' own UI face with the same metrics class; Microsoft YaHei UI keeps
+// Chinese text covered. Nothing changes where Noto Sans SC is installed.
+// CRISPPLAY_KEEP_UI_FONT=1 keeps Qt's fallback (before/after comparison).
+void installInterfaceFont() {
+    const QString wanted = QStringLiteral("Noto Sans SC");
+    if (qEnvironmentVariableIsSet("CRISPPLAY_KEEP_UI_FONT") || QFontDatabase::hasFamily(wanted)) return;
+    QFont::insertSubstitutions(wanted, {QStringLiteral("Segoe UI"), QStringLiteral("Microsoft YaHei UI")});
+    veyra::log::info("subs", "interface font: Noto Sans SC is not installed; Segoe UI substitutes for it");
 }
 QString megabytes(qint64 bytes) { return QString::number(double(bytes) / (1024.0 * 1024.0), 'f', 0) + QStringLiteral(" MB"); }
 
@@ -44,15 +86,26 @@ QString megabytes(qint64 bytes) { return QString::number(double(bytes) / (1024.0
 class Overlay final : public OverlayBackend {
 public:
     void appendLines(std::vector<veyra::ui::SubtitleLine>& draw, const veyra::ui::SubtitleView& view, const RECT& client) override {
-        DrawnLine drawn;
-        if (!Service::instance().current(drawn)) { frame_.reset(); return; }
         // Same mapping as the overlay's picture path: the canvas is the video's
         // rectangle on screen, so the picture is drawn 1:1 (sharp text).
         const double width = client.right, height = client.bottom;
         const double videoW = view.videoWidth > 0 ? view.videoWidth : width, videoH = view.videoHeight > 0 ? view.videoHeight : height;
-        if (width < 32 || height < 32 || videoW <= 0 || videoH <= 0) return;
+        if (width < 32 || height < 32 || videoW <= 0 || videoH <= 0) { frame_.reset(); outline_.reset(); return; }
         const double fit = std::min(width / videoW, height / videoH) * view.preview.zoom;
         const int canvasW = int(std::lround(videoW * fit)), canvasH = int(std::lround(videoH * fit));
+
+        // Region picker open: the edited region on the live picture.
+        Region region;
+        if (Service::instance().outline(region)) {
+            if (!outline_ || !(region == outlineRegion_) || canvasW != outlineW_ || canvasH != outlineH_) {
+                outline_ = renderOutline(region, canvasW, canvasH);
+                outlineRegion_ = region; outlineW_ = canvasW; outlineH_ = canvasH;
+            }
+            if (outline_) { veyra::ui::SubtitleLine line; line.bitmap = outline_; draw.push_back(std::move(line)); }
+        } else outline_.reset();
+
+        DrawnLine drawn;
+        if (!Service::instance().current(drawn)) { frame_.reset(); return; }
         if (!frame_ || serial_ != drawn.serial || canvasW != canvasW_ || canvasH != canvasH_) {
             OverlayStyle style;
             style.scale = drawn.scale; style.opacity = drawn.opacity;
@@ -65,9 +118,10 @@ public:
         draw.push_back(std::move(line));
     }
 private:
-    std::shared_ptr<const veyra::engine::SubtitleBitmapFrame> frame_;
+    std::shared_ptr<const veyra::engine::SubtitleBitmapFrame> frame_, outline_;
     uint64_t serial_ = 0;
-    int canvasW_ = 0, canvasH_ = 0;
+    int canvasW_ = 0, canvasH_ = 0, outlineW_ = 0, outlineH_ = 0;
+    Region outlineRegion_;
 };
 
 } // namespace
@@ -77,6 +131,16 @@ SubsController::SubsController(const QString& dataDirectory, QObject* bridge, QO
     models_ = new ModelStore(dataDirectory, this);
     connect(models_, &ModelStore::stateChanged, this, [this] { apply(false); });
     connect(models_, &ModelStore::progress, this, [this] { poll(); });
+    connect(this, &SubsController::settingsChanged, this, &SubsController::rebuildMenu);
+    connect(this, &SubsController::stateChanged, this, &SubsController::rebuildMenu);
+    connect(this, &SubsController::onlineChanged, this, &SubsController::rebuildMenu);
+    // The menu shows the toggle's shortcut: follow the bridge's shortcut table.
+    if (bridge_) {
+        const QMetaObject* meta = bridge_->metaObject();
+        const int index = meta->indexOfProperty("shortcuts");
+        if (index >= 0 && meta->property(index).hasNotifySignal())
+            connect(bridge_, meta->property(index).notifySignal(), this, metaObject()->method(metaObject()->indexOfMethod("rebuildMenu()")));
+    }
     load();
     onlineConfig_ = loadOnlineConfig(dataUtf8());
     onlineHasKey_ = onlineConfig_.provider != OnlineProvider::None && hasApiKey(dataUtf8(), onlineConfig_.provider);
@@ -121,7 +185,7 @@ void SubsController::load() {
     settings_.overlayScale = std::clamp(o.value("overlaySize").toInt(100), 70, 160) / 100.0;
     settings_.coverOpacity = std::clamp(o.value("coverOpacity").toInt(92), 60, 100);
     preset_ = o.value("regionPreset").toString(QStringLiteral("default"));
-    if (const Region* region = presetRegion(preset_)) settings_.region = *region;
+    if (const auto region = presetRegion(preset_)) settings_.region = *region;
     else {
         preset_ = QStringLiteral("custom");
         const QJsonObject r = o.value("region").toObject();
@@ -176,16 +240,18 @@ void SubsController::setCoverOpacity(int percent) {
 }
 void SubsController::setRegionPreset(const QString& preset) {
     if (preset == preset_) return;
-    if (const Region* region = presetRegion(preset)) { preset_ = preset; settings_.region = *region; }
+    if (const auto region = presetRegion(preset)) { preset_ = preset; settings_.region = *region; }
     else preset_ = QStringLiteral("custom");   // keeps the current numbers as the starting point
     apply(true);
 }
 void SubsController::setRegion(int left, int top, int right, int bottom) {
-    Region region;
-    region.left = float(left) / 100.0f; region.top = float(top) / 100.0f; region.right = float(right) / 100.0f; region.bottom = float(bottom) / 100.0f;
-    region = sanitized(region);
-    if (preset_ == QLatin1String("custom") && region == settings_.region) return;
-    preset_ = QStringLiteral("custom"); settings_.region = region;
+    const RegionInt rounded = roundRegion(RegionPct{double(left), double(top), double(right), double(bottom)});
+    const Region region = sanitized(toFraction(rounded));
+    // A preset's numbers select the preset (the settings tab shows its name).
+    const RegionPreset* preset = presetOf(rounded);
+    const QString id = preset ? QString::fromLatin1(preset->id) : QStringLiteral("custom");
+    if (preset_ == id && region == settings_.region) return;
+    preset_ = id; settings_.region = region;
     apply(true);
 }
 
@@ -338,6 +404,210 @@ void SubsController::poll() {
     if (!settings_.enabled && models_->state() != ModelStore::State::Downloading && !models_->checking() && s.state == State::Off) timer_.stop();
 }
 
+// ---- player bar menu ---------------------------------------------------------
+
+namespace {
+constexpr int kSizes[] = {85, 100, 120, 140};
+constexpr int kOpacities[] = {75, 85, 92, 100};
+QVariantMap item(std::initializer_list<std::pair<const char*, QVariant>> fields) {
+    QVariantMap m;
+    for (const auto& [k, v] : fields) m.insert(QString::fromLatin1(k), v);
+    return m;
+}
+} // namespace
+
+QString sizeLabel(int percent) {
+    switch (percent) {
+    case 85: return QStringLiteral("Küçük");
+    case 100: return QStringLiteral("Normal");
+    case 120: return QStringLiteral("Büyük");
+    case 140: return QStringLiteral("Çok büyük");
+    default: return QStringLiteral("%") + QString::number(percent);
+    }
+}
+int nextSize(int percent) {
+    for (const int v : kSizes) if (v > percent) return v;
+    return kSizes[0];
+}
+int nextOpacity(int percent) {
+    for (const int v : kOpacities) if (v > percent) return v;
+    return kOpacities[0];
+}
+
+QVariantList SubsController::buildMenuItems(const MenuState& s) {
+    QVariantList items;
+    items << item({{"sep", true}});
+    items << item({{"head", QStringLiteral("Altyazı çevirisi")}});
+
+    // What keeps it from working, if anything (one disabled line; details in the settings tab).
+    QString warning;
+    if (s.localBuilt && !s.modelsReady && !s.onlineUsable) {
+        if (s.modelState == 1)   // Downloading
+            warning = s.bytesTotal > 0 ? QStringLiteral("Modeller indiriliyor: %%1").arg(int(100.0 * double(s.bytesDone) / double(s.bytesTotal)))
+                                       : QStringLiteral("Modeller indiriliyor…");
+        else if (s.modelState == 3) warning = QStringLiteral("Model indirilemedi — Ayarlar'dan yeniden dene");
+        else warning = QStringLiteral("Modeller indirilmedi — Ayarlar'dan indir");
+    } else if (s.ocrMissing) {
+        warning = QStringLiteral("İngilizce OCR dil paketi yok — Ayarlar'a bak");
+    }
+
+    QString note;
+    if (warning.isEmpty()) {
+        const QString key = s.shortcut.isEmpty() ? QString() : QStringLiteral(" · ") + s.shortcut;
+        if (!s.enabled) note = QStringLiteral("Kapalı") + key;
+        else switch (s.serviceState) {
+        case 2: note = QStringLiteral("Açık · İngilizce → Türkçe") + key; break;
+        case 3: case 4: note = QStringLiteral("Açık ama çalışmıyor · ayrıntı Ayarlar'da"); break;
+        default: note = QStringLiteral("Başlatılıyor…"); break;
+        }
+    }
+    QVariantMap toggle = item({{"label", QStringLiteral("Türkçe çeviri")}, {"icon", QStringLiteral("globe")},
+                               {"checked", s.enabled}, {"crisp", QStringLiteral("toggle")}});
+    if (!note.isEmpty()) toggle.insert(QStringLiteral("note"), note);
+    items << toggle;
+    if (!warning.isEmpty()) items << item({{"label", warning}, {"disabled", true}, {"crisp", QStringLiteral("none")}});
+
+    items << item({{"label", QStringLiteral("Yazı boyutu")}, {"icon", QStringLiteral("type")}, {"tag", sizeLabel(s.overlaySize)},
+                   {"crisp", QStringLiteral("size")}});
+    items << item({{"label", QStringLiteral("Kutu opaklığı")}, {"icon", QStringLiteral("eye")},
+                   {"tag", QStringLiteral("%") + QString::number(s.coverOpacity)}, {"crisp", QStringLiteral("opacity")}});
+    items << item({{"label", QStringLiteral("Çevrilecek alanı seç…")}, {"icon", QStringLiteral("scan")}, {"tag", s.regionLabel},
+                   {"crisp", QStringLiteral("region")}});
+    items << item({{"label", QStringLiteral("Çeviri ayarları…")}, {"icon", QStringLiteral("settings")},
+                   {"crisp", QStringLiteral("settings")}, {"page", QStringLiteral("set")}});
+    return items;
+}
+
+QString SubsController::shortcut() const {
+    if (!bridge_) return {};
+    return bridge_->property("shortcuts").toMap().value(QStringLiteral("subs")).toString();
+}
+
+void SubsController::rebuildMenu() {
+    MenuState s;
+    s.enabled = settings_.enabled;
+    s.serviceState = state_;
+    s.modelsReady = models_->state() == ModelStore::State::Ready;
+    s.modelState = int(models_->state());
+    s.bytesDone = models_->bytesDone(); s.bytesTotal = models_->bytesTotal();
+    s.localBuilt = localBuilt();
+    s.onlineUsable = settings_.online && onlineHasKey_;
+    s.ocrMissing = !ocrWarning_.isEmpty();
+    s.overlaySize = overlaySize(); s.coverOpacity = settings_.coverOpacity;
+    s.regionLabel = preset_ == QLatin1String("custom") ? QStringLiteral("Özel") : presetLabel(preset_);
+    s.shortcut = shortcut();
+    QVariantList items = buildMenuItems(s);
+    if (items == menuItems_) return;
+    menuItems_ = std::move(items);
+    emit menuChanged();
+}
+
+void SubsController::menuPicked(const QVariantMap& picked) {
+    const QString what = picked.value(QStringLiteral("crisp")).toString();
+    if (what == QLatin1String("toggle")) toggle();
+    else if (what == QLatin1String("size")) {
+        setOverlaySize(nextSize(overlaySize()));
+        emit notice(QStringLiteral("Çeviri yazı boyutu: %1").arg(sizeLabel(overlaySize())), false);
+    } else if (what == QLatin1String("opacity")) {
+        setCoverOpacity(nextOpacity(settings_.coverOpacity));
+        emit notice(QStringLiteral("Çeviri kutusu opaklığı: %%1").arg(settings_.coverOpacity), false);
+    } else if (what == QLatin1String("region")) emit regionPickerRequested();
+    else if (what == QLatin1String("settings")) emit settingsRequested();
+    veyra::log::info("subs", std::format("menu pick {}", what.toStdString()));
+}
+
+// ---- region picker -----------------------------------------------------------
+
+QString SubsController::regionLabel() const {
+    if (preset_ != QLatin1String("custom")) return presetLabel(preset_);
+    return QStringLiteral("Özel · sol %%1 · üst %%2 · sağ %%3 · alt %%4").arg(regionLeft()).arg(regionTop()).arg(regionRight()).arg(regionBottom());
+}
+
+QVariantList SubsController::regionPresetList() {
+    QVariantList list;
+    for (const RegionPreset& preset : regionPresets()) {
+        QVariantMap m = mapOf(pctOf(preset.region));
+        m.insert(QStringLiteral("id"), QString::fromLatin1(preset.id));
+        m.insert(QStringLiteral("label"), QString::fromUtf8(preset.label));
+        list << m;
+    }
+    return list;
+}
+
+QVariantMap SubsController::regionDrag(double x0, double y0, double x1, double y1) const { return mapOf(regionFromDrag(x0, y0, x1, y1)); }
+QVariantMap SubsController::regionMove(const QVariantMap& region, double dx, double dy) const { return mapOf(moveRegion(pctOf(region), dx, dy)); }
+QVariantMap SubsController::regionResize(const QVariantMap& region, int edges, double dx, double dy) const {
+    return mapOf(resizeRegion(pctOf(region), edges, dx, dy));
+}
+QVariantMap SubsController::regionOfPreset(const QString& id) const {
+    if (const RegionPreset* preset = findRegionPreset(id.toLatin1().constData())) return mapOf(pctOf(preset->region));
+    return mapOf(RegionPct{});
+}
+QString SubsController::presetIdOf(const QVariantMap& region) const {
+    const RegionPreset* preset = presetOf(roundRegion(pctOf(region)));
+    return preset ? QString::fromLatin1(preset->id) : QStringLiteral("custom");
+}
+QString SubsController::presetLabel(const QString& id) const {
+    if (const RegionPreset* preset = findRegionPreset(id.toLatin1().constData())) return QString::fromUtf8(preset->label);
+    return QStringLiteral("Özel");
+}
+void SubsController::saveRegion(const QVariantMap& region) {
+    const RegionInt r = roundRegion(pctOf(region));
+    setRegion(r.left, r.top, r.right, r.bottom);
+    veyra::log::info("subs", std::format("region saved {} {} {} {} preset={}", r.left, r.top, r.right, r.bottom, preset_.toStdString()));
+}
+void SubsController::setPreviewOutline(bool on, const QVariantMap& region) {
+    Service::instance().setOutline(on, toFraction(roundRegion(pctOf(region))));
+}
+
+void SubsController::captureFrame() {
+    if (frameBusy_) return;
+    frameBusy_ = true;
+    frameNote_ = QStringLiteral("Görüntü alınıyor…");
+    emit frameChanged();
+    Service::instance().requestSnapshot();
+    // A paused source presents nothing, so nothing would be copied: show the
+    // same position once more (a seek to where it stands) to present that frame.
+    const bool paused = bridge_ && bridge_->property("hasSource").toBool() && bridge_->property("paused").toBool();
+    if (paused) {
+        const double at = bridge_->property("position").toDouble();
+        QMetaObject::invokeMethod(bridge_, "seekTo", Q_ARG(double, at));
+        veyra::log::info("subs", std::format("snapshot: paused, presenting {:.3f} s again", at));
+    }
+    QPointer<SubsController> self(this);
+    std::shared_ptr<FrameStore> store = frameStore_;
+    // Waiting for the GPU and converting a whole frame: off the UI thread.
+    std::thread([self, store, paused] {
+        FrameSnapshot snap;
+        const bool ok = Service::instance().takeSnapshot(snap, paused ? 3000 : 1500);
+        QImage image;
+        if (ok) {
+            const auto& b = snap.image;
+            image = QImage(b.bgra.data(), b.width, b.height, b.stride, QImage::Format_RGB32).copy();
+            constexpr int kWidth = 960;   // enough to place a rectangle; small to hold and draw
+            if (image.width() > kWidth) image = image.scaledToWidth(kWidth, Qt::SmoothTransformation);
+            std::lock_guard lock(store->mutex);
+            store->image = image;
+        }
+        const int w = int(snap.frameWidth), h = int(snap.frameHeight);
+        QMetaObject::invokeMethod(QCoreApplication::instance(), [self, ok, w, h] {
+            if (!self) return;
+            self->frameBusy_ = false;
+            if (ok) {
+                self->frameReady_ = true; self->frameWidth_ = w; self->frameHeight_ = h; ++self->frameSerial_;
+                self->frameNote_.clear();
+            } else {
+                const bool source = self->bridge_ && self->bridge_->property("hasSource").toBool();
+                self->frameNote_ = !source ? QStringLiteral("Görüntü yok: önce bir video ya da kaynak açın.")
+                                 : self->frameReady_ ? QStringLiteral("Yeni kare alınamadı (video duraklatılmış olabilir); önceki kare gösteriliyor.")
+                                                     : QStringLiteral("Kare alınamadı (video duraklatılmış olabilir). Oynatıp Yenile'ye basın.");
+            }
+            veyra::log::info("subs", std::format("snapshot {} {}x{}", ok ? "ok" : "none", w, h));
+            emit self->frameChanged();
+        }, Qt::QueuedConnection);
+    }).detach();
+}
+
 } // namespace crispplay::subs::app
 
 namespace crispplay::subs {
@@ -345,9 +615,11 @@ namespace crispplay::subs {
 void installQml(QQmlEngine& engine, QObject* bridge, const std::filesystem::path& dataDirectory) {
     static app::Overlay overlay;   // process lifetime: the bridge may tick until the end
     installOverlay(&overlay);
+    app::installInterfaceFont();
     // Parented to the application: destroyed (and the worker stopped) when it exits.
     auto* controller = new app::SubsController(QString::fromStdWString(dataDirectory.wstring()), bridge, QCoreApplication::instance());
     engine.rootContext()->setContextProperty(QStringLiteral("crispSubs"), controller);
+    engine.addImageProvider(QStringLiteral("crispsubs"), new app::FrameProvider(controller->frameStore()));   // the engine owns it
 }
 
 } // namespace crispplay::subs

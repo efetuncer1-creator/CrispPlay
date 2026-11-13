@@ -8,8 +8,35 @@ Ne yapar: oynatılan görüntüdeki İngilizce altyazıyı ekrandan okur (OCR), 
 
 1. **Ayarlar → Altyazı çevirisi** sekmesini aç.
 2. İlk kullanımda **Yerel model ve OCR ağı** satırındaki **İndir** düğmesine bas (tek dosya, ~226 MB; açılınca ~262 MB, veri klasöründe `models\`). İndirme yarıda kalırsa kaldığı yerden sürer; her dosya SHA-256 ile doğrulanır.
-3. **Oyun altyazısını Türkçeye çevir** anahtarını aç ya da oynatırken **F10**'a bas (Ayarlar → Kısayollar'dan değiştirilir). Açılıp kapandığında kısa bir bildirim çıkar.
-4. Altyazı ekranın altında ortada değilse **Okunan bölge**'den uygun ön ayarı seç ya da **Özel** ile yüzdeleri gir.
+3. **Oyun altyazısını Türkçeye çevir** anahtarını aç, oynatırken **F10**'a bas (Ayarlar → Kısayollar'dan değiştirilir) ya da oynatıcı çubuğundaki **altyazı (CC) menüsünden** **Türkçe çeviri**'yi seç. Açılıp kapandığında kısa bir bildirim çıkar.
+4. Altyazı ekranın altında ortada değilse **Çevrilecek alanı seç…** (CC menüsü ya da ayarlar sekmesindeki **Alanı seç…**) ile alanı görüntünün üzerinde çiz; ya da **Okunan bölge**'den uygun ön ayarı seç.
+
+### Oynatıcı menüsü (CC)
+
+Oynatıcı çubuğundaki altyazı menüsünün altında **Altyazı çevirisi** bölümü:
+
+| Öğe | Ne yapar |
+|---|---|
+| **Türkçe çeviri** (onay işaretli) | Aç / kapat (F10 ile aynı, bildirim çıkar). Altındaki not durumu ve kısayolu gösterir: "Kapalı · F10", "Açık · İngilizce → Türkçe · F10", "Başlatılıyor…" |
+| *Modeller indirilmedi — Ayarlar'dan indir* (soluk, tıklanmaz) | Yalnız yerel model hazır değilken ve çevrimiçi motor kullanılamıyorken; indirme sürerken "Modeller indiriliyor: %NN", İngilizce OCR paketi yoksa onu söyler |
+| **Yazı boyutu** [Normal] | Tıkladıkça Küçük → Normal → Büyük → Çok büyük (ayarlar sekmesindeki değerler: %85 / 100 / 120 / 140) |
+| **Kutu opaklığı** [%92] | Tıkladıkça %75 → %85 → %92 → %100 |
+| **Çevrilecek alanı seç…** [şu anki alan] | Bölge seçiciyi açar |
+| **Çeviri ayarları…** | Ayarlar → Altyazı çevirisi sekmesini açar (tam ekrandaysa önce tam ekrandan çıkar) |
+
+Menü her seçimde kapanır (upstream menüsünün davranışı). Bölüm upstream'in kendi öğelerinin altına eklenir; dosyada çok altyazı izi varsa menü upstream'in sınırı olan 420 px'te kaydırılır.
+
+### Bölge seçici ("Çevrilecek alanı seç")
+
+Ayrı bir pencere: oynatılan görüntünün o anki karesi (960 px genişliğe küçültülmüş), üstünde turuncu çerçeveyle çevrilecek alan; alanın dışı karartılır.
+
+- **Boş yerden sürükle**: yeni alan çizilir (her yönde; çok küçük bir sürükleme en az %10 × %5'lik bir alana büyür).
+- **Alanın içinden sürükle**: taşınır (boyut korunur, görüntünün kenarında durur).
+- **Kenar ve köşelerden sürükle**: boyutlandırılır (karşı kenarı geçemez, en az %10 × %5).
+- **Hazır alanlar**: Alt bant (varsayılan, x %14–86, y %62–97) · Alt yarı (%0–100, %50–100) · Tüm ekran · Üst bant (%14–86, %3–30).
+- **Kaydet** (Enter) alanı tam yüzde olarak kaydeder ve hemen geçerli olur; **Vazgeç** (Esc) değiştirmez; **Varsayılana dön** alanı Alt bant'a getirir (Kaydet'e basılınca kaydedilir). Bir ön ayarın sayıları seçilirse o ön ayar kaydedilir; ayarlar sekmesi Alt yarı / Tüm ekran'ı "Özel" olarak gösterir.
+- Pencere açıkken düzenlenen alan **canlı videonun üstünde de turuncu çerçeveyle** gösterilir.
+- Oynatılan bir şey yoksa nötr bir yer tutucu ve "Görüntü yok: önce bir video ya da kaynak açın." notu çıkar; alan yine çizilebilir. Video duraklatılmışsa uygulama aynı konuma yeniden atlar (görüntü değişmez) ki o kare yeniden gösterilip kopyalanabilsin. **Yenile** yeni bir kare alır.
 
 Windows'un İngilizce OCR dil paketi gerekir. Yoksa sekmede sarı bir uyarı ve kurulum yolu görünür: Ayarlar > Saat ve dil > Dil ve bölge > English (United States) > Dil seçenekleri > Optik karakter tanıma (ya da yönetici PowerShell: `Add-WindowsCapability -Online -Name "Language.OCR~~~en-US~0.0.1.0"`).
 
@@ -18,7 +45,7 @@ Windows'un İngilizce OCR dil paketi gerekir. Yoksa sekmede sarı bir uyarı ve 
 | Ayar | Seçenekler | Varsayılan | Not |
 |---|---|---|---|
 | Oyun altyazısını Türkçeye çevir | açık / kapalı | kapalı | Kapalıyken görüntü okunmaz, model bellekte durmaz |
-| Okunan bölge | Alt orta (x %14–86, y %62–97) · Alt geniş (%5–95, %58–98) · Alt kenar (%14–86, %76–98) · Üst (%14–86, %3–30) · Özel | Alt orta | Yalnız bu bölge ekran kartından kopyalanır ve okunur |
+| Okunan bölge | Alt orta (x %14–86, y %62–97) · Alt geniş (%5–95, %58–98) · Alt kenar (%14–86, %76–98) · Üst (%14–86, %3–30) · Özel (bölge seçiciyle; Alt yarı ve Tüm ekran da buradan) | Alt orta | Yalnız bu bölge ekran kartından kopyalanır ve okunur. Bölge değişince hat sıfırlanır, ekrandaki satır silinir, eski bölgeden yolda olan örnek atılır |
 | Yazı boyutu | Küçük %85 · Normal · Büyük %120 · Çok büyük %140 | Normal | Görüntü yüksekliğinin ~%3,6'sı × oran |
 | Kutu opaklığı | %75 · %85 · %92 · %100 | %92 | Kutu her zaman İngilizce satırın tamamını kaplar |
 | Motor | Yerel (OPUS-MT) · Çevrimiçi | Yerel | Aşağıdaki gizlilik bölümüne bak |
@@ -66,6 +93,8 @@ VideoPresenter ──record()──> present::Chain ──> LiveRecorder (upstre
 
 **Yakalama (`custom/subs/app/src/BandCapture.*`).** `record(list, frame)` içinde, yalnız özellik açıkken, kare üretilmiş değilken ve son örnekten 250 ms geçtiyse: graf çıktısı `COMMON → COPY_SOURCE`, bant `CopyTextureRegion` ile okuma yığınındaki tampona, sonra `COMMON`'a geri. Tam kare kopyalanmaz. Tampon boyutu bant kadar (1080p'de 2,1 MB, 4K'da 8,4 MB; 16 bit kayan noktalı çıktıda iki katı), üç yuva. Boş yuva yoksa örnek atlanır (`noSlot`); `submitted()`'ın verdiği çit değeri yuvaya yazılır. Diğer karelerde maliyet bir atomik okuma ve bir saat karşılaştırması. Oturum bitince (`sessionEnded`) tamponlar beklemeden bırakılır; işçinin o an okuduğu yuva işi bitince bırakılır. Desteklenen çıktı biçimleri: RGBA8, BGRA8, R10G10B10A2 (SDR ve HDR10/PQ), RGBA16F (SDR ve scRGB); başkası gelirse yakalama durur ve günlüğe bir kez yazılır.
 
+**Anlık görüntü (bölge seçici, `BandCapture::requestSnapshot` / `takeSnapshot`).** Seçici bir kare istediğinde bir bayrak kalkar; sunulan bir sonraki gerçek (üretilmemiş) karede aynı `record()` çağrısı, bant kopyasının yanına (aynı `COMMON → COPY_SOURCE → COMMON` geçişi içinde) tüm karenin tek bir `CopyTextureRegion` kopyasını ekler; çit değeri `submitted()`'ta yazılır. Motor iş parçacığında bekleme yok; özellik kapalıyken de çalışır (kapalıyken diğer karelerin maliyeti iki atomik okuma). Ayrı bir iş parçacığı çiti bekler (en çok 1,5 sn, duraklatılmışsa 3 sn), eşler, bandın çeviricisiyle BGRA8'e çevirir (HDR ton eşleme aynı), 960 px genişliğe küçültür ve `image://crispsubs/frame?<n>` (QQuickImageProvider) ile QML'e verir. Tam kare tamponu okunduktan hemen sonra bırakılır (1080p RGBA8 8,3 MB; 4K yarım kayan noktalı 66 MB, yalnız o an). Tampon, istek ilk geldiğinde motor iş parçacığında bir kez oluşturulur (birkaç ms, yalnız seçici açılırken).
+
 **OCR ve çeviri (`SubsService.*`).** Tek işçi iş parçacığı: en yeni örneği alır (eskiler bayat sayılır), çiti `SetEventOnCompletion` ile bekler (en çok 1 sn), tamponu eşler, `crispplay_subs_ocr` çeviricileriyle BGRA8'e çevirir. HDR çıktıda 203 nit beyaz kabul edilip omuzlu ton eşleme yapılır (HDR10 için 1024 girişli tablo). Bant değişmediyse (duraklatma, sabit sahne) OCR yeniden çalışmaz, önceki okuma kullanılır. Okuma `SubtitlePipeline::process()`'e verilir; çeviri hattın kendi iş parçacığında, aynı anda bir tane. Özellik kapanınca model ve OCR ağı bellekten atılır. 3 sn örnek gelmezse ya da oturum biterse ekrandaki satır silinir.
 
 **Katman (`OverlayRender.*`, `SubsController.cpp`).** QML video üzerine çizemediği için upstream'in dosya altyazılarında kullandığı katmanlı alt pencere kullanılır. `tickSubtitles()`'taki kanca `draw` listesine bir **resim** satırı ekler (PGS altyazılarının yolu): kutu ve metin Qt ile çizilir, 256 renkli palet + uzunluk kodlu satırlara çevrilir, upstream bunu video dikdörtgenine yerleştirir. Böylece kutunun yeri ve boyutu bizde: kutu, hattın verdiği kare-oranlı kapatma bandını (İngilizce satır kutularının birleşimi + pay) her zaman tam kaplar, Türkçe metin daha uzunsa merkezden büyür ve görüntünün içinde kalır. Konuşmacı adı sarı, metin beyaz. Resim, videonun ekrandaki boyutunda üretildiği için metin keskindir; satır ya da pencere boyutu değişmedikçe yeniden çizilmez. Kanca `!s.capture` koşulunun dışında olduğu için yakalama kartı, ekran ve yayın kaynaklarında da çalışır.
@@ -78,13 +107,14 @@ VideoPresenter ──record()──> present::Chain ──> LiveRecorder (upstre
 
 | Dosya | Satır | Ne |
 |---|---|---|
+| `qml/Veyra/CineBar.qml` | 2 | altyazı menüsüne `crispSubs.menuItems`; `onPicked`'te `o.crisp` öğeleri `crispSubs.menuPicked(o)`'ya |
 | `src/engine/EngineController.cpp` | 0 yeni (3 mevcut satır değişti) | Yakalama zinciri genelleşti: `crispplay::present::wrapCapture` / `sessionEnded` (`custom/include/crispplay/present/Hooks.h`); anlık tekrar zincire `addTap` ile ekleniyor |
 | `src/ui/bridge/Subtitles.cpp` | 2 | include + `crispplay::subs::appendLines(draw, view, client)` |
 | `apps/veyra-qml/main.cpp` | 2 | include + `crispplay::subs::installQml(engine, &bridge, dataDirectory)` |
 | `qml/Veyra/SettingsPage.qml` | 3 | sekme girdisi, `Loader`, kısayol satırı |
 | `src/ui/bridge/Preferences.cpp` | 0 yeni (1 mevcut satır) | varsayılan kısayol `{"subs", "F10"}` |
 
-Toplam 7 yeni `VEYRA_CUSTOM` satırı; `HOOKS.md` sayacı 44 → 51. `Main.qml`'e satır eklenmedi (kısayol ve bildirim `custom/qml/ReplayHost.qml` üzerinden yüklenir).
+Toplam 9 `VEYRA_CUSTOM` satırı (ilk sürümde 7, oynatıcı menüsüyle +2); `HOOKS.md` sayacı 44 → 51 → 53. `Main.qml`'e satır eklenmedi (kısayol ve bildirim `custom/qml/ReplayHost.qml` üzerinden yüklenir).
 
 ### Derleme ve paket
 
@@ -94,7 +124,8 @@ Toplam 7 yeni `VEYRA_CUSTOM` satırı; `HOOKS.md` sayacı 44 → 51. `Main.qml`'
 
 ### Test ve tanılama
 
-- Birim testleri: `crispplay_subs_app_tests` (bant geometrisi, biçim çevirme, HDR10 tablosu, zincir dağıtımı, kutu/palet, eksik karakter); `custom\scripts\build.ps1 -Test` içinde.
+- Birim testleri: `crispplay_subs_app_tests` (bant geometrisi, biçim çevirme, HDR10 tablosu, zincir dağıtımı, kutu/palet, eksik karakter; bölge seçici geometrisi: sürükleme → yüzde, sınırlama, en küçük boyut, taşıma, boyutlandırma, yuvarlama, ön ayarlar; menü öğeleri ve döngüler; video üstü çerçeve; anlık görüntü kopyası WARP aygıtında gerçek D3D12 ile); `custom\scripts\build.ps1 -Test` içinde.
+- Arayüz denemesi: `subs-test.ps1 -UiTest menu` CC menüsünü açık tutar ve öğelerin ekrandaki yerini günlüğe yazar (`[subs-ui] item …`); `-Clicks "6800:item:Türkçe_çeviri"` gerçek fareyle tıklar, `-UiTest menu` + `-Clicks "…:item:Çevrilecek_alanı_seç…"` + `-Drags "11000:2,1,42,13"` (seçicinin resmi üzerinde yüzde) + `-Clicks "…:button:subs-region-save"` bölgeyi uçtan uca değiştirir. `-UiTest picker` / `picker-paused` seçiciyi doğrudan açar, `pick:settings` CineBar'ın yaptığı çağrıyı fare olmadan yapar. `-NoMedia` dosyasız açar. `CRISPPLAY_SUBS_MODEL_ROOT` zaten kurulu bir model klasörünü gösteriyorsa betik onu kullanır.
 - Gerçek oynatma: `custom\scripts\subs-test.ps1` uygulamayı ayrı `--data-dir` ile açar, klibi oynatır, saniyede bir işlemci/bellek/GPU örnekler, pencere görüntüsü alır, `-Transcript` verilirse gösterilen satırları dökümle karşılaştırır (`custom/subs/app/tools/subs_regress.py`). Çıktı `out\subs-test\<ad>\`.
 
   ```powershell
@@ -167,6 +198,20 @@ Okuma:
 - NR + FG×6 bu ekran kartında zaten bütçenin üstünde olduğu için (BUILD.md) denenmedi.
 
 Kısayol: `out\subs-test\toggle\` çalıştırmasında F10 gerçekten basıldı; bildirim ("Altyazı çevirisi açık · İngilizce → Türkçe (yerel)") ve ilk Türkçe satır 1,1 sn içinde ekrandaydı (model yükleme dahil), ikinci F10 kapattı ve ayar dosyasına yazıldı.
+
+## Oynatıcı menüsü ve bölge seçici (2026-11-13, `feature/subs-ui`)
+
+Gerçek uygulamada, `sub_test.mp4` ile, ayrı `--data-dir`'lerle (`out\subs-test\ui-*`), modeller `%APPDATA%\CrispPlay\models`'ten:
+
+- CC menüsü yeni bölümle (`ui-menu\shot-006000.png`): başlık, Türkçe çeviri (kapalı, "Kapalı · F10"), Yazı boyutu [Normal], Kutu opaklığı [%92], Çevrilecek alanı seç… [Alt bant (varsayılan)], Çeviri ayarları…; 420 px'e sığıyor, kaydırma yok (altyazı izi olmayan dosyada).
+- Menüden gerçek fare tıklamasıyla açma: bildirim ve Türkçe satırlar geldi; menü yeniden açılınca onay işareti ve "Açık · İngilizce → Türkçe · F10" (`ui-menu\shot-012500.png`).
+- Yazı boyutu Normal → Büyük menüden, gerçek tıklamayla (`ui-menu-actions\input-006800.png`: bildirim ve büyük satır; `input-009300.png`: menüde [Büyük]; ayar dosyasına 120 yazıldı). Opaklık %92 → %100 ara bir çalıştırmada aynı yoldan (bildirim "Çeviri kutusu opaklığı: %100"; o görüntünün üzerine sonraki çalıştırma yazdı). Çeviri ayarları… → Ayarlar → Altyazı çevirisi (`ui-menu-settings\shot-012000.png`; bu adımda CineBar'ın yaptığı `menuPicked` çağrısı fare yerine test kancasıyla yapıldı).
+- Test kancası gerçek fareyi kullandığı için, menüyü programla yeniden açtıktan sonraki bazı tıklamalar yanlış satıra düştü (oynatıcı çubuğu penceresi o sırada yer değiştirmiş ya da ekranda başka bir fare hareketi olmuş olabilir); bunlar yukarıdaki sonuçlara sayılmadı.
+- Bölge seçici menüden açıldı, klibin gerçek karesiyle (`ui-picker\shot-009500.png`; canlı videoda da turuncu çerçeve); gerçek fareyle sol üstte yeni alan çizildi (`input-011000.png`), Kaydet tıklandı: `region saved 2 1 42 13 preset=custom`. Ardından altta İngilizce kalan konuşmalar çevrilmedi, sol üstteki görev yazısı çevrildi ("Depoya gizlice girin.", `shot-020000.png`): yeni bölge hemen geçerli.
+- Duraklatılmış videoda kare (`ui-picker-paused\shot-013500.png`, istekten 0,9 sn sonra), video yokken yer tutucu ve not (`ui-picker-nomedia\shot-006500.png`).
+- Menü başlığı "Al tyazı" düzeldi: `ui-menu-oldfont\header-zoom.png` (Tahoma yedeği, `CRISPPLAY_KEEP_UI_FONT=1`) ile `ui-menu\header-zoom.png` (Segoe UI); ayarlar sayfası `settings-oldfont\zoom.png` / `settings-newfont\zoom.png`.
+
+Doğrulanmadı: seçici tam ekranda; HDR çıktıda anlık görüntünün rengi (ton eşleme birim testte); yakalama kartı / ekran yakalama kaynaklarında anlık görüntü; menüden boyut ve opaklık döngüsünün Çok büyük / %75'e sarması (birim testte).
 
 ## Doğrulananlar / doğrulanmayanlar
 

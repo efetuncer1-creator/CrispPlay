@@ -475,7 +475,9 @@ Rectangle {
             .concat([{ label: qsTr("加载外部字幕…"), icon: "import", act: "load" },
                      { sep: true },
                      { label: qsTr("字幕设置…"), note: qsTr("字体、字号、描边、位置、延时"), icon: "type", act: "dlg" }])
+            .concat(typeof crispSubs !== "undefined" ? crispSubs.menuItems : []) // VEYRA_CUSTOM subtitle translation section
         onPicked: (i, o) => {
+            if (o.crisp) return crispSubs.menuPicked(o) // VEYRA_CUSTOM
             if (o.act === "load") veyra.loadSubtitleDialog()
             else if (o.act === "dlg") bar.requestDialog("subtitle")
             else if (o.track !== undefined) veyra.subtitlePrimary = o.track

@@ -7,6 +7,11 @@
 // Same pattern as upstream's LiveRecorder / present probe: the copy is
 // recorded into the presentation list while the graph output is in COMMON,
 // and the fence value reported by submitted() covers it.
+//
+// Snapshot (region picker): on request, one full-frame copy rides along with
+// the next presented real frame, also without any wait on the engine thread;
+// takeSnapshot() waits for it on the caller's thread. Works while the feature
+// is off; the buffer is let go of once it has been read.
 #pragma once
 
 #include <atomic>
@@ -29,6 +34,13 @@ struct BandSample {
     double readyMs = 0;                    // recorded -> GPU finished the copy
     double convertMs = 0;                  // map + convert + downscale
     uint64_t session = 0;                  // changes with every engine session
+};
+
+struct FrameSnapshot {
+    ocr::BandImage image;                  // BGRA8, full frame, HDR tone mapped (not downscaled)
+    uint32_t frameWidth = 0, frameHeight = 0;
+    DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
+    uint32_t hdrMode = 0;
 };
 
 struct CaptureStats {
@@ -63,6 +75,14 @@ public:
     bool next(BandSample& out, uint32_t timeoutMs);
     // Any thread: wakes a blocked next().
     void wake();
+
+    // Any thread: copy the next presented real frame whole (one shot).
+    void requestSnapshot();
+    // Any thread but the engine's: waits up to timeoutMs for the requested copy
+    // and converts it. False when no frame was presented in time (nothing
+    // playing, paused source that does not present) or the copy failed; the
+    // request is withdrawn then.
+    bool takeSnapshot(FrameSnapshot& out, uint32_t timeoutMs);
 
     // present::Tap (engine thread).
     bool record(ID3D12GraphicsCommandList* list, const Frame& frame) override;

@@ -4,15 +4,41 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <QImage>
+#include <QVariantList>
 #include <QVariantMap>
 
 #include <memory>
+#include <mutex>
 
 #include "SubsService.h"
 #include "crispplay/subs/ModelStore.h"
 #include "crispplay/subs/OnlineTranslator.h"
 
 namespace crispplay::subs::app {
+
+// The still the region picker shows, shared by the controller (writer, UI
+// thread) and the QML image provider (reader, scene graph thread).
+struct FrameStore {
+    std::mutex mutex;
+    QImage image;
+};
+
+// Everything the player bar's menu section depends on (buildMenuItems).
+struct MenuState {
+    bool enabled = false;
+    int serviceState = 0;          // State
+    bool modelsReady = false, localBuilt = true, onlineUsable = false;
+    int modelState = 0;            // ModelStore::State
+    qint64 bytesDone = 0, bytesTotal = 0;
+    bool ocrMissing = false;
+    int overlaySize = 100, coverOpacity = 92;
+    QString regionLabel, shortcut;
+};
+// Text sizes and box opacities the menu cycles through (same as the settings tab).
+QString sizeLabel(int percent);
+int nextSize(int percent);
+int nextOpacity(int percent);
 
 class SubsController final : public QObject {
     Q_OBJECT
@@ -44,8 +70,24 @@ class SubsController final : public QObject {
     Q_PROPERTY(int state READ state NOTIFY stateChanged)
     // Test hook (CRISPPLAY_TEST_SUBS_SETTINGS=1): SubsHost.qml opens this settings tab at start.
     Q_PROPERTY(bool testOpenSettings READ testOpenSettings CONSTANT)
+    // Test hook (CRISPPLAY_TEST_SUBS_UI=menu|picker|...): SubsHost.qml drives the UI for screenshots.
+    Q_PROPERTY(QString testUi READ testUi CONSTANT)
+
+    // Player bar: the "Altyazı çevirisi" section of the subtitle menu (VMenu
+    // items; ours carry `crisp`, picked through menuPicked()).
+    Q_PROPERTY(QVariantList menuItems READ menuItems NOTIFY menuChanged)
+    // Region picker.
+    Q_PROPERTY(QString regionLabel READ regionLabel NOTIFY settingsChanged)
+    Q_PROPERTY(QVariantList regionPresets READ regionPresetList CONSTANT)
+    Q_PROPERTY(int frameSerial READ frameSerial NOTIFY frameChanged)       // image://crispsubs/frame?<serial>
+    Q_PROPERTY(bool frameReady READ frameReady NOTIFY frameChanged)
+    Q_PROPERTY(bool frameBusy READ frameBusy NOTIFY frameChanged)
+    Q_PROPERTY(QString frameNote READ frameNote NOTIFY frameChanged)
+    Q_PROPERTY(int frameWidth READ frameWidth NOTIFY frameChanged)         // source frame, pixels
+    Q_PROPERTY(int frameHeight READ frameHeight NOTIFY frameChanged)
 public:
     bool testOpenSettings() const { return qEnvironmentVariableIsSet("CRISPPLAY_TEST_SUBS_SETTINGS"); }
+    QString testUi() const { return qEnvironmentVariable("CRISPPLAY_TEST_SUBS_UI"); }
     SubsController(const QString& dataDirectory, QObject* bridge, QObject* parent = nullptr);
     ~SubsController() override;
 
@@ -71,6 +113,16 @@ public:
     QString ocrWarning() const { return ocrWarning_; }
     QString engineWarning() const { return engineWarning_; }
     int state() const { return state_; }
+    QVariantList menuItems() const { return menuItems_; }
+    QString regionLabel() const;
+    static QVariantList regionPresetList();
+    int frameSerial() const { return frameSerial_; }
+    bool frameReady() const { return frameReady_; }
+    bool frameBusy() const { return frameBusy_; }
+    QString frameNote() const { return frameNote_; }
+    int frameWidth() const { return frameWidth_; }
+    int frameHeight() const { return frameHeight_; }
+    std::shared_ptr<FrameStore> frameStore() const { return frameStore_; }
 
     void setEnabled(bool enabled);
     void setRegionPreset(const QString& preset);
@@ -90,7 +142,32 @@ public:
     // The settings page opened: look for the OCR language pack, re-check the model files.
     Q_INVOKABLE void refresh();
 
+    // Player bar menu: one of menuItems() was picked.
+    Q_INVOKABLE void menuPicked(const QVariantMap& item);
+    Q_INVOKABLE void openRegionPicker() { emit regionPickerRequested(); }
+    Q_INVOKABLE void openSettings() { emit settingsRequested(); }
+    // Region picker geometry (RegionEdit.h), percent of the frame; maps {left, top, right, bottom}.
+    Q_INVOKABLE QVariantMap regionDrag(double x0, double y0, double x1, double y1) const;
+    Q_INVOKABLE QVariantMap regionMove(const QVariantMap& region, double dx, double dy) const;
+    Q_INVOKABLE QVariantMap regionResize(const QVariantMap& region, int edges, double dx, double dy) const;
+    Q_INVOKABLE QVariantMap regionOfPreset(const QString& id) const;
+    Q_INVOKABLE QString presetIdOf(const QVariantMap& region) const;
+    Q_INVOKABLE QString presetLabel(const QString& id) const;
+    // Saves a picked region (whole percent; a preset's numbers select that preset).
+    Q_INVOKABLE void saveRegion(const QVariantMap& region);
+    // Outline of the edited region on the video while the picker is open.
+    Q_INVOKABLE void setPreviewOutline(bool on, const QVariantMap& region);
+    // One still of the presented frame for the picker (asynchronous; frameChanged).
+    Q_INVOKABLE void captureFrame();
+
+    // Pure helpers (tests).
+    static QVariantList buildMenuItems(const MenuState& state);
+
 signals:
+    void menuChanged();
+    void frameChanged();
+    void regionPickerRequested();
+    void settingsRequested();
     void settingsChanged();
     void onlineChanged();
     void stateChanged();
@@ -102,6 +179,8 @@ private:
     void store() const;
     void apply(bool persist);
     void poll();
+    Q_INVOKABLE void rebuildMenu();   // invokable: connected to the bridge's shortcutsChanged by meta method
+    QString shortcut() const;
     std::string dataUtf8() const { return dataDirectory_.toStdString(); }
 
     QString dataDirectory_, file_;
@@ -114,6 +193,12 @@ private:
     QString onlineTest_, summary_, ocrWarning_, engineWarning_, modelSummary_;
     int state_ = 0;
     QTimer timer_;
+    QVariantList menuItems_;
+    std::shared_ptr<FrameStore> frameStore_ = std::make_shared<FrameStore>();
+    int frameSerial_ = 0, frameWidth_ = 0, frameHeight_ = 0;
+    bool frameReady_ = false, frameBusy_ = false;
+    QString frameNote_;
 };
+
 
 } // namespace crispplay::subs::app

@@ -10,6 +10,7 @@
 
 #include <QString>
 
+#include "BandFormat.h"
 #include "crispplay/subs/Types.h"
 #include "veyra/engine/Subtitles.h"
 
@@ -30,6 +31,10 @@ QString displayable(const QString& text, const QString& family);
 // Returns null when there is nothing to draw.
 std::shared_ptr<const veyra::engine::SubtitleBitmapFrame> renderLine(const ShownLine& line, int canvasWidth, int canvasHeight,
                                                                      const OverlayStyle& style);
+
+// Region picker: an outline of `region` (fractions of the frame) on a canvas
+// of the video's on-screen size, drawn while the picker is open.
+std::shared_ptr<const veyra::engine::SubtitleBitmapFrame> renderOutline(const Region& region, int canvasWidth, int canvasHeight);
 
 // For tests: the box of the last renderLine call in canvas pixels (x, y, w, h).
 struct RenderedBox { int x = 0, y = 0, width = 0, height = 0; };

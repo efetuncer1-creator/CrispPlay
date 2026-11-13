@@ -88,6 +88,13 @@ public:
     bool current(DrawnLine& out);
     // UI thread, for the event log only: playback position in seconds.
     void setPlaybackPosition(double seconds);
+    // Region picker: one full-frame copy of the next presented frame (works
+    // while the feature is off). takeSnapshot blocks: not on the UI thread.
+    void requestSnapshot();
+    bool takeSnapshot(FrameSnapshot& out, uint32_t timeoutMs);
+    // Region picker: outline `region` on the video while the picker is open (UI thread).
+    void setOutline(bool on, const Region& region);
+    bool outline(Region& out);
     // Stops the worker, at most timeoutMs.
     void shutdown(uint32_t timeoutMs);
 

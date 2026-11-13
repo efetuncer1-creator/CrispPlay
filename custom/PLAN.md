@@ -111,12 +111,13 @@ Fork'u kendin kullanırken yükümlülük yok; dağıttığın anda kaynak kodun
 ## Açık sorular ve sonraki adımlar
 
 - [x] Fork'un adı: CrispPlay (kod içi kısa ad: `CrispPlay`, sürüm eki `-crispplay.N`)
-- [ ] GitHub fork'u: `efetuncer1-creator/CrispPlay` (adres `Branding.h`'de sabit; fork açılınca işaretle)
+- [x] GitHub fork'u: `efetuncer1-creator/CrispPlay`
 - [x] Test GPU'su: NVIDIA GeForce RTX 3060 Ti
-- [ ] Discord Developer Portal'dan uygulama kimliği alınacak (Aşama 3 öncesi)
-- [x] Aşama 0 iskeleti kuruldu (derlenmedi)
-- [ ] Aşama 0 fork'a push edilecek; `SYNC_TOKEN`, Actions PR izni ve zamanlanmış workflow etkinleştirme
-- [ ] CrispPlay ikonu (`assets/veyra.ico`, `qml/Veyra/logo.png` yerine)
+- [x] Discord uygulama kimliği `Branding.h`'de
+- [x] Aşama 0–5 tamamlandı ve `main`'de
+- [ ] Efe: `SYNC_TOKEN` secret'ı ve Actions'ın PR açma izni (repo ayarları)
+- [x] CrispPlay ikonu (Gemini, `custom/branding/`)
+- [x] İlk sürüm: `v2.1.5-crispplay.1` (latest) ve `subs-models-v1` (ön sürüm, altyazı modelleri) 2026-11-13'te yayınlandı
 - [ ] Veri/ayar klasörü: `setApplicationName("Veyra")` değişsin mi? Değişirse orijinal Veyra ile ayarlar ayrılır ama mevcut ayarlar taşınmaz.
 
 ## Claude Code için başlangıç talimatı

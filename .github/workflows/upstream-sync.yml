@@ -49,7 +49,14 @@ jobs:
             echo "main already contains $tag"; echo "todo=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
           if git ls-remote --exit-code --heads origin "sync/$tag" >/dev/null; then
-            echo "sync/$tag already exists; PR is open or pending"; echo "todo=false" >> "$GITHUB_OUTPUT"; exit 0
+            prs=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "sync/$tag" --state all --json number --jq 'length')
+            if [ "$prs" = "0" ]; then
+              # An earlier run pushed the branch but could not open the PR: open it now.
+              echo "sync/$tag exists without a PR; opening it"
+              echo "todo=false" >> "$GITHUB_OUTPUT"; echo "pronly=true" >> "$GITHUB_OUTPUT"
+              echo "tag=$tag" >> "$GITHUB_OUTPUT"; echo "commit=$commit" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            echo "sync/$tag already has a PR"; echo "todo=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
           echo "todo=true" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
@@ -99,9 +106,30 @@ jobs:
           } > "$RUNNER_TEMP/body.md"
 
       - name: Open pull request
-        if: steps.tag.outputs.todo == 'true'
+        if: steps.tag.outputs.todo == 'true' || steps.tag.outputs.pronly == 'true'
         env:
           TAG: ${{ steps.tag.outputs.tag }}
+          COMMIT: ${{ steps.tag.outputs.commit }}
         run: |
-          gh pr create --base main --head "sync/$TAG" \
-            --title "Upstream $TAG" --body-file "$RUNNER_TEMP/body.md"
+          if [ ! -s "$RUNNER_TEMP/body.md" ]; then
+            {
+              echo "Upstream etiketi: \`$TAG\` (\`$COMMIT\`)"
+              echo
+              echo "Dal önceki bir çalıştırmada açılmıştı. Çakışma varsa yerelde çöz:"
+              echo
+              echo '```'
+              echo "git fetch origin && git checkout -b sync-fix/$TAG origin/main"
+              echo "git merge origin/sync/$TAG"
+              echo '```'
+              echo
+              echo "Kancalar için \`custom/HOOKS.md\`."
+            } > "$RUNNER_TEMP/body.md"
+          fi
+          # GitHub may not see a just-pushed branch yet ("Head sha can't be blank"): retry.
+          for i in 1 2 3 4 5 6; do
+            if gh pr create --base main --head "sync/$TAG" --title "Upstream $TAG" --body-file "$RUNNER_TEMP/body.md"; then
+              exit 0
+            fi
+            echo "PR creation failed (attempt $i); retrying in 15 s"; sleep 15
+          done
+          exit 1

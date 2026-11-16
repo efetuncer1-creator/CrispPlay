@@ -3,7 +3,7 @@
 
 # Our patch level on top of the upstream release in project(VERSION).
 # Bump it for each CrispPlay release; reset to 1 after taking a new upstream tag.
-set(CRISPPLAY_PATCH 1 CACHE STRING "CrispPlay patch level (-crispplay.N)")
+set(CRISPPLAY_PATCH 2) # bump per CrispPlay release; reset to 1 after a new upstream tag
 
 set(CRISPPLAY_PRODUCT_NAME "CrispPlay")
 # ASCII only: the version resource is compiled by rc.exe.

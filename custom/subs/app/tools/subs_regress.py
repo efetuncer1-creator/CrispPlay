@@ -61,7 +61,7 @@ def main() -> int:
     played = [line for line in transcript if first - 0.5 <= line["t"] <= last - 3.0]
 
     used = set()
-    delays, late, exact, speaker_ok, missed = [], 0, 0, 0, []
+    delays, late, exact, speaker_ok, speaker_final, missed = [], 0, 0, 0, 0, []
     for line in played:
         want = norm(line["en"])
         best, best_score = None, 0.0
@@ -90,9 +90,42 @@ def main() -> int:
             exact += 1
         if not line["speaker"] or norm(line["speaker"]) == norm(show.get("speaker", "")):
             speaker_ok += 1
+        # The speaker row may be read a moment after the dialogue: the shown line then gets it
+        # (a "replaces" show of the same line). Counted separately.
+        if not line["speaker"] or any(
+                norm(line["speaker"]) == norm(s.get("speaker", "")) and abs(s["pos"] - line["t"]) <= args.window
+                and (similar(want, norm(s["source"])) >= 0.75 or (want and norm(s["source"]) and (want in norm(s["source"]) or norm(s["source"]) in want)))
+                for s in shows):
+            speaker_final += 1
     in_range = [s for s in shows if first - 0.5 <= s["pos"] <= last]
     extra = [i for i, s in enumerate(shows) if i not in used and not s.get("replaces")]
     originals = sum(1 for s in in_range if s.get("original"))
+
+    # Turkish lines that still hold English of their source: two lower case source words in a
+    # row, or a source word that cannot be English ("nd", "wh") copied over. Names (capitalised)
+    # and words that are Turkish too do not count.
+    shared_words = {"a", "o", "i", "ad", "al", "an", "at", "ay", "bar", "ben", "bin", "can", "de", "da", "el", "en", "her",
+                    "kim", "me", "ne", "ok", "on", "son", "set", "ten", "top", "var", "ve", "ya", "yan", "bu", "mi", "ki"}
+    short_words = {"a", "i", "o", "am", "an", "as", "at", "be", "by", "do", "go", "he", "hi", "if", "in", "is", "it", "me",
+                   "my", "no", "of", "oh", "ok", "on", "or", "so", "to", "up", "us", "we", "ye", "ya", "uh", "um", "ah"}
+
+    def leftover(show):
+        if show.get("original"):
+            return False
+        src = re.findall(r"[^\W\d_]+(?:['’][^\W\d_]+)?", show["source"])
+        english = {w for i, w in enumerate(src) if w.islower() and len(w) >= 2 and w not in shared_words}
+        junk = {w for w in src if w.islower() and len(w) <= 2 and w not in short_words}
+        run = 0
+        for w in re.findall(r"[^\W\d_]+(?:['’][^\W\d_]+)?", show["text"]):
+            lw = w.lower()
+            if lw in junk:
+                return True
+            run = run + 1 if lw in english else 0
+            if run >= 2:
+                return True
+        return False
+
+    leftovers = [s for s in in_range if leftover(s)]
 
     def pct(part, whole):
         return round(100.0 * part / whole, 1) if whole else 0.0
@@ -112,11 +145,13 @@ def main() -> int:
         "shownPct": pct(len(played) - len(missed), len(played)),
         "sourceExactPct": pct(exact, len(played)),
         "speakerOkPct": pct(speaker_ok, len(played) - len(missed)),
+        "speakerOkAfterCorrectionPct": pct(speaker_final, len(played) - len(missed)),
         "shownAfterLineLeft": late,
         "missed": len(missed),
         "showsTotal": len(in_range),
         "showsWithoutTranscriptLine": len(extra),
         "shownAsOriginal": originals,
+        "turkishWithEnglishLeftover": len(leftovers),
         # Transcript times have a 0.5 s grid: these are +-0.5 s.
         "appearToShownSecMedian": round(statistics.median(delays), 2) if delays else 0,
         "appearToShownSecP90": round(quantile(delays, 0.9), 2),
@@ -138,6 +173,8 @@ def main() -> int:
             print(f"MISSED {line['t']:7.1f}s {line['en']}")
         for i in extra:
             print(f"EXTRA  {shows[i]['pos']:7.1f}s {shows[i]['source']} -> {shows[i]['text']}")
+        for s in leftovers:
+            print(f"LEFTOVER {s['pos']:7.1f}s {s['source']} -> {s['text']}")
     return 0 if report["passed"] else 1
 
 

@@ -7,6 +7,7 @@
 // Licensed under the GNU Affero General Public License version 3; see custom/subs/core/NOTICE.md.
 #include "crispplay/subs/LineTranslator.h"
 
+#include "crispplay/subs/OcrNoise.h"
 #include "crispplay/subs/PackText.h"
 #include "crispplay/subs/SubtitleSegmenter.h"
 #include "crispplay/subs/TextMatch.h"
@@ -105,6 +106,77 @@ UnknownMarkResult handleUnknownMarks(const std::string& outputUtf8, const std::s
     return {uni::encode(collapse(s)), false};
 }
 
+namespace {
+
+// Words that are English and Turkish alike: their presence in a translation proves nothing.
+const std::u32string_view kSharedWords[] = {
+    U"a", U"o", U"i", U"ad", U"al", U"an", U"at", U"ay", U"bar", U"ben", U"bin", U"can", U"dam", U"de", U"da", U"el",
+    U"en", U"ha", U"her", U"kim", U"me", U"ne", U"ok", U"on", U"pas", U"set", U"son", U"tam", U"ten", U"test", U"top",
+    U"tur", U"var", U"ve", U"ya", U"yan", U"dans", U"bot", U"kart", U"plan", U"park", U"film", U"radyo", U"sen", U"bu",
+    U"mi", U"ki", U"hey", U"oh", U"ah", U"eh", U"hm", U"mm", U"ay", U"so"};
+
+bool shared(const std::u32string& lower) {
+    return std::any_of(std::begin(kSharedWords), std::end(kSharedWords), [&](std::u32string_view w) { return w == lower; });
+}
+
+// Words (letters, marks, inner apostrophes) in order, as written.
+std::vector<std::u32string> words(const std::u32string& text) {
+    std::vector<std::u32string> out;
+    std::u32string current;
+    for (size_t i = 0; i < text.size(); ++i) {
+        const char32_t c = text[i];
+        const bool apostrophe = (c == '\'' || c == U'’') && !current.empty() && i + 1 < text.size() && uni::isLetter(text[i + 1]);
+        if (wordy(c) || apostrophe) { current.push_back(c); continue; }
+        if (!current.empty()) out.push_back(std::move(current));
+        current.clear();
+    }
+    if (!current.empty()) out.push_back(std::move(current));
+    return out;
+}
+
+}  // namespace
+
+bool hasLeftoverEnglish(const std::string& sourceUtf8, const std::string& outputUtf8, const std::set<std::string>& names) {
+    const auto source = words(uni::decode(sourceUtf8));
+    // In a broken reading, lower case words of 5+ letters the dictionary does not know are junk
+    // too ("kilthosewo"); in a clean one such a word is foreign and may stay ("minchia").
+    const bool doubtful = OcrNoise::looksBroken(sourceUtf8);
+    std::vector<std::u32string> english, broken;  // lower case
+    for (size_t i = 0; i < source.size(); ++i) {
+        const auto& w = source[i];
+        const auto lower = uni::toLowerInvariant(w);
+        if (names.count(uni::encode(lower))) continue;
+        if (OcrNoise::isBrokenWord(uni::encode(w)) ||
+            (doubtful && w == lower && w.size() >= 5 && OcrNoise::unknownWords(uni::encode(w)) > 0))
+            broken.push_back(lower);
+        const bool lowerCase = std::none_of(w.begin(), w.end(), [](char32_t c) { return uni::isUpper(c); });
+        // A capitalised word is a name, unless it only starts the sentence.
+        if (!lowerCase && !(i == 0 && std::count_if(w.begin(), w.end(), [](char32_t c) { return uni::isUpper(c); }) == 1)) continue;
+        if (lower.size() < 2 || shared(lower)) continue;
+        english.push_back(lower);
+    }
+    const auto output = words(uni::decode(outputUtf8));
+    if (output.empty()) return false;
+    // The engine may change a letter or two of a word it copies ("ilthosewo" -> "Iltheswo").
+    auto similar = [](const std::vector<std::u32string>& list, const std::u32string& w, double threshold) {
+        return std::any_of(list.begin(), list.end(), [&](const std::u32string& s) {
+            return s == w || (s.size() >= 5 && w.size() >= 5 && TextMatch::isSimilar(uni::encode(s), uni::encode(w), threshold));
+        });
+    };
+    size_t count = 0, run = 0;
+    for (const auto& w : output) {
+        const auto lower = uni::toLowerInvariant(w);
+        if (!shared(lower) && similar(broken, lower, 0.7)) return true;  // "r Lin" -> "R Lin ..."
+        if (similar(english, lower, 0.8)) {
+            ++count;
+            if (++run >= 2) return true;
+        } else {
+            run = 0;
+        }
+    }
+    return count >= 3 && count * 10 >= output.size() * 4;
+}
+
 LineTranslator::LineTranslator(Translator& engine, Options options)
     : engine_(engine), options_(std::move(options)), recent_(options_.clock) {
     cache_ = options_.cache;
@@ -143,8 +215,11 @@ std::optional<std::pair<std::string, std::string>> damagedSpeaker(const std::str
 
 }  // namespace
 
-std::optional<TranslatedLine> LineTranslator::translate(const std::string& text) {
+std::optional<TranslatedLine> LineTranslator::translate(const std::string& text, const std::string& speaker) {
     std::lock_guard lock(mutex_);
+    // CrispPlay: words of a speaker read above the line are names (casing, leftover check).
+    for (const auto& word : uni::splitWhiteSpace(uni::decode(speaker)))
+        if (word.size() >= 2) names_.insert(uni::encode(uni::toLowerInvariant(word)));
     // CrispPlay: an OCR-damaged label ("MİNE GUARD•", "-GAETANO:") is still kept out of the translation.
     if (auto damaged = damagedSpeaker(text)) {
         auto out = translateLocked(damaged->second);
@@ -174,7 +249,7 @@ std::optional<TranslatedLine> LineTranslator::translateLocked(const std::string&
             if (piece.translate) previous = piece.text;
 
     std::vector<std::optional<std::string>> translations;
-    size_t translatable = 0, originals = 0;
+    size_t translatable = 0, originals = 0, leftovers = 0;
     for (const auto& piece : pieces) {
         if (!piece.translate) {
             translations.push_back(std::nullopt);
@@ -185,6 +260,7 @@ std::optional<TranslatedLine> LineTranslator::translateLocked(const std::string&
         if (!sentence) return std::nullopt;
         ++translatable;
         if (sentence->original) ++originals;
+        if (sentence->leftover) ++leftovers;
         translations.push_back(sentence->text);
         previous = piece.text;
     }
@@ -201,6 +277,8 @@ std::optional<TranslatedLine> LineTranslator::translateLocked(const std::string&
     for (size_t i = first; i < pieces.size(); ++i) out.text += final[i] ? *final[i] : pieces[i].text;
     out.full += out.text;
     out.original = translatable > 0 && originals == translatable;
+    out.partial = originals > 0 && originals < translatable;
+    out.leftover = leftovers > 0;
     return out;
 }
 
@@ -223,7 +301,11 @@ std::optional<LineTranslator::Sentence> LineTranslator::translateSentence(const 
             return handled.text;
         });
     if (!result) return std::nullopt;
+    // CrispPlay: English the engine left in (junk words of a broken reading, an untranslated
+    // phrase) makes the sentence unusable, like a name the engine could not spell: it stays English.
     if (keptOriginal) result = sentence;
+    if (!keptOriginal && options_.leftoverCheck && hasLeftoverEnglish(sentence, *result, names))
+        return Sentence{sentence, true, true};  // not cached: a better reading of it may come
     cache_->store(key, *result);
     return Sentence{*result, *result == sentence};
 }

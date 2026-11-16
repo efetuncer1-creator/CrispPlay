@@ -40,7 +40,10 @@ public:
     static constexpr int RestoreWithinMs = 1500;
     // A line whose translation failed is retried at most this often.
     static constexpr int RetryAfterMs = 1000;
-    // A garbled-looking reading goes only after staying the same this long.
+    // A garbled-looking reading goes only after staying the same this long. CrispPlay: so does
+    // a broken one (OcrNoise::looksBroken: "nd kill shose wh"), and of the similar readings
+    // seen meanwhile the best one (OcrNoise::quality) is sent; a clean reading that comes after
+    // a broken one was sent is sent again (a revision of the line).
     static constexpr int GarbledStableMs = 700;
 
     using Clock = std::function<int64_t()>;
@@ -55,6 +58,9 @@ public:
     // Forget the last sent line (its translation failed); it is translated again while it
     // stays, at most every RetryAfterMs.
     void forgetSent();
+    // CrispPlay: the sent line's translation was not shown (English left in it): a better
+    // reading of the same line is sent again, like after a broken reading.
+    void sentUnusable() { if (!sent_.empty()) sentBroken_ = true; }
     StabilizerAction reset();
 
 private:
@@ -69,7 +75,11 @@ private:
     std::string candidate_;
     int candidateCount_ = 0;
     int64_t candidateSince_ = 0;
+    std::string bestRaw_;  // best reading of the candidate so far (CrispPlay)
+    int bestQuality_ = 0;
     std::string sent_, sentRaw_;  // normalized rows and first read form of the line on screen
+    bool sentBroken_ = false;     // sentRaw_ looked broken: a clean reading revises it
+    int sentQuality_ = 0;
     std::optional<int64_t> emptySince_;
     std::vector<Left> history_;
     std::string forgotten_;

@@ -9,7 +9,9 @@
 //
 // CrispPlay additions: speaker label returned separately (an OCR-damaged "NAME:"/"NAME•" label too,
 // via PackLookup's LooseLabel rule), and the SentencePiece unknown mark
-// U+2047 "⁇" handled (original line, restored foreign word, or the mark dropped).
+// U+2047 "⁇" handled (original line, restored foreign word, or the mark dropped); a sentence whose
+// translation kept English words of the source (hasLeftoverEnglish) stays English like with "⁇",
+// is not cached, and marks the line `leftover` (the pipeline then waits for a better reading).
 #pragma once
 
 #include "crispplay/subs/FreeTranslation.h"
@@ -32,7 +34,17 @@ struct TranslatedLine {
     std::string text;     // translation without that label
     bool original = false;  // no sentence could be translated usefully: `text` is the English
     std::string full;     // whole translated line, labels included (CouchSubs' result)
+    bool partial = false;   // some (not all) sentences kept their English (U+2047 or leftover rule)
+    bool leftover = false;  // a sentence kept its English because the engine left English in it
 };
+
+// CrispPlay: does the engine output still hold English of the source that is no name or term?
+// "Al bunu, nd kill shose wh hakettiğimi." for "Take it, nd kill shose wh deserve it." does:
+// a source word that cannot be English ("nd", OcrNoise::isBrokenWord) came through, or two
+// lower case source words follow each other in the output, or such words make 40 % of it (3+).
+// Capitalised source words other than the first, `names` (lower case) and words that are also
+// Turkish ("her", "can", "son", "at"...) do not count.
+bool hasLeftoverEnglish(const std::string& source, const std::string& output, const std::set<std::string>& names = {});
 
 // What the engine said about one call (U+2047 handling).
 struct UnknownMarkResult {
@@ -60,6 +72,9 @@ public:
         // false: no sentence splitting, glossary, context or post-edit; the engine gets the line
         // without its speaker label (whole-line engines, tests).
         bool textPipeline = true;
+        // A sentence whose translation kept English (hasLeftoverEnglish) stays English. Off only
+        // for tests whose fake engines answer in (upper case) English.
+        bool leftoverCheck = true;
         std::function<int64_t()> clock;  // milliseconds, for the short-line context age
         std::shared_ptr<TranslationCache> cache;   // overrides cacheDirectory
         std::shared_ptr<GlossaryStore> glossary;   // overrides glossaryDirectory
@@ -69,12 +84,13 @@ public:
 
     LineTranslator(Translator& engine, Options options);
 
-    // Blocking; nullopt if the engine failed (or was cancelled).
-    std::optional<TranslatedLine> translate(const std::string& line);
+    // Blocking; nullopt if the engine failed (or was cancelled). `speaker`: the name read above
+    // the line (SpeakerRow), not part of it; its words are known names from then on.
+    std::optional<TranslatedLine> translate(const std::string& line, const std::string& speaker = {});
     void cancel() { engine_.cancel(); }
 
 private:
-    struct Sentence { std::string text; bool original = false; };
+    struct Sentence { std::string text; bool original = false; bool leftover = false; };
     std::optional<Sentence> translateSentence(const std::string& sentence, const std::optional<std::string>& context);
     std::optional<TranslatedLine> translateLocked(const std::string& line);
     std::optional<TranslatedLine> translateDirect(const std::string& line);

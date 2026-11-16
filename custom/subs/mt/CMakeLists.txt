@@ -60,6 +60,16 @@ if(CRISPPLAY_HAVE_CT2)
       CRISPPLAY_MT_DEFAULT_REAL="${PROJECT_SOURCE_DIR}/../deps/subs-real/real.json")
     target_link_libraries(crispplay_mt_bench PRIVATE crispplay_subs_mt Qt6::Core psapi)
   endif()
+
+  # Offline replay of an in-app event log through the text pipeline (development only).
+  if(TARGET crispplay_subs_core)
+    add_executable(crispplay_subs_replay tools/SubsReplay.cpp)
+    target_compile_options(crispplay_subs_replay PRIVATE /utf-8)
+    target_compile_definitions(crispplay_subs_replay PRIVATE NOMINMAX
+      CRISPPLAY_MT_DEFAULT_MODEL="${CRISPPLAY_MT_MODEL_DIR}")
+    # crispplay_subs_ocr (defined after this folder) for Windows' English word list.
+    target_link_libraries(crispplay_subs_replay PRIVATE crispplay_subs_core crispplay_subs_mt crispplay_subs_ocr ole32)
+  endif()
 endif()
 
 if(TARGET Qt6::Test)

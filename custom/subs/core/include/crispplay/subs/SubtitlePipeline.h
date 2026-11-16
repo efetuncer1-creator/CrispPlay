@@ -7,11 +7,15 @@
 //
 // Changes from CouchSubs: input is an already read OcrFrame (OCR runs elsewhere), output is a
 // callback for CrispPlay's overlay instead of the TV sender, the cover rectangle is computed from
-// the subtitle's line boxes, game packs and dubbing are left out.
+// the subtitle's line boxes, game packs and dubbing are left out. CrispPlay additions: a speaker
+// name row above the dialogue (SpeakerRow) is kept out of the text and shown as the speaker; a
+// translation with leftover English (TranslatedLine::leftover), or of a broken reading
+// (OcrNoise::looksBroken) that kept a sentence English, is not shown.
 #pragma once
 
 #include "crispplay/subs/LineTranslator.h"
 #include "crispplay/subs/Reading.h"
+#include "crispplay/subs/SpeakerRow.h"
 #include "crispplay/subs/SubtitleStabilizer.h"
 #include "crispplay/subs/Types.h"
 
@@ -91,12 +95,14 @@ public:
 private:
     struct Request;
     struct Pair { int number; std::string source; std::optional<TranslatedLine> translation; };
-    struct Screen { int number; std::string source; Rect cover; };
+    struct Screen { int number; std::string source; Rect cover; std::string speaker; };
     using Events = std::vector<SubtitleUpdate>;
 
     void lineLeft();
-    bool enqueue(const std::string& source, const Rect& cover, Events& events);
-    bool restore(const std::string& source, const Rect& cover, Events& events);
+    bool enqueue(const std::string& source, const Rect& cover, const std::string& speaker, Events& events);
+    bool restore(const std::string& source, const Rect& cover, const std::string& speaker, Events& events);
+    // The speaker row was read later than the dialogue: the line on screen gets its speaker.
+    void addSpeaker(const std::string& speaker, Events& events);
     void show(const Request& request, const TranslatedLine& line, int duration, Events& events);
     void remember(int number, const std::string& source, std::optional<TranslatedLine> translation);
     bool revisesShown(const std::string& source) const;
@@ -114,6 +120,7 @@ private:
     mutable std::mutex mutex_;
     std::condition_variable wake_, idle_;
     SubtitleStabilizer stabilizer_;
+    KnownSpeakers speakers_;  // names read above dialogue so far (process() thread only)
     int lastRequested_ = 0, lastShown_ = 0;
     std::shared_ptr<Request> inFlight_;
     bool started_ = false;  // inFlight_ has been picked up by the worker

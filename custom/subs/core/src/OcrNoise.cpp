@@ -7,11 +7,14 @@
 //
 // Port note: the two .NET regular expressions (LeadingNumber, Usual) are hand-written matchers;
 // \d is Unicode Nd as in .NET.
+// CrispPlay additions: isBrokenWord / brokenWords / looksBroken / quality (end of the file).
 #include "crispplay/subs/OcrNoise.h"
 
 #include "crispplay/subs/Unicode.h"
 
 #include <algorithm>
+#include <memory>
+#include <mutex>
 #include <optional>
 #include <vector>
 
@@ -228,6 +231,175 @@ bool looksGarbled(const std::string& text) {
         (isClean ? good : bad) += static_cast<int>(letters.size());
     }
     return bad * 6 > good + bad;
+}
+
+// ---- CrispPlay additions ------------------------------------------------------------------
+
+namespace {
+
+// English words of one or two letters (lower case), and short interjections without vowels.
+const std::u32string_view kShortWords[] = {
+    U"a", U"i", U"o", U"ad", U"ah", U"am", U"an", U"as", U"at", U"aw", U"ax", U"ay", U"be", U"by", U"do", U"eh",
+    U"em", U"er", U"ex", U"go", U"ha", U"he", U"hi", U"ho", U"id", U"if", U"in", U"is", U"it", U"la", U"lo", U"ma",
+    U"me", U"mi", U"mm", U"hm", U"my", U"na", U"no", U"of", U"oh", U"ok", U"on", U"or", U"ow", U"ox", U"oy", U"pa",
+    U"re", U"so", U"to", U"uh", U"um", U"un", U"up", U"us", U"we", U"ye", U"ya", U"yo", U"vs", U"de", U"da", U"di",
+    U"du", U"le", U"el", U"al", U"ta", U"ti", U"sh", U"ps"};
+// brokenWords() lets these pass in context: ordinal tails right after a number ("2 nd"),
+// contraction tails right after a word ("I ll", "we ve": the apostrophe read as a space).
+const std::u32string_view kOrdinalTails[] = {U"st", U"nd", U"rd", U"th"};
+const std::u32string_view kContractionTails[] = {U"ll", U"ve", U"re", U"s", U"t", U"d", U"m"};
+const std::u32string_view kInterjections[] = {U"hmm", U"hmmm", U"mmm", U"shh", U"shhh", U"psst", U"pst", U"tsk",
+                                              U"brr", U"grr", U"grrr", U"pff", U"pfft", U"hmph", U"zzz", U"nth", U"ssh"};
+// Two leading consonants an English word can start with.
+const std::u32string_view kOnsets[] = {U"bl", U"br", U"ch", U"cl", U"cr", U"dr", U"dw", U"fl", U"fr", U"gh", U"gl",
+                                       U"gn", U"gr", U"kn", U"kr", U"kl", U"ph", U"pl", U"pr", U"ps", U"pt", U"rh",
+                                       U"sc", U"sh", U"sk", U"sl", U"sm", U"sn", U"sp", U"sq", U"st", U"sv", U"sw",
+                                       U"th", U"tr", U"ts", U"tw", U"wh", U"wr", U"zh", U"vl", U"mc", U"cz", U"kh",
+                                       U"mn", U"vr", U"dj", U"sv"};
+
+bool inList(std::u32string_view word, const std::u32string_view* begin, const std::u32string_view* end) {
+    return std::any_of(begin, end, [&](std::u32string_view w) { return w == word; });
+}
+
+bool isVowel(char32_t c) { return contains(U"aeiouyäöüıàáâèéêìíîòóôùúû", c); }
+
+// The letters of a token if it is only lower case letters (apostrophes allowed inside), else empty.
+std::u32string lowerLetters(const std::u32string& core) {
+    std::u32string letters;
+    for (char32_t c : core) {
+        if (c == '\'' || c == U'’') continue;
+        if (!uni::isLower(c)) return {};
+        letters.push_back(c);
+    }
+    return letters;
+}
+
+}  // namespace
+
+bool isBrokenWord(const std::string& tokenUtf8) {
+    const auto core = splitToken(uni::decode(tokenUtf8)).core;
+    if (core.empty() || core.find(U'\'') != std::u32string::npos || core.find(U'’') != std::u32string::npos) return false;
+    const auto letters = lowerLetters(core);
+    if (letters.empty()) return false;  // capitalised, mixed with digits or symbols: not judged here
+    if (letters.size() <= 2) return !inList(letters, std::begin(kShortWords), std::end(kShortWords));
+    if (inList(letters, std::begin(kInterjections), std::end(kInterjections))) return false;
+    if (std::none_of(letters.begin(), letters.end(), isVowel)) return true;
+    // Words run together by OCR ("probablyinvestigating"); English words this long are rare.
+    if (letters.size() >= 17) return true;
+    if (!isVowel(letters[0]) && !isVowel(letters[1])) {
+        const bool known = std::any_of(std::begin(kOnsets), std::end(kOnsets), [&](std::u32string_view onset) {
+            return letters.compare(0, onset.size(), onset) == 0;
+        });
+        // "str", "spl", "scr", "thr", "chr", "shr", "phr", "squ" start with a known pair too.
+        if (!known) return true;
+    }
+    return false;
+}
+
+int brokenWords(const std::string& text) {
+    int count = 0;
+    const auto tokens = uni::splitWhiteSpace(uni::decode(text));
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        const auto parts = splitToken(tokens[i]);
+        const auto& core = parts.core;
+        std::u32string letters;
+        for (char32_t c : core)
+            if (uni::isLetter(c)) letters.push_back(c);
+        if (letters.empty()) continue;
+        // A space lost between two words ("you.Take", "it,and"); "e.g." and "U.S." pass.
+        bool lostSpace = false;
+        for (size_t k = 1; k + 1 < core.size(); ++k) {
+            if (!contains(U".,;:!?", core[k]) || !uni::isLetter(core[k - 1]) || !uni::isLetter(core[k + 1])) continue;
+            const bool singleBefore = k < 2 || !uni::isLetter(core[k - 2]);
+            const bool singleAfter = k + 2 >= core.size() || !uni::isLetter(core[k + 2]);
+            if (!(core[k] == '.' && singleBefore && singleAfter)) lostSpace = true;
+        }
+        if (lostSpace) { ++count; continue; }
+        // Words run together, capitalised too ("Pangzhewhathappened"); not ALL CAPS shouting.
+        if (letters.size() >= 17 && !std::all_of(letters.begin(), letters.end(), [](char32_t c) { return uni::isUpper(c); })) {
+            ++count;
+            continue;
+        }
+        const auto cleaned = cleanCore(core);
+        const bool clean = cleaned && *cleaned == core && normalCase(core) && !hasBracket(core);
+        const auto folded = uni::toLowerInvariant(letters);
+        if (!clean || (vowelless(letters) && !inList(folded, std::begin(kInterjections), std::end(kInterjections)))) {
+            ++count;
+            continue;
+        }
+        const auto lower = lowerLetters(core);
+        if (!lower.empty() && lower.size() <= 2 && i > 0) {
+            const auto previous = splitToken(tokens[i - 1]);
+            const bool afterNumber = !previous.core.empty() && uni::isDigit(previous.core.back());
+            const bool afterWord = parts.lead.empty() && previous.trail.empty() && uni::anyLetter(previous.core);
+            if (afterNumber && inList(lower, std::begin(kOrdinalTails), std::end(kOrdinalTails))) continue;
+            if (afterWord && inList(lower, std::begin(kContractionTails), std::end(kContractionTails))) continue;
+        }
+        if (isBrokenWord(uni::encode(core))) ++count;
+    }
+    return count;
+}
+
+namespace {
+
+std::mutex dictionaryMutex;
+std::shared_ptr<const Dictionary> dictionary;
+
+std::shared_ptr<const Dictionary> currentDictionary() {
+    std::lock_guard lock(dictionaryMutex);
+    return dictionary;
+}
+
+// Lower case words of 3+ letters as the dictionary is asked ("don't" with its apostrophe).
+std::vector<std::u32string> dictionaryWords(const std::string& text) {
+    std::vector<std::u32string> out;
+    for (const auto& token : uni::splitWhiteSpace(uni::decode(text))) {
+        auto core = splitToken(token).core;
+        std::replace(core.begin(), core.end(), U'’', U'\'');
+        const auto letters = lowerLetters(core);
+        if (letters.size() >= 3) out.push_back(core);
+    }
+    return out;
+}
+
+}  // namespace
+
+void setDictionary(Dictionary knows) {
+    std::lock_guard lock(dictionaryMutex);
+    dictionary = knows ? std::make_shared<const Dictionary>(std::move(knows)) : nullptr;
+}
+
+int unknownWords(const std::string& text) {
+    const auto knows = currentDictionary();
+    if (!knows) return 0;
+    int count = 0;
+    for (const auto& word : dictionaryWords(text))
+        if (!(*knows)(uni::encode(word))) ++count;
+    return count;
+}
+
+bool looksBroken(const std::string& text) {
+    if (looksGarbled(text) || brokenWords(text) > 0) return true;
+    // Two or more unknown words making a fifth of the lower case words: a partly read line
+    // ("When wil wenally ecome strong enoug to hel hira"); one foreign word ("minchia") is not.
+    const int unknown = unknownWords(text);
+    const int words = static_cast<int>(dictionaryWords(text).size());
+    return unknown >= 2 && unknown * 5 >= words;
+}
+
+int quality(const std::string& text) {
+    int total = score(text);
+    const auto knows = currentDictionary();
+    for (const auto& token : uni::splitWhiteSpace(uni::decode(text))) {
+        auto core = splitToken(token).core;
+        std::replace(core.begin(), core.end(), U'’', U'\'');
+        const bool unknown = knows && lowerLetters(core).size() >= 3 && !(*knows)(uni::encode(core));
+        if (!unknown && !isBrokenWord(uni::encode(core))) continue;
+        // Counted as clean by score(): turn the plus into the garbage minus.
+        const int letters = static_cast<int>(std::count_if(core.begin(), core.end(), [](char32_t c) { return uni::isLetter(c); }));
+        total -= 3 * letters;
+    }
+    return total;
 }
 
 }  // namespace crispplay::subs::OcrNoise

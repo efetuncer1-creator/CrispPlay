@@ -23,7 +23,8 @@ add_library(crispplay_subs_ocr STATIC
   src/TextScore.cpp
   src/WindowsOcr.cpp
   src/PpOcr.cpp
-  src/HybridOcr.cpp)
+  src/HybridOcr.cpp
+  src/SpellCheck.cpp)
 target_include_directories(crispplay_subs_ocr PUBLIC include)
 target_compile_features(crispplay_subs_ocr PUBLIC cxx_std_20)
 target_compile_options(crispplay_subs_ocr PRIVATE /utf-8 /EHsc)

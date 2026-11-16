@@ -47,6 +47,17 @@ inline bool needsDownscale(const BandImage& img) { return img.width > kDownscale
 // 2x2 box filter; odd last row/column is dropped.
 BandImage downscale2x(const BandImage& img);
 
+// Low-resolution sources (below ~540p) give a band whose subtitle text is only 8-10 px high,
+// too small for Windows OCR: such a band is enlarged before OCR (bilinear). Measured on a 360p
+// clip (70 subtitles, band 460x126): Windows OCR similarity to the transcript 0.65 as is,
+// 0.88 at 2x and 3x, exact lines 2 -> 20 (2x) -> 25 (3x). Boxes come back in the enlarged
+// band's pixels; the pipeline only uses them relative to the band size.
+inline constexpr int kUpscaleBelowHeight = 200;
+// 3 below 140 px band height, 2 below 200 px, else 1.
+inline int upscaleFactor(const BandImage& img) {
+    return img.height <= 0 || img.height >= kUpscaleBelowHeight ? 1 : img.height < 140 ? 3 : 2;
+}
+
 // "White text only" (fallback preprocessing): bright pixels (max channel >= 200)
 // with a dark pixel (luma < 90) within `radius` become black on white.
 BandImage whiteTextOnly(const BandImage& img, int radius = 5);

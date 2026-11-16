@@ -4,7 +4,9 @@
 #include "crispplay/subs/OnlineTranslator.h"
 #include "crispplay/subs/SubtitlePipeline.h"
 #include "crispplay/subs/TextMatch.h"
+#include "crispplay/subs/OcrNoise.h"
 #include "crispplay/subs/ocr/HybridOcr.h"
+#include "crispplay/subs/ocr/SpellCheck.h"
 #include "crispplay/subs/ocr/WindowsOcr.h"
 #if CRISPPLAY_SUBS_HAVE_MT
 #include "crispplay/subs/mt/OpusMtTranslator.h"
@@ -257,6 +259,12 @@ struct Service::Impl {
 
     void run() {
         ocr::WindowsOcrReader::prepareThread();
+        // Windows' English word list: the text rules tell a partly read line from a real one
+        // (OcrNoise::looksBroken). Lives as long as this thread's COM apartment.
+        auto spell = std::make_shared<ocr::SpellCheck>();
+        if (spell->ready()) OcrNoise::setDictionary([spell](const std::string& word) { return spell->knows(word); });
+        veyra::log::info("subs", std::format("spellcheck en-US={}", spell->ready() ? 1 : 0));
+        struct DictionaryReset { ~DictionaryReset() { OcrNoise::setDictionary({}); } } dictionaryReset;
         std::unique_ptr<ocr::HybridOcrReader> reader;
         std::filesystem::path readerModel;
 #if CRISPPLAY_SUBS_HAVE_MT
@@ -426,15 +434,20 @@ struct Service::Impl {
         const uint64_t print = fingerprint(sample.image);
         OcrFrame frame;
         double ocrTime = 0, windowsMs = 0, ppocrMs = 0;
-        const bool reused = print == lastFingerprint && lastFrame.width == sample.image.width && lastFrame.height == sample.image.height;
+        // A small band (low-resolution source) is read enlarged: its text is too small as it is.
+        const int up = ocr::upscaleFactor(sample.image);
+        const bool reused = print == lastFingerprint && lastFrame.width == sample.image.width * up && lastFrame.height == sample.image.height * up;
         if (reused) {
             frame = lastFrame;   // identical picture (paused, static scene): same reading
             frame.timeMs = nowMs;
         } else {
             ocr::HybridDetail detail;
-            frame = reader.read(sample.image, nowMs, &detail);
+            const ocr::BandImage enlarged = up > 1 ? ocr::resizeBilinear(sample.image, sample.image.width * up, sample.image.height * up)
+                                                   : ocr::BandImage{};
+            const ocr::BandImage& image = up > 1 ? enlarged : sample.image;
+            frame = reader.read(image, nowMs, &detail);
             ocrTime = detail.totalMs; windowsMs = detail.windowsMs; ppocrMs = detail.ppocrMs;
-            frame.width = sample.image.width; frame.height = sample.image.height;
+            frame.width = image.width; frame.height = image.height;
             frame.bandLeft = float(sample.box.x) / float(sample.frameWidth);
             frame.bandTop = float(sample.box.y) / float(sample.frameHeight);
             frame.bandRight = float(sample.box.x + sample.box.width) / float(sample.frameWidth);
@@ -457,10 +470,18 @@ struct Service::Impl {
                 sample.box.width, sample.box.height, sample.scale, int(sample.format), sample.hdrMode, sample.readyMs, sample.convertMs,
                 ocrTime, windowsMs, ppocrMs, frame.lines.size(), reused ? 1 : 0));
         if (events.is_open()) {
-            std::string lines;
-            for (const auto& line : frame.lines) { if (!lines.empty()) lines += ','; lines += json::quote(line.text); }
-            event(std::format("{{\"kind\":\"sample\",\"t\":{},\"pos\":{:.3f},\"readyMs\":{:.1f},\"convertMs\":{:.1f},\"ocrMs\":{:.1f},\"reused\":{},\"lines\":[{}]}}",
-                nowMs, position.load(), sample.readyMs, sample.convertMs, ocrTime, reused ? "true" : "false", lines));
+            // Line texts plus their boxes (band pixels) and PP-OCR confidence, and the band geometry:
+            // enough to replay the reading offline (crispplay_subs_replay).
+            std::string lines, boxes;
+            for (const auto& line : frame.lines) {
+                if (!lines.empty()) { lines += ','; boxes += ','; }
+                lines += json::quote(line.text);
+                boxes += std::format("[{:.1f},{:.1f},{:.1f},{:.1f},{:.3f}]", line.box.x, line.box.y, line.box.w, line.box.h, line.confidence);
+            }
+            event(std::format("{{\"kind\":\"sample\",\"t\":{},\"pos\":{:.3f},\"readyMs\":{:.1f},\"convertMs\":{:.1f},\"ocrMs\":{:.1f},\"reused\":{},\"lines\":[{}],"
+                              "\"boxes\":[{}],\"size\":[{},{}],\"band\":[{:.4f},{:.4f},{:.4f},{:.4f}]}}",
+                nowMs, position.load(), sample.readyMs, sample.convertMs, ocrTime, reused ? "true" : "false", lines, boxes,
+                frame.width, frame.height, frame.bandLeft, frame.bandTop, frame.bandRight, frame.bandBottom));
         }
         if (!dumpDirectory.empty() && !reused)
             writeBmp(dumpDirectory / std::format("band-{:06}.bmp", dumpIndex++), sample.image);

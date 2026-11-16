@@ -42,41 +42,62 @@ StabilizerAction SubtitleStabilizer::feed(const std::string& rawText) {
     }
 
     emptySince_.reset();
+    const int quality = OcrNoise::quality(rawText);
     if (TextMatch::isSimilar(text, candidate_, similarity_)) {
         ++candidateCount_;
+        // CrispPlay: of the similar readings the best one counts (a line partly read over a
+        // bright background is read better in another sample).
+        if (quality > bestQuality_) {
+            bestRaw_ = rawText;
+            bestQuality_ = quality;
+        }
     } else {
         candidate_ = text;
         candidateCount_ = 1;
         candidateSince_ = time;
+        bestRaw_ = rawText;
+        bestQuality_ = quality;
     }
+    const std::string raw = bestRaw_;
+    const std::string best = TextMatch::normalize(raw);
     // A line ending with punctuation is complete and goes on the first frame; a garbled one
     // (subtitles cross-fading) waits until it has been stable longer than a cross-fade.
-    const bool ready = OcrNoise::looksGarbled(rawText)
-                           ? candidateCount_ >= stableFrames_ && time - candidateSince_ >= GarbledStableMs
-                           : candidateCount_ >= stableFrames_ || endsSentence(rawText);
-    // A noisy reread of the sent line is not a new line.
-    if (!ready || isSame(text, sent_)) return StabilizerAction::none();
-    // Neither is a worse reread with a word or two read differently.
-    if (!sentRaw_.empty() && TextMatch::isWorseReread(rawText, sentRaw_)) return StabilizerAction::none();
+    // CrispPlay: so does a broken one ("Take it, nd kill shose wh"): a better reading may come.
+    const bool broken = OcrNoise::looksBroken(raw);
+    const bool ready = broken ? candidateCount_ >= stableFrames_ && time - candidateSince_ >= GarbledStableMs
+                              : candidateCount_ >= stableFrames_ || endsSentence(raw);
+    if (!ready) return StabilizerAction::none();
+    // CrispPlay: a clean reading of a line that was sent from a broken reading is sent again.
+    const bool revises = sentBroken_ && !broken && bestQuality_ > sentQuality_ && isSame(best, sent_);
+    if (!revises) {
+        // A noisy reread of the sent line is not a new line.
+        if (isSame(best, sent_)) return StabilizerAction::none();
+        // Neither is a worse reread with a word or two read differently.
+        if (!sentRaw_.empty() && TextMatch::isWorseReread(raw, sentRaw_)) return StabilizerAction::none();
 
-    // A line that just left came back: reads were missed; show the old translation again.
-    for (int i = static_cast<int>(history_.size()) - 1; i >= 0; --i) {
-        if (time - history_[i].leftAt <= RestoreWithinMs && isSame(text, history_[i].rows)) {
-            Left back = history_[i];
-            history_.erase(history_.begin() + i);
-            leaveScreen(time);
-            sent_ = back.rows;
-            sentRaw_ = back.raw;
-            return StabilizerAction::restore(back.raw);
+        // A line that just left came back: reads were missed; show the old translation again.
+        for (int i = static_cast<int>(history_.size()) - 1; i >= 0; --i) {
+            if (time - history_[i].leftAt <= RestoreWithinMs && isSame(best, history_[i].rows)) {
+                Left back = history_[i];
+                history_.erase(history_.begin() + i);
+                leaveScreen(time);
+                sent_ = back.rows;
+                sentRaw_ = back.raw;
+                sentBroken_ = OcrNoise::looksBroken(sentRaw_);
+                sentQuality_ = OcrNoise::quality(sentRaw_);
+                return StabilizerAction::restore(back.raw);
+            }
         }
+        // A line whose translation just failed is not asked for on every frame.
+        if (!forgotten_.empty() && time < retryAt_ && isSame(best, forgotten_)) return StabilizerAction::none();
     }
-    // A line whose translation just failed is not asked for on every frame.
-    if (!forgotten_.empty() && time < retryAt_ && isSame(text, forgotten_)) return StabilizerAction::none();
 
     leaveScreen(time);
     forgotten_.clear();
-    sentRaw_ = uni::encode(uni::trim(uni::decode(rawText)));
+    sentRaw_ = uni::encode(uni::trim(uni::decode(raw)));
     sent_ = TextMatch::normalizeRows(sentRaw_);
+    sentBroken_ = broken;
+    sentQuality_ = bestQuality_;
     return StabilizerAction::translate(sentRaw_);
 }
 
@@ -90,6 +111,7 @@ void SubtitleStabilizer::leaveScreen(int64_t time) {
     if (history_.size() > kHistorySize) history_.erase(history_.begin());
     sent_.clear();
     sentRaw_.clear();
+    sentBroken_ = false;
 }
 
 bool SubtitleStabilizer::endsSentence(const std::string& raw) {
@@ -107,6 +129,7 @@ void SubtitleStabilizer::forgetSent() {
     retryAt_ = now_() + RetryAfterMs;
     sent_.clear();
     sentRaw_.clear();
+    sentBroken_ = false;
     candidate_.clear();
     candidateCount_ = 0;
 }
@@ -120,6 +143,7 @@ StabilizerAction SubtitleStabilizer::reset() {
     if (sent_.empty()) return StabilizerAction::none();
     sent_.clear();
     sentRaw_.clear();
+    sentBroken_ = false;
     return StabilizerAction::clear();
 }
 

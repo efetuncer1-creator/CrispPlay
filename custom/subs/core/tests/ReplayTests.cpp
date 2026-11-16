@@ -139,11 +139,15 @@ TEST(Replay_RealClipSegmentsMatchTheSpikeDraft) {
         const auto* text = segment.find("draft");
         if (!text) continue;
         const auto want = TextMatch::normalize(text->string);
+        bool found = false;
         for (const auto& s : sources)
             if (TextMatch::isSimilar(TextMatch::normalize(s), want, 0.8) || TextMatch::isSameSubtitle(TextMatch::normalize(s), want)) {
                 ++matched;
+                found = true;
                 break;
             }
+        // Game text: printed only on request, while debugging on this machine.
+        if (!found && std::getenv("CRISPPLAY_SUBS_REPLAY_VERBOSE")) std::printf("  missed: %s\n", text->string.c_str());
     }
     const int drafts = static_cast<int>(draft->array.size());
     std::printf("  replay: %zu frames, %d engine calls, %zu shown, %d/%d draft segments matched\n", scan->array.size(),

@@ -32,7 +32,9 @@ param(
     # Extra screenshots shortly after each click / drag.
     [switch]$ShotAfterInput,
     # Open the clip paused (the picker's still then comes from a paused source).
-    [switch]$NoMedia
+    [switch]$NoMedia,
+    # Another EXE in the build folder to run (e.g. a copy of an older build for a before/after run).
+    [string]$Exe = "veyra_qml_ui.exe"
 )
 # Subtitle translation real-pipeline run (custom/docs/SUBS.md): plays a clip in
 # the real app with an isolated --data-dir, samples the process's CPU / RAM /
@@ -48,7 +50,7 @@ $deps = (Resolve-Path $Deps).Path
 if (-not $Media) { $Media = Join-Path $env:USERPROFILE "Downloads\sub_test.mp4" }
 $media = (Resolve-Path -LiteralPath $Media).Path
 $build = Join-Path $root "out\build\$Preset"
-$exe = Join-Path $build "veyra_qml_ui.exe"
+$exe = Join-Path $build $Exe
 if (-not $Name) { $Name = "$Subs-" + ($Effects -replace '\+', '-') }
 $work = Join-Path $root "out\subs-test\$Name"
 if (Test-Path $work) { Remove-Item -Recurse -Force $work }
@@ -90,6 +92,7 @@ public static class CrispShot {
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
     [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr dc, uint flags);
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
+    [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
     [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr h);
     [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
@@ -106,10 +109,15 @@ function Save-Window($handle, $path) {
     if ($w -le 0 -or $h -le 0) { return $false }
     # The video is a child swap chain and the Turkish line a layered child:
     # the screen is the only place where both are composed.
+    # Another app may own the foreground (SetForegroundWindow is refused then): the window is
+    # made topmost for the moment of the copy so no other window ends up in the picture.
+    [void][CrispShot]::SetWindowPos($handle, [IntPtr](-1), 0, 0, 0, 0, 0x0013)
+    Start-Sleep -Milliseconds 150
     $bitmap = New-Object System.Drawing.Bitmap($w, $h)
     $g = [System.Drawing.Graphics]::FromImage($bitmap)
     $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w, $h)))
     $g.Dispose()
+    [void][CrispShot]::SetWindowPos($handle, [IntPtr](-2), 0, 0, 0, 0, 0x0013)
     $bitmap.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
     $bitmap.Dispose()
     return $true

@@ -213,6 +213,52 @@ Gerçek uygulamada, `sub_test.mp4` ile, ayrı `--data-dir`'lerle (`out\subs-test
 
 Doğrulanmadı: seçici tam ekranda; HDR çıktıda anlık görüntünün rengi (ton eşleme birim testte); yakalama kartı / ekran yakalama kaynaklarında anlık görüntü; menüden boyut ve opaklık döngüsünün Çok büyük / %75'e sarması (birim testte).
 
+## Üstte ayrı satırdaki konuşmacı ve bozuk okuma (2026-11-16, `feature/subs-speaker`)
+
+Sorun (Efe'nin görüntüleri, `deps\subs-real\bug-archer-*.png`): oyun konuşmacının adını diyalogun üstünde ayrı satırda, iki nokta olmadan yazıyor ("Brooding Old Archer"); ad cümleye yapışıp çevriliyordu. Parlak saman dokusunun üstündeki ikinci yarı "nd kill shose wh" diye okunup bu artık İngilizce Türkçe satırda kalıyordu.
+
+Eklenen kurallar (ayrıntı `custom/subs/core/README.md` 4–6):
+
+- **Konuşmacı satırı** (`SpeakerRow`): diyalogun hemen üstünde, ona ortalı, 1–4 sözcüklü, Title Case / BÜYÜK harfli, cümle noktalaması olmayan ve diyalogun en çok %70'i genişliğindeki satır (alt satır küçük harfle başlıyorsa %55'i) konuşmacıdır, sarı gösterilir, çevrilmez; kapatma kutusu ad satırını da örter. Görülen adlar hatırlanır: sonra kısa bir diyalogun üstünde de ("Old Man Tao" / "And you?") ve biraz yanlış okunmuş hâliyle de ("Olk MaE Tao", "4 ruo Mel") tanınır; tek başına okunan bilinen ad satır sayılmaz. Ad diyalogdan sonra okunursa gösterilen satıra eklenir. Bir satıra sarılmış diyalog (ilk satır geniş), "Run!", "Hey, Romano!" gibi ünlemler ve kenardaki ipuçları ad sayılmaz (birim testleri).
+- **Bozuk okuma**: İngilizce olamayan küçük harfli sözcük ("nd", "wh", ünlüsüz, olmayan çift ünsüzle başlayan, 17+ harfli birleşik), kaybolmuş boşluk ("you.Take", "it,and") ya da Windows'un en-US yazım denetleyicisinin bilmediği ≥ 2 sözcük (küçük harfli sözcüklerin beşte biri; tek yabancı sözcük, "minchia", sayılmaz). Böyle okuma 700 ms bekletilir, benzer okumaların en iyisi gönderilir; sonradan gelen temiz okuma satırı yeniden çevirtir.
+- **Artık İngilizce**: çeviride kaynağın İngilizce olamayan sözcüğü (ya da bir iki harfi değişmiş hâli) veya art arda iki küçük harfli kaynak sözcüğü kalırsa o cümle ⁇ kuralındaki gibi İngilizce kalır, önbelleğe yazılmaz ve satır **gösterilmez**; oyunun kendi satırı açıkta kalır, daha iyi okuma gelince çevrilir. Önbellek sürümü `p3`.
+- **Küçük bant büyütülür** (`ocr::upscaleFactor`): 200 px'ten alçak bant (540p altı kaynak) OCR'dan önce 2–3× büyütülür. `test2.mp4` 640×360: bant 460×126 → 1380×378; Windows OCR'ın dökümle benzerliği 0,65 → 0,88, birebir satır 2 → 25 / 70.
+- Olay günlüğü (`CRISPPLAY_SUBS_EVENT_LOG`) artık satır kutularını ve bant geometrisini de yazar; `crispplay_subs_replay` (geliştirme aracı, `custom/subs/mt/tools`) bir günlüğü OPUS-MT ve aynı sözlükle çevrimdışı yeniden oynatır. `subs_regress.py` yeni ölçüler: `turkishWithEnglishLeftover`, `speakerOkAfterCorrectionPct`.
+
+Ölçümler (gerçek uygulama, `subs-test.ps1`, modeller `%APPDATA%\CrispPlay\models`, ayrı `--data-dir`; "önce" = `main`'in EXE'si `veyra_qml_ui-main.exe` adıyla aynı klasörde):
+
+`test2.mp4` (640×360, 22 dk 53 sn, 70 altyazı; döküm `deps\subs-test2\transcript.tsv`, 68'inde konuşmacı üstte):
+
+| | önce | sonra |
+|---|---|---|
+| Gösterilen altyazı | 66 / 70 (%94,3) | 67 / 70 (%95,7) |
+| İngilizce kaynak birebir | %58,6 | %64,3 |
+| Konuşmacı doğru (ilk gösterim) | %3,0 | %77,6 |
+| Konuşmacı doğru (düzeltmeyle, ≤ 0,5 sn sonra) | %3,0 | %95,5 |
+| Artık İngilizceli Türkçe satır | 24 | 0 |
+| Toplam gösterim / dökümde olmayan | 203 / 120 | 103 / 15 |
+| İngilizce gösterilen | 11 | 4 |
+| Belirme → Türkçe (ortanca / %90) | 0,29 / 1,61 sn | 0,19 / 0,79 sn |
+
+`sub_test.mp4` (gerileme denetimi, 73 altyazı, konuşmacı `AD:` önekli):
+
+| | önce | sonra |
+|---|---|---|
+| Gösterilen | 72 / 73 | 72 / 73 |
+| İngilizce birebir | %97,3 | %97,3 |
+| Konuşmacı doğru / düzeltmeyle | %98,6 / %100 | %98,6 / %100 |
+| Artık İngilizceli Türkçe satır | 2 | 0 |
+| Toplam / dökümde olmayan / İngilizce gösterilen | 81 / 9 / 4 | 81 / 10 / 4 |
+| Belirme → Türkçe (ortanca / %90) | 0,22 / 0,47 sn | 0,27 / 0,55 sn |
+
+(Bu bölümün başındaki %94,5 / %97,2 değerleri 2026-11-13 ölçümü; aynı EXE ile bugün %97,3 / %98,6 çıktı.)
+
+test2 ekran görüntüleri: önce out\subs-test\t2-before\shot-*.png, sonra out\subs-test\t2-final\shot-*.png (182 sn: sarı konuşmacı, ama ad yarım okunduğu için yalnız ikinci sözcüğü göründü ve bir OCR hatası metinde kaldı). 3 altyazı kaçtı (iki kısa satır ve bir uzun bağırış; okumalar bozuk kaldı, İngilizce açıkta kaldı).
+
+Okçu anı (`deps\subs-test2\archer\archer.mp4`: Efe'nin ekran görüntüsünden 1080p, hafif kayan 10 sn'lik klip): önce `out\subs-test\archer-before\shot-005000.png` ("Brooding Old Archer Bu pruvayı al, nd kilthesew geyiği."), sonra `out\subs-test\archer-after\shot-009000.png` (sarı "Brooding Old Archer:", "Bunu senin için düzelteceğim. Al ve hak edenleri öldür."). Bedeli: bozuk okumalar yüzünden Türkçe satır 0,3 sn yerine ~3 sn'de geldi (`shot-005000.png`'de kutu yok, İngilizce açıkta).
+
+Doğrulanmadı: başka oyunların ad satırı stilleri (sol hizalı ad, adın diyalogla aynı satırda renkli yazılması); İngilizce yazım denetleyicisi kurulu olmayan Windows (kural sözlüksüz çalışır, bozuk okuma tespiti zayıflar); 480p/720p kaynakta büyütmenin süresi ve doğruluğu; okçu klibi gerçek oyun değil, sabit bir görüntüden üretildi.
+
 ## Doğrulananlar / doğrulanmayanlar
 
 Doğrulandı (bu makinede, gerçek uygulamayla):

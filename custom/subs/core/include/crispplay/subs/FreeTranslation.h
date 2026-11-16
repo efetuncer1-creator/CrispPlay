@@ -23,7 +23,8 @@ namespace crispplay::subs {
 namespace FreeTranslation {
 
 // Version of the rules before/after translation; part of the cache's engine name.
-constexpr int PipelineVersion = 2;
+// 3: CrispPlay's leftover-English rule (LineTranslator) changes what a sentence caches.
+constexpr int PipelineVersion = 3;
 // Sentences with fewer words are translated with the previous sentence.
 constexpr int ShortLineWords = 4;
 // Context/line separator: "▁***" is one piece in the OPUS-MT vocabulary.

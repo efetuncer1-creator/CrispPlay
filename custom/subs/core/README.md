@@ -55,6 +55,23 @@ pipeline.process(frame);
 3. **Konuşmacı**: "MINE GUARD: …" etiketi çeviriye girmez, `ShownLine.speaker` olarak gelir; OCR'ın bozduğu etiket de
    ("MİNE GUARD•", "-GAETANO:") CouchSubs'ın LooseLabel kuralıyla ayrılır.
 
+4. **Üstte ayrı satırdaki konuşmacı** (`SpeakerRow`, 2026-11-13): diyalogun hemen üstündeki (en çok 1,2 satır boşluk),
+   ona ortalı, 1–4 sözcüklü, Title Case ya da BÜYÜK harfli, cümle noktalaması olmayan satır konuşmacıdır; diyalogun en çok
+   %70'i genişliğindeyse (alt satır küçük harfle başlıyorsa %55'i) kesin sayılır ve hatırlanır (`KnownSpeakers`, 32 ad).
+   Bilinen ad (benzerlik ≥ 0,75: "Olk MaE Tao" → "Old Man Tao") her genişlikte kabul edilir; tek başına okunan bilinen ad
+   satır sayılmaz. Ad çeviriye girmez, kapatma bandı ad satırını da kapsar; ad diyalogdan sonra okunursa gösterilen
+   satıra eklenir (`replaces`). Testler: `SpeakerRow_*`.
+5. **Bozuk okuma** (`OcrNoise::looksBroken`): İngilizce olamayan küçük harfli sözcük ("nd", "wh", ünsüzsüz, olmayan çift
+   ünsüzle başlayan, 17+ harf), kaybolmuş boşluk ("you.Take", "it,and") ya da sözlüğün bilmediği ≥ 2 sözcük (küçük
+   harfli sözcüklerin en az beşte biri; sözlük uygulamada Windows'un en-US yazım denetleyicisi,
+   `OcrNoise::setDictionary`). Dengeleyici böyle okumayı 700 ms bekletir, benzer okumaların en iyisini (`quality`)
+   gönderir; bozuk okumadan gönderilmiş satırın sonra gelen temiz okuması yeniden çevrilir.
+6. **Artık İngilizce** (`hasLeftoverEnglish`): çeviride kaynağın İngilizce olamayan sözcüğü (bozuk okumada sözlükte
+   olmayan 5+ harfli sözcük de; bir iki harf değişmiş hâli de sayılır) ya da art arda iki küçük harfli kaynak sözcüğü
+   kalırsa o cümle ⁇ kuralındaki gibi İngilizce kalır, önbelleğe girmez ve satır `leftover` olur; hat bunu **göstermez**
+   (oyunun kendi satırı açıkta kalır), dengeleyici daha iyi okumayı yeniden gönderir. Bozuk okumanın ⁇ yüzünden
+   kısmen/tamamen İngilizce kalan çevirisi de gösterilmez. `PipelineVersion` 3 (önbellek adı değişti).
+
 ## CouchSubs'tan farklar
 
 - **Girdi/çıktı:** hat OCR yapmaz, `OcrFrame` alır; TV gönderimi yerine geri çağrı; oyun paketleri, ortak havuz ve

@@ -6,6 +6,7 @@
 // Licensed under the GNU Affero General Public License version 3; see custom/subs/core/NOTICE.md.
 #pragma once
 
+#include <functional>
 #include <string>
 
 namespace crispplay::subs {
@@ -20,6 +21,30 @@ std::string clean(const std::string& line);
 int score(const std::string& text);
 // More than a sixth of the letters are in broken words (mixed case, symbols, no vowels).
 bool looksGarbled(const std::string& text);
+
+// CrispPlay additions (a partly read line over a bright background: "Take it, nd kill shose wh").
+// A lower case token that cannot be an English word: one or two letters that are no English
+// word ("nd", "wh", "ke"), three or more without a vowel ("rnnk"), or starting with two
+// consonants no English word starts with ("ndkill"), or 17+ letters (words run together).
+// Capitalised tokens are names and pass.
+bool isBrokenWord(const std::string& token);
+// Tokens of the text for which isBrokenWord holds, that are garbage in the looksGarbled sense,
+// or that lost a space ("you.Take", "it,and").
+int brokenWords(const std::string& text);
+
+// English word list the rules may consult (the app gives Windows' spell checker; none = no
+// dictionary rule). Called with one lower case word ("don't" keeps its apostrophe); must be
+// callable from the threads that call the functions below. Process-wide.
+using Dictionary = std::function<bool(const std::string& word)>;
+void setDictionary(Dictionary knows);
+// Lower case words of 3+ letters the dictionary does not know (0 without a dictionary).
+int unknownWords(const std::string& text);
+
+// A reading worth waiting for a better one: garbled, holding a broken word, or with two or
+// more unknown words that make at least a fifth of its lower case words.
+bool looksBroken(const std::string& text);
+// score() with broken and unknown words counted as garbage: the better of two readings of one line.
+int quality(const std::string& text);
 
 }  // namespace OcrNoise
 }  // namespace crispplay::subs

@@ -60,6 +60,13 @@ struct TempDir {
     }
 };
 
+// The fake engines answer in English: the leftover-English rule would keep every sentence English.
+LineTranslator::Options echo() {
+    LineTranslator::Options o;
+    o.leftoverCheck = false;
+    return o;
+}
+
 std::string full(LineTranslator& t, const std::string& line) {
     auto r = t.translate(line);
     return r ? r->full : std::string("<failed>");
@@ -79,7 +86,7 @@ TEST(LineTranslator_CachesExactInput) {
 
 TEST(LineTranslator_ReusesCachedSentencesAcrossLines) {
     FakeEngine engine;
-    LineTranslator t(engine, {});
+    LineTranslator t(engine, echo());
     full(t, "We go to the mountain now. Stay behind me, boy.");
     CHECK_EQ(full(t, "We go to the mountain now. Stay behind me, boy. Keep your eyes open."),
              std::string("WE GO TO THE MOUNTAIN NOW. STAY BEHIND ME, BOY. KEEP YOUR EYES OPEN."));
@@ -88,7 +95,7 @@ TEST(LineTranslator_ReusesCachedSentencesAcrossLines) {
 
 TEST(LineTranslator_KeepsLabelsAndSkipsPunctuationOnly) {
     FakeEngine engine;
-    LineTranslator t(engine, {});
+    LineTranslator t(engine, echo());
     auto line = t.translate("ATREUS: Father, look!\nKRATOS: Stay.");
     CHECK(line.has_value());
     CHECK_EQ(line->full, std::string("ATREUS: FATHER, LOOK!\nKRATOS: STAY."));
@@ -111,12 +118,12 @@ TEST(LineTranslator_PersistentCacheSkipsTheModelInTheNextSession) {
     const auto file = dir.path / "cache.jsonl";
     {
         FakeEngine first;
-        LineTranslator::Options o;
+        LineTranslator::Options o = echo();
         o.cache = std::make_shared<TranslationCache>(file);
         LineTranslator(first, o).translate("KRATOS: We go now. Stay close.");
     }
     FakeEngine engine;
-    LineTranslator::Options o;
+    LineTranslator::Options o = echo();
     o.cache = std::make_shared<TranslationCache>(file);
     LineTranslator t(engine, o);
     CHECK_EQ(full(t, "KRATOS: We go now. Stay close."), std::string("KRATOS: WE GO NOW. STAY CLOSE."));
@@ -128,14 +135,14 @@ TEST(LineTranslator_PersistentCacheInADirectory) {
     TempDir dir;
     {
         FakeEngine first;
-        LineTranslator::Options o;
+        LineTranslator::Options o = echo();
         o.cacheDirectory = dir.path;
         LineTranslator(first, o).translate("Hold the gate.");
     }
-    CHECK(std::filesystem::exists(dir.path / "v1-opus_mt_p2-en-tr.jsonl"));
+    CHECK(std::filesystem::exists(dir.path / "v1-opus_mt_p3-en-tr.jsonl"));
     FakeEngine engine;
-    LineTranslator::Options o;
-    o.cache = std::make_shared<TranslationCache>(dir.path / "v1-opus_mt_p2-en-tr.jsonl");
+    LineTranslator::Options o = echo();
+    o.cache = std::make_shared<TranslationCache>(dir.path / "v1-opus_mt_p3-en-tr.jsonl");
     LineTranslator t(engine, o);
     CHECK_EQ(full(t, "Hold the gate."), std::string("HOLD THE GATE."));
     CHECK(engine.calls.empty());
@@ -150,7 +157,7 @@ TEST(LineTranslator_SpeakerNamesAreNotTranslated) {
     };
     for (auto& c : cases) {
         FakeEngine engine;
-        LineTranslator t(engine, {});
+        LineTranslator t(engine, echo());
         CHECK_EQ(full(t, c[0]), std::string(c[1]));
         CHECK_EQ(engine.calls, (std::vector<std::string>{c[2]}));
     }
@@ -248,7 +255,7 @@ TEST(LineTranslator_SpeakerPrefixIsKeptOutOfTranslation) {
     engine.map = [](const std::string& s) -> Opt {
         return s.find("MINE") != std::string::npos || s.find("GUARD") != std::string::npos ? "LEAKED" : "çeviri: " + s;
     };
-    LineTranslator t(engine, {});
+    LineTranslator t(engine, echo());
     auto line = t.translate("MINE GUARD: Romano, you done with your count? Delivery's here!");
     CHECK(line.has_value());
     CHECK_EQ(line->speaker, std::string("MINE GUARD"));

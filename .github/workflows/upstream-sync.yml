@@ -125,9 +125,10 @@ jobs:
               echo "Kancalar için \`custom/HOOKS.md\`."
             } > "$RUNNER_TEMP/body.md"
           fi
-          # GitHub may not see a just-pushed branch yet ("Head sha can't be blank"): retry.
+          # --repo is required: in a fork, gh defaults to the PARENT repository (upstream),
+          # which must never receive these PRs. Retry once GitHub sees a just-pushed branch.
           for i in 1 2 3 4 5 6; do
-            if gh pr create --base main --head "sync/$TAG" --title "Upstream $TAG" --body-file "$RUNNER_TEMP/body.md"; then
+            if gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "sync/$TAG" --title "Upstream $TAG" --body-file "$RUNNER_TEMP/body.md"; then
               exit 0
             fi
             echo "PR creation failed (attempt $i); retrying in 15 s"; sleep 15

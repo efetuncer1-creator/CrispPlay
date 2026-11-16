@@ -10,7 +10,10 @@
 #include "crispplay/subs/ReadScheduler.h"
 #include "crispplay/subs/SubtitleStabilizer.h"
 
+#include <functional>
+#include <optional>
 #include <ostream>
+#include <vector>
 
 namespace crispplay::subs {
 std::ostream& operator<<(std::ostream& out, const StabilizerAction& a) {
@@ -300,4 +303,127 @@ TEST(ReadScheduler_AlwaysDisablesReuse) {
     s.plan(still());
     s.record("");
     CHECK_EQ(s.plan(still()), ReadPlan::read(true));
+}
+
+// --- CouchSubs f4e5284: missed reads over an unchanged line place ---------------------------
+
+namespace {
+// The subtitle's place in the region and a region signature (64 x 12 grey samples).
+const TextBox kPlace{0.3, 0.6, 0.7, 0.85};
+
+std::vector<uint8_t> scene(const std::function<void(std::vector<uint8_t>&)>& change = {}) {
+    std::vector<uint8_t> s(static_cast<size_t>(ReadScheduler::SignatureWidth) * ReadScheduler::SignatureHeight, 120);
+    if (change) change(s);
+    return s;
+}
+// A sample on the subtitle's place (row 8, column 30).
+void subtitleSpot(std::vector<uint8_t>& s, int delta) {
+    s[8 * ReadScheduler::SignatureWidth + 30] = static_cast<uint8_t>(120 + delta);
+}
+}  // namespace
+
+TEST(ReadScheduler_ChangeWithinABoxIgnoresTheRestOfTheRegion) {
+    constexpr int width = ReadScheduler::SignatureWidth;
+    const auto still = scene();
+    auto elsewhere = still;
+    elsewhere[0] = 250;
+    elsewhere[8 * width + 10] = 250;
+    CHECK(ReadScheduler::changed(still, elsewhere, ReadScheduler::ChangeThreshold));
+    CHECK(!ReadScheduler::changed(still, elsewhere, ReadScheduler::ChangeThreshold, kPlace));
+    auto inside = still;
+    inside[8 * width + 30] = 180;
+    CHECK(ReadScheduler::changed(still, inside, ReadScheduler::ChangeThreshold, kPlace));
+    inside[8 * width + 30] = 130;
+    CHECK(!ReadScheduler::changed(still, inside, ReadScheduler::ChangeThreshold, kPlace));
+}
+
+// White text on a bright background goes unread for seconds (It Takes Two): while the line's
+// place is unchanged since it was last read (movement elsewhere and video noise do not count)
+// the line is not cleared, and read again it is not translated again.
+TEST(Stabilizer_LineIsKeptThroughMissedReadsWhileItsPlaceIsUnchanged) {
+    TestClock clock;
+    SubtitleStabilizer s(clock.read());
+    const auto still = scene();
+    CHECK_EQ(s.feed("Hold the gate.", &still, kPlace), A::translate("Hold the gate."));
+    const auto moving = scene([](auto& x) { x[0] = 250; x[5] = 10; subtitleSpot(x, 10); });
+    for (int t = 0; t < 3000; t += 50) {
+        clock.now += 50;
+        CHECK_EQ(s.feed("", &moving), A::none());
+    }
+    CHECK_EQ(s.feed("Hold the gate.", &still, kPlace), A::none());
+    // Missed again after being read: the time counts from the start.
+    for (int t = 0; t < 3000; t += 50) {
+        clock.now += 50;
+        CHECK_EQ(s.feed("", &still), A::none());
+    }
+}
+
+TEST(Stabilizer_LineIsClearedOnTimeWhenItsPlaceChanges) {
+    TestClock clock;
+    SubtitleStabilizer s(clock.read());
+    const auto still = scene();
+    s.feed("Hold the gate.", &still, kPlace);
+    const auto gone = scene([](auto& x) { subtitleSpot(x, 60); });
+    CHECK_EQ(s.feed("", &gone), A::none());
+    clock.now += SubtitleStabilizer::ClearAfterMs - 1;
+    CHECK_EQ(s.feed("", &gone), A::none());
+    clock.now += 1;
+    CHECK_EQ(s.feed("", &gone), A::clear());
+}
+
+TEST(Stabilizer_HeldLineIsClearedOnTimeOnceItsPlaceChanges) {
+    TestClock clock;
+    SubtitleStabilizer s(clock.read());
+    const auto still = scene();
+    s.feed("Hold the gate.", &still, kPlace);
+    clock.now += 2000;
+    CHECK_EQ(s.feed("", &still), A::none());
+    clock.now += 1000;
+    const auto gone = scene([](auto& x) { subtitleSpot(x, -60); });
+    CHECK_EQ(s.feed("", &gone), A::none());
+    clock.now += SubtitleStabilizer::ClearAfterMs - 1;
+    CHECK_EQ(s.feed("", &still), A::none());
+    clock.now += 1;
+    CHECK_EQ(s.feed("", &still), A::clear());
+}
+
+TEST(Stabilizer_UnchangedPlaceHoldsTheLineOnlyForALimitedTime) {
+    TestClock clock;
+    SubtitleStabilizer s(clock.read());
+    const auto still = scene();
+    s.feed("Hold the gate.", &still, kPlace);
+    CHECK_EQ(s.feed("", &still), A::none());
+    clock.now += SubtitleStabilizer::HoldUnchangedMs - 1;
+    CHECK_EQ(s.feed("", &still), A::none());
+    clock.now += 1;
+    CHECK_EQ(s.feed("", &still), A::clear());
+}
+
+// Without the line's place (no boxes) or the frame's signature: the old rule, 800 ms.
+TEST(Stabilizer_WithoutPlaceOrSignatureEmptyReadsClearAsBefore) {
+    const auto still = scene();
+    for (int variant = 0; variant < 2; ++variant) {
+        TestClock clock;
+        SubtitleStabilizer s(clock.read());
+        const std::vector<uint8_t>* signature = variant == 0 ? &still : nullptr;
+        s.feed("Hold the gate.", signature, variant == 0 ? std::nullopt : std::optional<TextBox>(kPlace));
+        s.feed("", signature);
+        clock.now += SubtitleStabilizer::ClearAfterMs;
+        CHECK_EQ(s.feed("", signature), A::clear());
+    }
+}
+
+// The cell-mean signature: a dark line drawn on a bright band moves the samples it covers.
+TEST(ReadScheduler_SignatureFollowsTheBand) {
+    const int w = 640, h = 120, stride = w * 4;
+    std::vector<uint8_t> bright(static_cast<size_t>(stride) * h, 230);
+    auto withText = bright;
+    for (int y = 70; y < 90; ++y)
+        for (int x = 200; x < 440; x += 3)
+            for (int c = 0; c < 3; ++c) withText[static_cast<size_t>(y) * stride + x * 4 + c] = 20;
+    const auto a = ReadScheduler::signature(bright.data(), w, h, stride);
+    const auto b = ReadScheduler::signature(withText.data(), w, h, stride);
+    CHECK_EQ(a.size(), size_t(ReadScheduler::SignatureWidth * ReadScheduler::SignatureHeight));
+    CHECK(ReadScheduler::changed(a, b, ReadScheduler::ChangeThreshold, TextBox{0.3, 0.55, 0.7, 0.8}));
+    CHECK(!ReadScheduler::changed(a, b, ReadScheduler::ChangeThreshold, TextBox{0.0, 0.0, 0.2, 0.3}));
 }

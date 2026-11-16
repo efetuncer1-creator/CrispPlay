@@ -10,6 +10,7 @@
 #include "crispplay/subs/TranslationCache.h"
 
 #include "crispplay/subs/Json.h"
+#include "crispplay/subs/Sha256.h"
 #include "crispplay/subs/Unicode.h"
 
 #include <algorithm>
@@ -38,8 +39,22 @@ TranslationCache::TranslationCache(std::optional<std::filesystem::path> file, in
 
 std::filesystem::path TranslationCache::fileFor(const std::filesystem::path& directory, const std::string& engine,
                                                 const std::string& source, const std::string& target) {
-    const std::string name = safe("v" + std::to_string(FormatVersion)) + "-" + safe(engine) + "-" + safe(source) + "-" +
-                             safe(target) + ".jsonl";
+    // Simple, already used engine names keep their file ("v1-opus_mt-en-tr.jsonl").
+    auto legacySafe = [](const std::string& part) {
+        return !part.empty() && std::all_of(part.begin(), part.end(), [](char c) {
+            return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-';
+        });
+    };
+    std::string name;
+    if (legacySafe(engine) && legacySafe(source) && legacySafe(target)) {
+        name = safe("v" + std::to_string(FormatVersion)) + "-" + safe(engine) + "-" + safe(source) + "-" + safe(target) +
+               ".jsonl";
+    } else {
+        // CouchSubs b04fde5 (#110): turning punctuation into '_' put two model ids into one file
+        // ("qwen2.5:7b" / "qwen2-5:7b"); other ids get a fixed-length name from their digest.
+        const std::string key = engine + std::string(1, '\0') + source + std::string(1, '\0') + target;
+        name = "v" + std::to_string(FormatVersion) + "h-" + sha256Hex(key) + ".jsonl";
+    }
     return directory / std::filesystem::path(std::u8string(name.begin(), name.end()));
 }
 

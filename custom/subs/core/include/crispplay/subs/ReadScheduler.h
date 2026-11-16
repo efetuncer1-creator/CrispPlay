@@ -6,6 +6,8 @@
 // Licensed under the GNU Affero General Public License version 3; see custom/subs/core/NOTICE.md.
 #pragma once
 
+#include "crispplay/subs/Reading.h"
+
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -30,13 +32,27 @@ struct ReadPlan {
 // computes it.
 class ReadScheduler {
 public:
-    explicit ReadScheduler(int changeThreshold = 16, int maxReuse = 20, int deepEvery = 3);
+    // Signature size: SignatureWidth grey samples per row, SignatureHeight rows.
+    static constexpr int SignatureWidth = 64, SignatureHeight = 12;
+    // Video noise stays below this difference; an added letter does not.
+    static constexpr int ChangeThreshold = 16;
+
+    explicit ReadScheduler(int changeThreshold = ChangeThreshold, int maxReuse = 20, int deepEvery = 3);
     // Every frame is read and empty frames are always read deep.
     static ReadScheduler always() { return ReadScheduler(-1, 0, 1); }
 
     ReadPlan plan(const std::vector<uint8_t>& signature);
     void record(const std::string& text);
     void reset();
+    // Do two signatures differ (a sample changed by more than `threshold`)? With `within`, only
+    // the samples that box covers (fractions of the region) count; movement elsewhere in the
+    // region does not (CouchSubs ReadScheduler.Changed, f4e5284).
+    static bool changed(const std::vector<uint8_t>& a, const std::vector<uint8_t>& b, int threshold,
+                        std::optional<TextBox> within = std::nullopt);
+    // Signature of a BGRA image: SignatureWidth x SignatureHeight grey values (B + 2G + R) / 4.
+    // CrispPlay: each value is the mean of its cell (CouchSubs samples one pixel per cell), so a
+    // line's glyphs move it even when no sampled pixel would hit a stroke.
+    static std::vector<uint8_t> signature(const uint8_t* bgra, int width, int height, int stride);
 
 private:
     bool changed(const std::vector<uint8_t>& a, const std::vector<uint8_t>& b) const;

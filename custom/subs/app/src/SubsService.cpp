@@ -2,6 +2,7 @@
 
 #include "crispplay/subs/Json.h"
 #include "crispplay/subs/OnlineTranslator.h"
+#include "crispplay/subs/ReadScheduler.h"
 #include "crispplay/subs/SubtitlePipeline.h"
 #include "crispplay/subs/TextMatch.h"
 #include "crispplay/subs/OcrNoise.h"
@@ -454,6 +455,10 @@ struct Service::Impl {
             frame.bandBottom = float(sample.box.y + sample.box.height) / float(sample.frameHeight);
             lastFrame = frame; lastFingerprint = print;
         }
+        // The band's thumbnail: an empty reading over an unchanged line place is a missed read, not
+        // the line leaving (SubtitleStabilizer::HoldUnchangedMs).
+        frame.signature = ReadScheduler::signature(sample.image.bgra.data(), sample.image.width, sample.image.height,
+                                                   sample.image.stride);
         noteSeen(frame, sample.capturedUs);
         pipeline.process(frame);
         {

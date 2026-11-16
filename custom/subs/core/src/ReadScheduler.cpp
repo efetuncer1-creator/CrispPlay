@@ -6,6 +6,8 @@
 // Licensed under the GNU Affero General Public License version 3; see custom/subs/core/NOTICE.md.
 #include "crispplay/subs/ReadScheduler.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
 
 namespace crispplay::subs {
@@ -37,10 +39,50 @@ void ReadScheduler::reset() {
     emptyReads_ = 0;
 }
 
+std::vector<uint8_t> ReadScheduler::signature(const uint8_t* bgra, int width, int height, int stride) {
+    std::vector<uint8_t> samples(static_cast<size_t>(SignatureWidth) * SignatureHeight, 0);
+    if (!bgra || width <= 0 || height <= 0 || stride < width * 4) return samples;
+    for (int cy = 0; cy < SignatureHeight; ++cy) {
+        const int y0 = cy * height / SignatureHeight, y1 = std::max(y0 + 1, (cy + 1) * height / SignatureHeight);
+        for (int cx = 0; cx < SignatureWidth; ++cx) {
+            const int x0 = cx * width / SignatureWidth, x1 = std::max(x0 + 1, (cx + 1) * width / SignatureWidth);
+            uint64_t sum = 0, count = 0;
+            for (int y = y0; y < y1 && y < height; ++y) {
+                const uint8_t* row = bgra + static_cast<size_t>(y) * static_cast<size_t>(stride);
+                for (int x = x0; x < x1 && x < width; ++x) {
+                    const uint8_t* p = row + static_cast<size_t>(x) * 4;
+                    sum += (static_cast<unsigned>(p[0]) + 2u * p[1] + p[2]) / 4u;
+                    ++count;
+                }
+            }
+            samples[static_cast<size_t>(cy) * SignatureWidth + cx] = static_cast<uint8_t>(count ? sum / count : 0);
+        }
+    }
+    return samples;
+}
+
 bool ReadScheduler::changed(const std::vector<uint8_t>& a, const std::vector<uint8_t>& b) const {
+    return changed(a, b, changeThreshold_);
+}
+
+bool ReadScheduler::changed(const std::vector<uint8_t>& a, const std::vector<uint8_t>& b, int threshold,
+                            std::optional<TextBox> within) {
     if (a.size() != b.size()) return true;
-    for (size_t i = 0; i < a.size(); ++i)
-        if (std::abs(static_cast<int>(a[i]) - static_cast<int>(b[i])) > changeThreshold_) return true;
+    auto differs = [&](size_t i) { return std::abs(static_cast<int>(a[i]) - static_cast<int>(b[i])) > threshold; };
+    constexpr int columns = SignatureWidth;
+    const int rows = static_cast<int>(a.size()) / columns;
+    if (!within || rows == 0 || a.size() % columns != 0) {
+        for (size_t i = 0; i < a.size(); ++i)
+            if (differs(i)) return true;
+        return false;
+    }
+    const int left = std::clamp(static_cast<int>(std::floor(within->left * columns)), 0, columns - 1);
+    const int right = std::clamp(static_cast<int>(std::ceil(within->right * columns)), left + 1, columns);
+    const int top = std::clamp(static_cast<int>(std::floor(within->top * rows)), 0, rows - 1);
+    const int bottom = std::clamp(static_cast<int>(std::ceil(within->bottom * rows)), top + 1, rows);
+    for (int y = top; y < bottom; ++y)
+        for (int x = left; x < right; ++x)
+            if (differs(static_cast<size_t>(y * columns + x))) return true;
     return false;
 }
 

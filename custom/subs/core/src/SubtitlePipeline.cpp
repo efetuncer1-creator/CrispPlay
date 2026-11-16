@@ -97,7 +97,9 @@ void SubtitlePipeline::process(const OcrFrame& frame) {
     const TextBox area{frame.bandLeft, frame.bandTop, frame.bandRight, frame.bandBottom};
     // Controller prompts, OCR word garbage, menus and corner gauges are not subtitles; only the
     // subtitle block is translated and its lines give the cover.
-    const Reading block = Reading::fromFrame(frame).withoutButtonPrompts().withoutOcrNoise().subtitleBlock(area);
+    // A name read apart on the sentence's row joins it (CouchSubs 376c08a).
+    const Reading block =
+        Reading::fromFrame(frame).withoutButtonPrompts().withoutOcrNoise().joiningRows().subtitleBlock(area);
     // The cover hides the whole block, the speaker row too.
     const Rect cover = coverFor(block, frame, options_.coverMargin, options_.widenCentered);
     // CrispPlay: a name row above the dialogue is the speaker, not part of the sentence.
@@ -121,7 +123,7 @@ void SubtitlePipeline::process(const OcrFrame& frame) {
         lastFrame_.bandTop = frame.bandTop;
         lastFrame_.bandRight = frame.bandRight;
         lastFrame_.bandBottom = frame.bandBottom;
-        const auto action = stabilizer_.feed(text);
+        const auto action = stabilizer_.feed(text, &frame.signature, block.box());
         switch (action.kind) {
         case StabilizerKind::Clear:
             lineLeft();

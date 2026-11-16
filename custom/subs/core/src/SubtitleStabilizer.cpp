@@ -7,6 +7,7 @@
 #include "crispplay/subs/SubtitleStabilizer.h"
 
 #include "crispplay/subs/OcrNoise.h"
+#include "crispplay/subs/ReadScheduler.h"
 #include "crispplay/subs/TextMatch.h"
 #include "crispplay/subs/Unicode.h"
 
@@ -26,7 +27,8 @@ SubtitleStabilizer::SubtitleStabilizer(Clock clock, double similarity, int stabl
     : now_(clock ? std::move(clock) : Clock(steadyMs)), similarity_(similarity), stableFrames_(stableFrames),
       clearAfterMs_(clearAfterMs) {}
 
-StabilizerAction SubtitleStabilizer::feed(const std::string& rawText) {
+StabilizerAction SubtitleStabilizer::feed(const std::string& rawText, const std::vector<uint8_t>* signature,
+                                          std::optional<TextBox> box) {
     const int64_t time = now_();
     const std::string text = TextMatch::normalize(rawText);
     // Readings shorter than 3 characters (noise, a lone symbol) count as an empty frame.
@@ -34,7 +36,10 @@ StabilizerAction SubtitleStabilizer::feed(const std::string& rawText) {
         candidate_.clear();
         candidateCount_ = 0;
         if (!emptySince_) emptySince_ = time;
-        if (!sent_.empty() && time - *emptySince_ >= clearAfterMs_) {
+        if (sent_.empty()) return StabilizerAction::none();
+        // The line's place unchanged since it was last read: OCR missed it, it has not left.
+        if (!goneSince_ && !looksUnchanged(signature)) goneSince_ = time;
+        if ((goneSince_ && time - *goneSince_ >= clearAfterMs_) || time - *emptySince_ >= HoldUnchangedMs) {
             leaveScreen(time);
             return StabilizerAction::clear();
         }
@@ -42,6 +47,7 @@ StabilizerAction SubtitleStabilizer::feed(const std::string& rawText) {
     }
 
     emptySince_.reset();
+    goneSince_.reset();
     const int quality = OcrNoise::quality(rawText);
     if (TextMatch::isSimilar(text, candidate_, similarity_)) {
         ++candidateCount_;
@@ -63,6 +69,7 @@ StabilizerAction SubtitleStabilizer::feed(const std::string& rawText) {
     // A line ending with punctuation is complete and goes on the first frame; a garbled one
     // (subtitles cross-fading) waits until it has been stable longer than a cross-fade.
     // CrispPlay: so does a broken one ("Take it, nd kill shose wh"): a better reading may come.
+    if (isSame(TextMatch::normalize(rawText), sent_)) remember(signature, box);
     const bool broken = OcrNoise::looksBroken(raw);
     const bool ready = broken ? candidateCount_ >= stableFrames_ && time - candidateSince_ >= GarbledStableMs
                               : candidateCount_ >= stableFrames_ || endsSentence(raw);
@@ -73,7 +80,10 @@ StabilizerAction SubtitleStabilizer::feed(const std::string& rawText) {
         // A noisy reread of the sent line is not a new line.
         if (isSame(best, sent_)) return StabilizerAction::none();
         // Neither is a worse reread with a word or two read differently.
-        if (!sentRaw_.empty() && TextMatch::isWorseReread(raw, sentRaw_)) return StabilizerAction::none();
+        if (!sentRaw_.empty() && TextMatch::isWorseReread(raw, sentRaw_)) {
+            remember(signature, box);
+            return StabilizerAction::none();
+        }
 
         // A line that just left came back: reads were missed; show the old translation again.
         for (int i = static_cast<int>(history_.size()) - 1; i >= 0; --i) {
@@ -85,6 +95,7 @@ StabilizerAction SubtitleStabilizer::feed(const std::string& rawText) {
                 sentRaw_ = back.raw;
                 sentBroken_ = OcrNoise::looksBroken(sentRaw_);
                 sentQuality_ = OcrNoise::quality(sentRaw_);
+                remember(signature, box);
                 return StabilizerAction::restore(back.raw);
             }
         }
@@ -98,7 +109,18 @@ StabilizerAction SubtitleStabilizer::feed(const std::string& rawText) {
     sent_ = TextMatch::normalizeRows(sentRaw_);
     sentBroken_ = broken;
     sentQuality_ = bestQuality_;
+    remember(signature, box);
     return StabilizerAction::translate(sentRaw_);
+}
+
+void SubtitleStabilizer::remember(const std::vector<uint8_t>* signature, const std::optional<TextBox>& box) {
+    if (signature && !signature->empty() && box) lastSeen_ = Seen{*signature, *box};
+    else lastSeen_.reset();
+}
+
+bool SubtitleStabilizer::looksUnchanged(const std::vector<uint8_t>* signature) const {
+    return signature && !signature->empty() && lastSeen_ &&
+           !ReadScheduler::changed(lastSeen_->signature, *signature, ReadScheduler::ChangeThreshold, lastSeen_->box);
 }
 
 bool SubtitleStabilizer::isSame(const std::string& text, const std::string& rows) {
@@ -112,6 +134,7 @@ void SubtitleStabilizer::leaveScreen(int64_t time) {
     sent_.clear();
     sentRaw_.clear();
     sentBroken_ = false;
+    lastSeen_.reset();
 }
 
 bool SubtitleStabilizer::endsSentence(const std::string& raw) {
@@ -130,6 +153,7 @@ void SubtitleStabilizer::forgetSent() {
     sent_.clear();
     sentRaw_.clear();
     sentBroken_ = false;
+    lastSeen_.reset();
     candidate_.clear();
     candidateCount_ = 0;
 }
@@ -138,6 +162,8 @@ StabilizerAction SubtitleStabilizer::reset() {
     candidate_.clear();
     candidateCount_ = 0;
     emptySince_.reset();
+    goneSince_.reset();
+    lastSeen_.reset();
     history_.clear();
     forgotten_.clear();
     if (sent_.empty()) return StabilizerAction::none();

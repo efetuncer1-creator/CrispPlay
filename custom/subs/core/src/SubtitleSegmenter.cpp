@@ -63,14 +63,24 @@ struct Label {
 };
 
 // Speaker label at the start; one-word headings ("Note:", "Objective:") are not names.
+// CrispPlay, after CouchSubs SpeakerPrefix (376c08a): the full-width colon ("Mrs. Adler：Leave
+// me."), one space before the colon ("OLD MAN : Hm.") and no space after it ("ARTHUR:We go.")
+// are labels too; a name is at most 24 characters and the rest must have a letter and not be
+// an address ("HTTPS://…").
+constexpr size_t kMaxNameLength = 24;
+
 std::optional<Label> speakerLabel32(const std::u32string& text) {
-    const size_t colon = text.find(U':');
-    if (colon == std::u32string::npos || colon + 1 >= text.size() || !uni::isWhiteSpace(text[colon + 1])) return std::nullopt;
+    const size_t colon = text.find_first_of(U":：");
+    if (colon == std::u32string::npos || colon + 1 >= text.size()) return std::nullopt;
     std::u32string name = text.substr(0, colon);
-    if (!isName(name)) return std::nullopt;
+    if (!name.empty() && name.back() == U' ') name.pop_back();
+    if (name.size() > kMaxNameLength || !isName(name)) return std::nullopt;
     if (!contains(name, U' ') && inList(name, std::begin(kNotNames), std::end(kNotNames))) return std::nullopt;
     size_t end = colon + 1;
     while (end < text.size() && uni::isWhiteSpace(text[end])) ++end;
+    if (end < text.size() && text[end] == U'/') return std::nullopt;
+    if (!std::any_of(text.begin() + static_cast<std::ptrdiff_t>(end), text.end(), [](char32_t c) { return uni::isLetter(c); }))
+        return std::nullopt;
     return Label{name + U":", name, end};
 }
 

@@ -43,6 +43,9 @@ struct OcrFrame {
     // Where the band sits in the full video frame, as fractions of the frame (0-1). Used to
     // tell a centred subtitle from corner text and to widen a partly read centred line.
     float bandLeft = 0.f, bandTop = 0.f, bandRight = 1.f, bandBottom = 1.f;
+    // Small grey thumbnail of the band (ReadScheduler::signature); empty if unknown. With it an
+    // empty reading over an unchanged line place does not clear the line at once.
+    std::vector<uint8_t> signature;
 };
 
 // Implemented by the MT agent (CTranslate2) and later an online engine. One call = one

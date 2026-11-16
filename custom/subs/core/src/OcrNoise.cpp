@@ -146,12 +146,28 @@ bool hasBracket(const std::u32string& core) {
     return std::any_of(core.begin(), core.end(), [](char32_t c) { return c == '[' || c == ']' || c == '(' || c == ')'; });
 }
 
-// Three or more letters, no vowel, not an all-caps abbreviation: not English ("Gtt", "rnnk").
+// Vowelless but real interjections ("Hmm", "Shh", "Brr", "Grr", "Psst", "Pfft", "Mmm", "Zzz",
+// "Tsk"), with repeated letters collapsed (CouchSubs OcrNoise.Interjections).
+const std::u32string_view kVowellessInterjections[] = {U"hm", U"m", U"sh", U"br", U"gr", U"pst", U"pft", U"tsk",
+                                                       U"hrm", U"z", U"pht"};
+
+std::u32string collapsed(const std::u32string& text) {
+    std::u32string out;
+    for (char32_t c : text)
+        if (out.empty() || out.back() != c) out.push_back(c);
+    return out;
+}
+
+// Three or more letters, no vowel, not an all-caps abbreviation and not an interjection: not
+// English ("Gtt", "rnnk").
 bool vowelless(const std::u32string& letters) {
     if (letters.size() < 3) return false;
     if (std::all_of(letters.begin(), letters.end(), [](char32_t c) { return uni::isUpper(c); })) return false;
     const auto lower = uni::toLowerInvariant(letters);
-    return lower.find_first_of(U"aeiouyäöüıàáâèéêìíîòóôùúû") == std::u32string::npos;
+    if (lower.find_first_of(U"aeiouyäöüıàáâèéêìíîòóôùúû") != std::u32string::npos) return false;
+    const auto folded = collapsed(lower);
+    return std::none_of(std::begin(kVowellessInterjections), std::end(kVowellessInterjections),
+                        [&](std::u32string_view w) { return folded == w; });
 }
 
 // "l", "|", "l'm", "|'ll" -> "I", "I'm", "I'll".
@@ -209,11 +225,15 @@ int score(const std::string& text) {
     int total = 0;
     for (const auto& token : uni::splitWhiteSpace(uni::decode(text))) {
         const auto core = splitToken(token).core;
-        const int letters = static_cast<int>(std::count_if(core.begin(), core.end(), [](char32_t c) { return uni::isLetter(c); }));
-        if (letters == 0) continue;
+        std::u32string letters;
+        for (char32_t c : core)
+            if (uni::isLetter(c)) letters.push_back(c);
+        if (letters.empty()) continue;
         const auto cleaned = cleanCore(core);
-        const bool isClean = cleaned && *cleaned == core && normalCase(core) && !hasBracket(core);
-        total += isClean ? letters : -2 * letters;
+        // A vowelless word ("Gtt") is a misreading too (CouchSubs #120).
+        const bool isClean = cleaned && *cleaned == core && normalCase(core) && !hasBracket(core) && !vowelless(letters);
+        const int count = static_cast<int>(letters.size());
+        total += isClean ? count : -2 * count;
     }
     return total;
 }

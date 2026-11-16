@@ -177,6 +177,9 @@ TEST(OcrNoise_CleanReadingScoresHigherThanGarbled) {
     CHECK(OcrNoise::score("CESARE: Wait for me!") > OcrNoise::score("- CESAREiVJütt'h!"));
     CHECK(OcrNoise::score("We go to McDonald's now.") > 0);
     CHECK(OcrNoise::score("T hats the[lil Should be quiet now.") < OcrNoise::score("That should be quiet now."));
+    // CouchSubs 0aea0ed (#120): vowelless words cost points; real interjections do not.
+    CHECK(OcrNoise::score("Get to the gate now.") > OcrNoise::score("Gtt to the gate now."));
+    for (const char* word : {"Hmm!", "Shh!", "Brr!", "Psst!", "Mmm!"}) CHECK(OcrNoise::score(word) > 0);
 }
 
 TEST(OcrNoise_GarbledReadingsAreRecognised) {

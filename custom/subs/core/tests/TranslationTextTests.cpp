@@ -11,6 +11,7 @@
 #include "crispplay/subs/FreeTranslation.h"
 #include "crispplay/subs/GameEnglish.h"
 #include "crispplay/subs/Glossary.h"
+#include "crispplay/subs/Sha256.h"
 #include "crispplay/subs/SubtitleSegmenter.h"
 #include "crispplay/subs/TermProtection.h"
 #include "crispplay/subs/TranslationCache.h"
@@ -138,6 +139,20 @@ TEST(Segmenter_SpeakerLabelHelper) {
     CHECK_EQ(SubtitleSegmenter::speakerLabel("Hold the gate."), Opt());
 }
 
+// The examples of CouchSubs SpeakerPrefixTests (376c08a) against our label rule.
+TEST(Segmenter_SpeakerLabelLikeCouchSubsSpeakerPrefix) {
+    CHECK_EQ(SubtitleSegmenter::speakerLabel("ARTHUR: We need to go."), Opt("ARTHUR"));
+    CHECK_EQ(SubtitleSegmenter::speakerLabel("Dutch: I have a plan."), Opt("Dutch"));
+    CHECK_EQ(SubtitleSegmenter::speakerLabel("Mrs. Adler：Leave me."), Opt("Mrs. Adler"));
+    CHECK_EQ(SubtitleSegmenter::speakerLabel("OLD MAN : Hm."), Opt("OLD MAN"));
+    CHECK_EQ(SubtitleSegmenter::speakerLabel("ARTHUR:We go."), Opt("ARTHUR"));
+    CHECK_EQ(render("ARTHUR:We go."), std::string("ARTHUR: [We go.]"));
+    for (const char* text : {"10:30 at the station.", "Meet me at 10:30.", "HTTPS://example.com", "Ratio 16:9",
+                             "Note: the gate is shut.", "I told you: get out!", "Very Long Name Of Four: words",
+                             "Bartholomew Montgomeryson: Hi.", "ARTHUR:", "ARTHUR: ..."})
+        CHECK_EQ(SubtitleSegmenter::speakerLabel(text), Opt());
+}
+
 // --- GameEnglishTests.cs ----------------------------------------------------------------------
 
 TEST(GameEnglish_GameIdiomsBecomePlainEnglish) {
@@ -191,6 +206,25 @@ TEST(Glossary_BuiltInGlossaryHasGeneralGameTerms) {
     CHECK(Glossary::builtIn().count() >= 10);
     CHECK_EQ(Glossary::builtIn().turkish("Health Potion"), Opt("can iksiri"));
     CHECK_EQ(Glossary::builtIn().turkish("skill tree"), Opt("yetenek ağacı"));
+}
+
+// CouchSubs GlossaryTests.KeepExactNamesMatchOnlyAsWritten (b247d4c). CrispPlay's built-in
+// glossary does not carry the game-specific "Soul", so the user glossary gives it here.
+TEST(Glossary_KeepExactNamesMatchOnlyAsWritten) {
+    auto user = *Glossary::parse(R"({ "keepExact": ["Soul"] })");
+    auto merged = Glossary::merge({&Glossary::builtIn(), &user});
+    auto found = merged.find(U"Soul, you sold your soul. SOUL!");
+    CHECK_EQ(found.size(), size_t(1));
+    if (found.size() == 1) {
+        CHECK(found[0].english == U"Soul");
+        CHECK_EQ(found[0].start, size_t(0));
+    }
+    CHECK(merged.capitalWords().count("soul") == 0);
+    CHECK(Glossary::parse(R"({ "keep": ["Soul"] })")->fingerprint() !=
+          Glossary::parse(R"({ "keepExact": ["Soul"] })")->fingerprint());
+    // A glossary without keepExact keeps its old trace (cache keys stay valid).
+    CHECK_EQ(Glossary::parse(R"({ "keep": ["Soul"] })")->fingerprint(),
+             Glossary::parse(R"({ "terms": { "Soul": "Soul" } })")->fingerprint());
 }
 
 TEST(Glossary_LaterGlossaryWinsAndFingerprintFollowsContent) {
@@ -572,6 +606,29 @@ TEST(TranslationCache_EnginesHaveSeparateFiles) {
     TranslationCache(cacheFile(dir, "deepl")).store("Run!", "DeepL çevirisi");
     CHECK_EQ(TranslationCache(cacheFile(dir, "opus-mt")).get("Run!"), Opt());
     CHECK(cacheFile(dir, "opus-mt").filename() == std::filesystem::path("v1-opus_mt-en-tr.jsonl"));
+}
+
+// CouchSubs TranslationCacheTests.DifferentEngineIdsNeverShareTheSameCache (b04fde5).
+TEST(TranslationCache_DifferentEngineIdsNeverShareTheSameCache) {
+    TempDir dir;
+    for (const auto& [first, other] : std::vector<std::pair<std::string, std::string>>{
+             {"local:qwen2.5:7b", "local:qwen2-5:7b"}, {"local:model.a", "local:model_a"}, {"opus-mt", "opus_mt"}}) {
+        CHECK(cacheFile(dir, first) != cacheFile(dir, other));
+        auto a = TranslationCache::shared(dir.path, first, "en", "tr");
+        auto b = TranslationCache::shared(dir.path, other, "en", "tr");
+        CHECK(a != b);
+        a->store("Run!", "First model translation");
+        CHECK_EQ(b->get("Run!"), Opt());
+    }
+}
+
+// Same digest as CouchSubs on every platform (TranslationCacheTests.SpecialEngineFileNamesAreStableAcrossPlatforms).
+TEST(TranslationCache_SpecialEngineFileNamesAreStable) {
+    TempDir dir;
+    CHECK(cacheFile(dir, "local:model.a").filename() ==
+          std::filesystem::path("v1h-6b5f11ab62999719865a030d1fb7f93bbcf1184290b58d4d603d1bee6c03249c.jsonl"));
+    CHECK_EQ(sha256Hex(""), std::string("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"));
+    CHECK_EQ(sha256Hex("abc"), std::string("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"));
 }
 
 TEST(TranslationCache_LinesWithQuotesAndNewlinesRoundTrip) {

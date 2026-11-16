@@ -61,6 +61,13 @@ public:
 
     Reading withoutButtonPrompts() const;
     Reading withoutOcrNoise() const;
+    // Pieces read side by side on one row become one line, left to right (CouchSubs
+    // Reading.JoiningRows, 376c08a): OCR can read a coloured speaker name ("Arthur:") apart from
+    // its sentence; ordered by top edge alone the name fell behind the sentence or into a block of
+    // its own. Pieces at most RowGap (fraction of the area width) apart are joined; far corner
+    // text stays apart. Lines without boxes: the reading stays as is.
+    Reading joiningRows() const;
+    static constexpr double RowGap = 0.05;
     // The subtitle block of the area: lines grouped by place; the lowest centred non-menu
     // block, else the lowest non-menu block of 3+ words. `area` is the read area's place in
     // the frame. Lines without boxes: the reading stays as is.

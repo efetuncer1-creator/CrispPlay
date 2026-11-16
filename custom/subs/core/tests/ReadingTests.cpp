@@ -9,7 +9,10 @@
 
 #include "crispplay/subs/Reading.h"
 
+#include <algorithm>
 #include <cmath>
+#include <string>
+#include <vector>
 
 using namespace crispplay::subs;
 
@@ -106,4 +109,30 @@ TEST(Reading_FromFrameKeepsPixelBoxes) {
     auto pixels = reading.pixelBox();
     CHECK_EQ(pixels.x, 250.f);
     CHECK_EQ(pixels.bottom(), 190.f);
+}
+
+// CouchSubs SpeakerPrefixTests.NameReadApartJoinsItsRow (376c08a): a coloured name read apart
+// from its sentence joins it left to right; far corner text stays apart.
+TEST(Reading_NameReadApartJoinsItsRow) {
+    Reading reading({TextLine{"We need to go.", TextBox{0.40, 0.501, 0.70, 0.60}, Rect{400, 50, 300, 10}},
+                     TextLine{"ARTHUR:", TextBox{0.30, 0.50, 0.385, 0.60}, Rect{300, 50, 85, 10}},
+                     TextLine{"9", TextBox{0.95, 0.50, 0.97, 0.60}, std::nullopt}});
+    const auto joined = reading.joiningRows();
+    std::vector<std::string> texts;
+    for (const auto& l : joined.lines()) texts.push_back(l.text);
+    std::sort(texts.begin(), texts.end());
+    CHECK_EQ(texts, (std::vector<std::string>{"9", "ARTHUR: We need to go."}));
+    for (const auto& l : joined.lines()) {
+        if (l.text != "ARTHUR: We need to go.") continue;
+        CHECK(near(l.box->left, 0.30) && near(l.box->right, 0.70));
+        CHECK(l.pixels && near(l.pixels->x, 300) && near(l.pixels->right(), 700));
+    }
+}
+
+// Rows of a two-line subtitle stay two lines; lines without boxes are left as they are.
+TEST(Reading_JoiningRowsKeepsSeparateRows) {
+    Reading reading({line("Mac and John... they were both shot.", 0.3, 0.6, 0.7), line("We need to move.", 0.4, 0.68, 0.6)});
+    CHECK_EQ(reading.joiningRows().text(), reading.text());
+    Reading unplaced({TextLine{"A", std::nullopt, std::nullopt}, TextLine{"B", std::nullopt, std::nullopt}});
+    CHECK_EQ(unplaced.joiningRows().text(), std::string("A\nB"));
 }

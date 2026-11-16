@@ -122,6 +122,38 @@ Reading Reading::withoutOcrNoise() const {
     return Reading(std::move(kept));
 }
 
+namespace {
+
+// joiningRows(): `next` lies on `row`'s row (they overlap vertically by 60 % of the lower one)
+// and starts at most RowGap after it.
+bool sameRow(const TextBox& next, const TextBox& row) {
+    const double overlap = std::min(next.bottom, row.bottom) - std::max(next.top, row.top);
+    const double smaller = std::min(next.bottom - next.top, row.bottom - row.top);
+    if (smaller <= 0 || overlap < smaller * 0.6) return false;
+    return next.left - row.right <= Reading::RowGap;
+}
+
+}  // namespace
+
+Reading Reading::joiningRows() const {
+    if (lines_.size() < 2 || std::any_of(lines_.begin(), lines_.end(), [](const TextLine& l) { return !l.box; })) return *this;
+    std::vector<TextLine> byLeft = lines_;
+    std::stable_sort(byLeft.begin(), byLeft.end(), [](const TextLine& a, const TextLine& b) { return a.box->left < b.box->left; });
+    std::vector<TextLine> rows;
+    for (auto& line : byLeft) {
+        auto row = std::find_if(rows.begin(), rows.end(), [&](const TextLine& r) { return sameRow(*line.box, *r.box); });
+        if (row == rows.end()) {
+            rows.push_back(std::move(line));
+            continue;
+        }
+        row->text += " " + line.text;
+        row->box = row->box->unite(*line.box);
+        if (line.pixels) row->pixels = row->pixels ? row->pixels->united(*line.pixels) : *line.pixels;
+    }
+    std::stable_sort(rows.begin(), rows.end(), [](const TextLine& a, const TextLine& b) { return a.box->top < b.box->top; });
+    return Reading(std::move(rows));
+}
+
 Reading Reading::subtitleBlock(const TextBox& area) const {
     if (lines_.empty() || std::any_of(lines_.begin(), lines_.end(), [](const TextLine& l) { return !l.box; })) return *this;
     std::vector<TextLine> ordered = lines_;

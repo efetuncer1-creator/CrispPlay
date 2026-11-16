@@ -46,20 +46,23 @@ std::optional<std::string> readFile(const std::filesystem::path& file) {
 
 Glossary::Glossary(Terms terms) : terms_(std::move(terms)) {
     for (const auto& [key, value] : terms_) ordered_.push_back(value);
-    std::sort(ordered_.begin(), ordered_.end(), [](const auto& a, const auto& b) {
-        if (a.first.size() != b.first.size()) return a.first.size() > b.first.size();
-        return a.first < b.first;
+    std::sort(ordered_.begin(), ordered_.end(), [](const Term& a, const Term& b) {
+        if (a.english.size() != b.english.size()) return a.english.size() > b.english.size();
+        return a.english < b.english;
     });
-    for (const auto& [english, turkish] : ordered_) {
+    for (const auto& [english, turkish, exact] : ordered_) {
         // Terms written with a capital are names: they stay capitalised in an all-caps line.
-        if (!std::any_of(english.begin(), english.end(), [](char32_t c) { return uni::isUpper(c); })) continue;
+        // keepExact names are also ordinary words, so they are not ("I SOLD MY SOUL" -> "soul").
+        if (exact || !std::any_of(english.begin(), english.end(), [](char32_t c) { return uni::isUpper(c); })) continue;
         for (const auto& word : uni::split(english, U' '))
             if (word.size() >= 2) capitalWords_.insert(uni::encode(uni::toLowerInvariant(word)));
     }
     // FNV-1a (32 bit) over the terms sorted by lower-case English (same as CouchSubs).
     uint32_t hash = 2166136261u;
+    // The exact mark is added only when set: older glossaries keep their trace.
     for (const auto& [key, value] : terms_) {
-        const std::string bytes = uni::encode(key) + "\x01" + uni::encode(value.second) + "\x02";
+        const std::string bytes =
+            uni::encode(key) + "\x01" + uni::encode(value.turkish) + (value.exact ? "\x03" : "") + "\x02";
         for (unsigned char b : bytes) hash = (hash ^ b) * 16777619u;
     }
     char buf[16];
@@ -72,12 +75,12 @@ const Glossary& Glossary::builtIn() {
     return value;
 }
 
-void Glossary::add(Terms& terms, std::u32string english, std::u32string turkish) {
+void Glossary::add(Terms& terms, std::u32string english, std::u32string turkish, bool exact) {
     english = collapseSpaces(english);
     turkish = collapseSpaces(turkish);
     // A term without letters would match everywhere; placeholders are few, so no long terms.
     if (!uni::anyLetter(english) || turkish.empty() || english.size() > 80) return;
-    terms[uni::toLowerInvariant(english)] = {english, turkish};
+    terms[uni::toLowerInvariant(english)] = Term{english, turkish, exact};
 }
 
 std::optional<Glossary> Glossary::parse(const std::string& text) {
@@ -94,6 +97,14 @@ std::optional<Glossary> Glossary::parse(const std::string& text) {
         if (name == "keep" && member.isArray()) {
             for (const auto& item : member.array)
                 if (item.isString()) add(terms, uni::decode(item.string), uni::decode(item.string));
+        }
+    }
+    // keepExact (CouchSubs b247d4c): names that are also ordinary words ("Soul" the hero, "soul"
+    // the word) are kept only when written with the same casing.
+    for (const auto& [name, member] : root->object) {
+        if (name == "keepExact" && member.isArray()) {
+            for (const auto& item : member.array)
+                if (item.isString()) add(terms, uni::decode(item.string), uni::decode(item.string), true);
         }
     }
     return Glossary(std::move(terms));
@@ -133,16 +144,16 @@ Glossary Glossary::load(const std::optional<std::filesystem::path>& directory) {
 std::optional<std::string> Glossary::turkish(const std::string& english) const {
     auto it = terms_.find(uni::toLowerInvariant(collapseSpaces(uni::decode(english))));
     if (it == terms_.end()) return std::nullopt;
-    return uni::encode(it->second.second);
+    return uni::encode(it->second.turkish);
 }
 
 std::vector<Glossary::TermMatch> Glossary::find(std::u32string_view text) const {
     std::vector<TermMatch> found;
     if (ordered_.empty() || text.empty()) return found;
-    for (const auto& [english, turkish] : ordered_) {
+    for (const auto& [english, turkish, exact] : ordered_) {
         size_t start = 0;
         while (start + english.size() <= text.size()) {
-            const size_t index = uni::findIgnoreCase(text, english, start);
+            const size_t index = exact ? text.find(english, start) : uni::findIgnoreCase(text, english, start);
             if (index == std::u32string::npos) break;
             const size_t end = index + english.size();
             const bool overlaps = std::any_of(found.begin(), found.end(), [&](const TermMatch& m) {

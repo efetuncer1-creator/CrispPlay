@@ -55,13 +55,17 @@ public:
     bool matches(const std::string& text) const;
 
 private:
-    // lower-case English -> (English as written, Turkish), UTF-32.
-    using Terms = std::map<std::u32string, std::pair<std::u32string, std::u32string>>;
+    struct Term {
+        std::u32string english, turkish;  // English as written
+        bool exact = false;               // keepExact: matches only with the same casing
+    };
+    // lower-case English -> term, UTF-32.
+    using Terms = std::map<std::u32string, Term>;
     explicit Glossary(Terms terms);
-    static void add(Terms& terms, std::u32string english, std::u32string turkish);
+    static void add(Terms& terms, std::u32string english, std::u32string turkish, bool exact = false);
 
     Terms terms_;
-    std::vector<std::pair<std::u32string, std::u32string>> ordered_;  // longest first
+    std::vector<Term> ordered_;  // longest first
     std::set<std::string> capitalWords_;
     std::string fingerprint_;
 };

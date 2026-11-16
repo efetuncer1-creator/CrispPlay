@@ -259,6 +259,8 @@ public:
     bool rotatePreviewClockwise(uint64_t session){std::lock_guard lock(mutex_);if(session!=snapshot_.sessionId||(!snapshot_.running&&!snapshot_.image))return false;previewView_.rotateClockwise();return true;}
     PreviewView previewView()const{std::lock_guard lock(mutex_);return previewView_;}
     void setVolume(float gain,bool mute);
+    // Local capture monitoring only. Recording takes PCM before this gain.
+    void setCaptureAudioMonitoring(bool enabled);
     bool selectAudioTrack(uint64_t sessionId,int streamIndex);
     void seek(double seconds){if(!std::isfinite(seconds)||seconds<0)return;std::lock_guard lock(mutex_);snapshot_.seekTarget=seconds;++snapshot_.seekRequested;seekSeconds_.store(seconds);}
     void saveFrame(const std::wstring& path);
@@ -270,6 +272,12 @@ public:
     bool requestRecording(const RecordingSettings& options,std::wstring& error);
     void stopRecording();
     RecordingStatus recordingSnapshot()const;
+    // Instant replay (#103): while enabled, the last options.replaySeconds of
+    // whatever is presented stay in memory, across sessions; saveReplay()
+    // writes them to a new file in the background. Any thread.
+    bool setReplay(bool enabled,const RecordingSettings& options,std::wstring& error);
+    bool saveReplay(const std::wstring& directory,std::wstring& error);
+    RecordingStatus replaySnapshot()const;
     // Refresh/VRR state of monitors, shared by every session's presenter and
     // the UI; queried in the background on events only. Any thread.
     DisplayStateService& displayStates(){return displayStates_;}
@@ -308,6 +316,10 @@ private:
     // Live recorder: every session's presenter records into it; it owns its
     // encoder and writer threads. Created before the engine thread starts.
     std::unique_ptr<LiveRecorder> recorder_=std::make_unique<LiveRecorder>();
+    // The instant replay buffer, a second recorder; both take the presented
+    // frame through captures_.
+    std::unique_ptr<LiveRecorder> replay_=std::make_unique<LiveRecorder>(true);
+    PresentCaptureFanout captures_{*recorder_,*replay_};
     // Declared before worker_: it outlives the engine thread's presenters.
     DisplayStateService displayStates_;
     std::thread worker_;
@@ -321,6 +333,7 @@ private:
     EnhancementSettings desired_;uint64_t nextRevision_=1;
     std::optional<ChainRuntimeOrder> desiredNodeOrder_; // protected by mutex_, paired with desired_
     std::atomic<bool> stop_{false},paused_{false},muted_{false};
+    std::atomic<bool> captureAudioMonitoring_{true};
     std::atomic<float> volume_{1};uint64_t sessionId_=0;
     std::atomic<double> seekSeconds_{-1};
     std::atomic<double> requestedPlaybackRate_{1};

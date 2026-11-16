@@ -90,7 +90,6 @@
 #include "veyra/remoteplay/ControllerInput.h"
 #include "veyra/remoteplay/Discovery.h"
 #include "veyra/remoteplay/ProfileStore.h"
-#include "veyra/remoteplay/PsnAuth.h"
 #include "veyra/source/RemotePlaySource.h"
 #endif
 #ifdef VEYRA_ENABLE_XBOX
@@ -371,6 +370,10 @@ struct QmlPlayerBridge::Impl {
     // Live recording state published by the engine (see LiveRecorder.h).
     QVariantMap recordingState;
     uint64_t recordingSaved = 0;   // LiveRecorder's finished-file counter already announced
+    QVariantMap replayState;       // the instant replay buffer (#103)
+    uint64_t replaySaved = 0;      // its saved-clip counter already announced
+    QVariantList microphones;      // recording endpoints, {id, label}
+    QString microphoneNotice;      // the microphone failure last announced
   // Custom: the display whose HDR curve is currently applied (see syncHdrDisplayProfile).
   QString hdrProfileDisplay;
   // Custom: the title whose curve is currently applied (see syncHdrTitleProfile).
@@ -459,9 +462,8 @@ struct QmlPlayerBridge::Impl {
     QString ps5Status;
     std::wstring ps5Profile;                 // file name inside profileDirectory()
     QVariantList ps5ProfileList;
-    uint64_t psnLoginStarted = 0;
     bool ps5Watching = false;
-    struct Ps5Outcome { std::wstring message; std::vector<std::pair<std::string, std::string>> hosts; std::wstring savedPath; std::string account; bool refreshProfiles = false; };
+    struct Ps5Outcome { std::wstring message; std::vector<std::pair<std::string, std::string>> hosts; std::wstring savedPath; bool refreshProfiles = false; };
     std::mutex ps5Mutex;
     Ps5Outcome ps5Outcome;
     std::atomic<bool> ps5Done{false};
@@ -509,7 +511,13 @@ struct QmlPlayerBridge::Impl {
     int audioPollTicks = 0;
     // --- protection drawing (#8) ---
     QString protDraw;                         // "" | rect | ellipse
+    bool protExclusion=false;
     HWND protOverlay = nullptr;
+    int exclusionSelected = -1;
+    bool exclusionDragging = false;
+    engine::ProtectionRect exclusionOriginal{}, exclusionPreview{};
+    std::pair<float,float> exclusionDragStart{};
+    QVariantList maskOverlayGeometry; // Repaint only when view, geometry or selection changes.
     // --- performance orbs / status light (#13) ---
     ui::live_status::DashboardHistory history;
     int historyTicks = 0;
@@ -713,7 +721,9 @@ struct QmlPlayerBridge::Impl {
                     initial.opticalFlowBackend=engine::OpticalFlowBackend::AmdFidelityFx;
                     initial.videoSrQuality=engine::kVideoSrFsr;
                 }
-                initial.frameGenerationBackend=engine::defaultFrameGenerationBackend(desc.VendorId);
+                // RX 9000 starts on FSR 4 ML (the same name rule as its menu gate, effectGpu()).
+                initial.frameGenerationBackend=engine::defaultFrameGenerationBackend(desc.VendorId,
+                    QString::fromWCharArray(desc.Description).contains(QStringLiteral("RX 90"),Qt::CaseInsensitive));
                 facade.setPending(initial);
                 veyra::log::info("nr-default",std::format("adapter={} selected={}",utf8Of(std::wstring(desc.Description)).toStdString(),engine::nrRuntimeName(initial.nrRuntime)));
                 break;
@@ -849,6 +859,7 @@ struct QmlPlayerBridge::Impl {
     // The chain is the source of truth for the stage settings; every commit
     // writes it back over the struct so the two can never disagree.
     bool commit(engine::EnhancementSettings settings) {
+        settings.content=engine::currentContentRate(settings.content);
         // Custom: the static HDR output tuning belongs to neither transaction, so
         // keep the draft globals in sync in BOTH modes. Only the node branch below
         // refreshed them, which is why a change made in list mode took effect and
@@ -925,6 +936,7 @@ struct QmlPlayerBridge::Impl {
             }
         }
         engine::fromChain(*projected, s);
+        s.content=engine::currentContentRate(s.content);
         if(const auto error=s.validate();!error.empty()){
             veyra::log::error("qml-settings",error);
             validation={false,"效果参数无效，未提交；详见诊断日志"};return false;

@@ -339,6 +339,10 @@ the Ko-fi glyph is split into its subpaths to colour the cup the way Ko-fi's own
 drawings only: the logos remain trademarks of their owners and are used solely to link to the author's own
 pages; no endorsement is implied.
 
+The Patreon glyph used by the sponsor page and documentation buttons (2026-11-11) is from
+[Simple Icons at cd796c98565fc466923fc1128b962e133fa3c612](https://github.com/simple-icons/simple-icons/blob/cd796c98565fc466923fc1128b962e133fa3c612/icons/patreon.svg),
+under CC0 1.0. Its original path is retained in the SVG files with source metadata.
+
 ## RTX Video SDK 1.1 local VSR adapter
 
 User-provided official SDK from https://developer.nvidia.com/rtx-video-sdk/getting-started, kept under ignored third_party_local/nvidia/RTX_Video_SDK_1.1.0. Its NVIDIA RTX SDK license remains applicable. VideoSrBackend is independently authored against the documented VSR parameter ABI; no SDK sample implementation or proprietary header is copied into the repository. Local nvngx_vsr.dll remains excluded from Git. Under the user-authorized 2026-09-09 Release Runtime Pack policy, its pinned signed release copy may be included only as a Release asset alongside the applicable SDK license and manifest; it is never committed to source control.
@@ -369,6 +373,8 @@ Veyra calls the pinned Chiaki orientation tracker API (AGPL-3.0-only with OpenSS
 
 ### PSN browser authorization adapter (2026-09-12)
 
+Historical attribution: this adapter was removed on 2026-11-11. Current Veyra opens the user-selected PSNTools website for manual Account ID lookup; it does not implement the old OAuth/token flow. Existing Chiaki protocol and dependency notices below still apply.
+
 `src/remoteplay/PsnAuth.cpp` adapts the OAuth request contract and public client identifiers from chiaki-ng, commit `0e16950165f06e5c3291537c2eeba6e852be7120`, `gui/src/psnaccountid.cpp`, `gui/include/psnaccountid.h`, and `gui/src/psntoken.cpp`. Upstream credits the Account ID script to grill2010. License: AGPL-3.0-only with the upstream OpenSSL exception. The Windows HTTP, protected storage and UI integration are Veyra code. This is an unofficial client, not Sony endorsement. json-c remains an existing Chiaki dependency; its license/notice must remain in binary distributions.
 
 Static dependency notices and installed SPDX records: licenses/remoteplay/{json-c,libevent,miniupnpc,openssl,opus,sdl3}/. Upstream curl, nanopb, Jerasure and gf-complete notices are in the same directory. Their corresponding sources and port recipes accompany the RemotePlay-source release asset.
@@ -393,7 +399,7 @@ Thank you to these projects and their contributors. Integrated code, dependencie
 
 | Project | Contribution to Veyra |
 | --- | --- |
-| [chiaki-ng](https://github.com/streetpea/chiaki-ng) | PS5 Remote Play protocol, pairing and sessions; controller, haptics and PSN authorization integration and adaptations. Also credit to grill2010 for the upstream Account ID approach. |
+| [chiaki-ng](https://github.com/streetpea/chiaki-ng) | PS5 Remote Play protocol, pairing and sessions; controller and haptics integration; historical PSN authorization adapter. Also credit to grill2010 for the upstream Account ID approach. |
 | [XeSS-GPU-Motion](https://github.com/gggz114514-oss/XeSS-GPU-Motion) / [OpenCV](https://github.com/opencv/opencv) | Ported GPU DIS provider and shaders, retaining attribution and licenses for the OpenCV DIS-derived portions. |
 | [FFmpeg](https://github.com/FFmpeg/FFmpeg) / [nv-codec-headers](https://github.com/FFmpeg/nv-codec-headers) | Media demuxing, decoding, muxing and NVENC API declarations. Releases provide the actual FFmpeg patches and corresponding source. |
 | [SDL](https://github.com/libsdl-org/SDL) | PC controller input, DualSense support and haptic audio output. |
@@ -770,8 +776,22 @@ NvAPI_Disp_GetVRRInfo and NvAPI_DISP_GetMonitorCapabilities and renamed
 NV_GET_VRR_INFO_V1 and NV_MONITOR_CAPABILITIES_V1 (generic capability bits)
 layouts (checked against the commit above). It only reads the monitor's
 variable-refresh support and state, for diagnostics and to enable the 可变刷新
-switch; the driver setting is never changed. Same loading rules and the same
+switch; this monitor query never changes driver settings. Same loading rules and the same
 license as above.
+
+`src/gfx/NvidiaVrrProfile.cpp` (2026-11-14) adds minimal renamed DRS v1
+application/profile/setting layouts, QueryInterface IDs and G-SYNC scope enums,
+checked against NVIDIA/nvapi commit
+`51e5aae4bc40c3ccd3fb7d4dfd94256e7bfc496e` (`nvapi.h`,
+`nvapi_interface.h`, `NvApiDriverSettings.h`, MIT). The independently authored
+controller exposes explicit check/repair/restore actions for the current
+application's full-path, isolated driver profile. Unlike the monitor query
+above, this user-invoked operation can save the two application scope values.
+It never enables global G-SYNC, edits another application's profile, or copies
+Profile Inspector implementation code. Original local/inherited values are
+saved before mutation; restoration preserves unrelated settings. No complete
+SDK header or driver DLL is committed or distributed. The same NVIDIA MIT
+notice below applies to the minimal ABI reference declarations.
 
 Copyright (c) 2019-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
@@ -1073,3 +1093,32 @@ Only the recognized VFG runtime receives this experimental SM86 adaptation. RTX 
 
 Veyra Virtual Speaker uses the original VB-Audio VB-CABLE Pack46 for Windows. Builds configured with `VEYRA_VB_CABLE_PACKAGE` include the unmodified vendor ZIP for offline installation. Veyra opens the vendor setup only after the user confirms installation or removal. VB-CABLE is VB-Audio donationware. Users can support VB-Audio from the vendor site. See [VB-CABLE](https://vb-audio.com/Cable/) and [VB-Audio distribution terms](https://vb-audio.com/Services/licensing.htm).
 
+
+## Apex Neural Rendering FG local experiment (2026-11-12)
+
+External runtime: [apex-compute/ANR](https://github.com/apex-compute/ANR), inspected repository commit `20a5e7731d899eca3a289904929879588448664d`, [FG-V.B15 release](https://github.com/apex-compute/ANR/releases/tag/FG-V.B15). The official `anr-fg-V.B15-addon.zip` used locally has SHA-256 `717e93b3e63cb08dbaf6240cd585bae94d498c2749d8603d800d17ad97ef9e41`; its original `nvngx_dlssg.dll` is ANR's provider, not an NVIDIA-signed replacement. Its 19 original files are held outside this source repository under the task's private runtime directory and recorded in `ANR-RUNTIME.json`. No runtime, model pack, SDK or downloaded archive is vendored in Git.
+
+Veyra independently implements the host in `AnrProvider.h/.cpp` and adapts `DlssFgBackend`, the shared `EnhanceGraph`, backend selection, persistence and export admission. No ANR core algorithm, OptiScaler implementation or installer is copied. The existing external NGX SDK parameter interface/helper is reused for direct D3D12 provider calls; ANR never registers with NVIDIA's NGX core. ANR's own Windows binary internally uses a Vulkan bridge/queue hooks. Veyra's adapter converts its pixel-motion and depth/motion resource-state contract at the provider boundary and reference-counts device initialization across live graphs.
+
+At the inspected commit the ANR core source and a clear integration/redistribution license were not available. The OptiScaler license present in the full download does not establish a license for the ANR core. This is a user-authorized, local experiment; no public binary redistribution is performed or licensed by this notice. ANR SR/RR components were not available and are not exposed as working features. The limits and actual local evidence are recorded in `docs/ANR_FG_EXPERIMENT_2026-11-12.md`.
+
+
+### ANR public release boundary (2026-11-13)
+
+Upstream collaborator selimsandal explicitly states that third-party redistribution is not allowed until a full-release license is issued: https://github.com/apex-compute/ANR/issues/9#issuecomment-6857895225 (2026-11-13T15:49:32Z). Veyra 2.1.6 public packages contain none of ANR's provider DLL, model/program packs, configuration or generated bridge loader. The host adapter remains independently written Veyra source. Existing private local test copies are not public Release assets; no automated download, mirror, repackaged or renamed ANR payload is offered. The previous dated local research/measurements remain historical evidence, not a grant of redistribution rights.
+
+## AMD Advanced Media Framework (AMF) SDK headers
+
+- Source: https://github.com/GPUOpen-LibrariesAndSDKs/AMF, tag v1.5.3 (commit 57ee0cfb0e1a08d9041f77435653794c1b012be0), public headers `amf/public/include` only, used at build time for AMD FRC (frame rate conversion).
+- License: MIT, Copyright (c) Advanced Micro Devices, Inc. (see LICENSE.txt in that tag; each header carries the MIT notice).
+- Nothing from the SDK is redistributed in Veyra packages. The AMF runtime (`amfrt64.dll`) belongs to the user's AMD driver and is loaded from the Windows system directory only.
+
+## Startup music in runnable packages (2026-11-15)
+
+The user supplied BGM.MP3 and confirmed permission to distribute the exact file
+in Veyra runnable packages. The asset is separate from Veyra source code and its
+GPL license; it is excluded from Git and corresponding source archives.
+Runtime path: `media/startup-music.mp3`, 1847011 bytes, SHA256
+`3005aa601f06a97d3968fd9fa171e870fceb4ec47586f1e950c9ed3c7875fb6a`.
+Each runnable package includes its separate notice and manifest. Windows Media
+Foundation provides decoding; no additional codec or audio SDK is bundled.

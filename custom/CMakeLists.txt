@@ -60,43 +60,15 @@ if(TARGET Qt6::Test)
   set_target_properties(crispplay_discord_tests PROPERTIES AUTOMOC ON)
 endif()
 
-# --- Instant replay (Phase 4, custom/docs/REPLAY.md) --------------------------
-# Upstream targets only include crispplay/replay/Hooks.h (header-only), so
-# nothing below is linked into them; the app links the two libraries.
+# --- MP4 check tool ---------------------------------------------------------------
+# ffprobe-like check of a saved clip (upstream instant replay / recording), used by
+# custom/scripts/replay-test.ps1. CrispPlay's own instant replay was removed in
+# favour of upstream's (2.1.6+); see custom/docs/REPLAY.md.
 if(TARGET veyra_engine AND TARGET veyra_qml_ui)
-  add_library(crispplay_replay STATIC
-    src/replay/ReplayService.cpp
-    src/replay/ReplayMux.cpp)
-  target_compile_features(crispplay_replay PRIVATE cxx_std_20)
-  target_compile_options(crispplay_replay PRIVATE /utf-8)
-  target_compile_definitions(crispplay_replay PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-  target_include_directories(crispplay_replay PRIVATE ${FFMPEG_INCLUDE_DIRS})
-  target_link_libraries(crispplay_replay PUBLIC veyra_engine PRIVATE ${FFMPEG_LIBRARIES} dxgi)
-
-  add_library(crispplay_replay_ui STATIC src/replay/ReplayController.cpp src/replay/ReplayController.h)
-  set_target_properties(crispplay_replay_ui PROPERTIES AUTOMOC ON)
-  target_compile_features(crispplay_replay_ui PRIVATE cxx_std_20)
-  target_compile_options(crispplay_replay_ui PRIVATE /utf-8)
-  target_compile_definitions(crispplay_replay_ui PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-  target_link_libraries(crispplay_replay_ui PUBLIC crispplay_replay Qt6::Core Qt6::Qml)
-  target_link_libraries(veyra_qml_ui PRIVATE crispplay_replay_ui)
-  # Our QML is compiled in (qrc:/crispplay/...); upstream's stays on disk.
-  qt_add_resources(veyra_qml_ui "crispplay_replay_qml" PREFIX "/crispplay" BASE "${CMAKE_CURRENT_SOURCE_DIR}/qml"
-    FILES qml/ReplayHost.qml qml/ReplaySettings.qml)
-
-  # ffprobe-like check of a saved replay (real-pipeline test, custom/scripts/replay-pipeline-test.ps1).
   add_executable(crispplay_replay_clip_check tests/ReplayClipCheck.cpp)
   target_compile_features(crispplay_replay_clip_check PRIVATE cxx_std_20)
   target_include_directories(crispplay_replay_clip_check PRIVATE ${FFMPEG_INCLUDE_DIRS})
   target_link_libraries(crispplay_replay_clip_check PRIVATE ${FFMPEG_LIBRARIES})
-endif()
-
-if(TARGET Qt6::Test)
-  add_executable(crispplay_replay_ring_tests tests/ReplayRingTests.cpp)
-  target_compile_features(crispplay_replay_ring_tests PRIVATE cxx_std_20)
-  target_compile_options(crispplay_replay_ring_tests PRIVATE /utf-8)
-  target_link_libraries(crispplay_replay_ring_tests PRIVATE Qt6::Core Qt6::Test)
-  set_target_properties(crispplay_replay_ring_tests PROPERTIES AUTOMOC ON)
 endif()
 
 # --- Game subtitle translation (Phase 5): text core (AGPL-3.0 port of CouchSubs), engine, OCR ---
@@ -119,8 +91,13 @@ foreach(rc veyra-version.rc veyra-qml-version.rc)
 endforeach()
 if(TARGET veyra_qml_files)
   # veyra_qml_files copies qml/ on every build; replace its logo afterwards.
+  # 2.1.9: the dusk palette's logo, home-page wordmark and the startup intro's layers
+  # (DuskIntro.qml) are images too; custom/branding/dusk holds ours under upstream's file
+  # names (custom/scripts/make-brand-dusk.py), so the intro's mechanics stay upstream's.
+  file(GLOB crispplay_dusk_images CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/branding/dusk/*.png")
   add_custom_target(crispplay_logo ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/branding/logo-256.png" "${CMAKE_BINARY_DIR}/qml/Veyra/logo.png"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${crispplay_dusk_images} "${CMAKE_BINARY_DIR}/qml/Veyra"
     COMMENT "CrispPlay logo")
   add_dependencies(crispplay_logo veyra_qml_files)
   add_dependencies(veyra_qml_ui crispplay_logo)

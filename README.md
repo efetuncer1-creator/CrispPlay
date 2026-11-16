@@ -4,6 +4,22 @@
 
 # Veyra
 
+<!-- veyra-creator-and-tutorials:start -->
+<p align="center">
+  <strong>作者主页 / Creator</strong>：
+  <a href="https://x.com/likely2002">X · @likely2002</a>
+  &nbsp;|&nbsp;
+  <a href="https://www.youtube.com/@Likely7Ai">YouTube · @Likely7Ai</a>
+</p>
+
+<p align="center">
+  <strong>视频教程 / Video tutorials</strong>：
+  <a href="https://www.youtube.com/watch?v=ZJ42jzNAbik">English · YouTube</a>
+  &nbsp;|&nbsp;
+  <a href="https://www.bilibili.com/video/BV1KvsE6bEPw/">中文 · 哔哩哔哩</a>
+</p>
+<!-- veyra-creator-and-tutorials:end -->
+
 ### Real-time GPU Video Enhancement for Windows
 
 **Super Resolution · Denoising · HDR · Frame Generation · Capture · PS5 / Xbox / PC Streaming**
@@ -73,6 +89,8 @@ Turn local video, capture cards and game streaming into one real-time GPU enhanc
 
 **📖 [English User Guide / GitHub Wiki](https://github.com/Likely7/Veyra-NRVideo/wiki)** — installation, software setup, capture card compatibility, troubleshooting, and community-tested solutions. [中文知识库（飞书）](https://qcnv4i7tnd7l.feishu.cn/wiki/space/7688258025282358221?ccm_open_type=lark_wiki_spaceLink&open_tab_from=wiki_home).
 
+**2.1.9 ·《迎接GTA6降临》:** Dusk theme/intro and per-launch music, draggable exclusion outlines, XeSS capture-hang and capture-audio fixes, other virtual-desktop windows, G-SYNC profile tools, multi-GPU diagnostics and AMD FRC/FSR4 fallback. [Full bilingual update and validation](docs/RELEASE_NOTES_2.1.9.md). ANR runtime remains excluded.
+
 **2.1.5:** Smoother frame pacing after capture deduplication and preview correction for invalid capture timestamps. [Full changes](docs/RELEASE_NOTES_2.1.5.md).
 
 **2.1.4:** Optional VB-CABLE capture audio, DLSS/FSR/RTX dual super resolution, NVIDIA DLAA, HDR wide-gamut restoration, NR inference reuse, 1% low FPS, and recording and compatibility fixes. [Full changes and settings migration](docs/RELEASE_NOTES_2.1.4.md).
@@ -89,7 +107,7 @@ Turn local video, capture cards and game streaming into one real-time GPU enhanc
 - **New export workflow:** editable ordered queue, trimming, MP4/MKV, multiple audio/embedded subtitle tracks, cancellation/retry and completion sound.
 - **Enhancement and compatibility:** SF310.9.16 performance/legacy models, NVIDIA original for RTX50 and AMD lmxxf, DLSS/XeSS/FSR options, capture improvements and a persistent OBS Game Capture switch with restart confirmation. Full details are in the Release.
 
-**Current version: [2.1.5](https://github.com/Likely7/Veyra-NRVideo/releases/tag/v2.1.5)** · [Full bilingual update](docs/RELEASE_NOTES_2.1.5.md).
+**Current version: [2.1.9 ·《迎接GTA6降临》](https://github.com/Likely7/Veyra-NRVideo/releases/tag/v2.1.9)** · [Full bilingual update](docs/RELEASE_NOTES_2.1.9.md).
 
 ## New in 2.1.2
 
@@ -126,7 +144,7 @@ Turn local video, capture cards and game streaming into one real-time GPU enhanc
 
 ## Install and upgrade
 
-Download **Veyra-2.1.5-NVIDIA-win64-portable.zip** or **Veyra-2.1.5-AMD-win64-portable.zip** for Veyra's active GPU. Extract with Windows or 7-Zip into a new writable folder and run **veyra_qml_ui.exe**. You need one GPU package to run the application; source assets are only for rebuilding. Windows 11 x64 and DirectX 12 are required; Qt and approved runtimes are included, while GPU/capture drivers are installed separately. Backend hardware requirements vary; most local tests used an RTX 5070.
+Download **Veyra-2.1.9-NVIDIA-win64-portable.zip** or **Veyra-2.1.9-AMD-win64-portable.zip** for Veyra's active GPU. Extract with Windows or 7-Zip into a new writable folder and run **veyra_qml_ui.exe**. You need one GPU package to run the application; source assets are only for rebuilding. Windows 11 x64 and DirectX 12 are required; Qt and approved runtimes are included, while GPU/capture drivers are installed separately. Backend hardware requirements vary; most local tests used an RTX 5070.
 
 Start with effects off, check picture/sound, then enable effects individually. High resolution, layered NR and frame generation increase GPU/VRAM requirements.
 
@@ -175,7 +193,7 @@ Select Nodes at the top of Professional. This is an executable chain editor:
 | Source | Setup |
 |---|---|
 | Capture card | Select device, resolution, rate, then a supported pixel format and audio input. Close competing apps. Match PQ/HLG/709 and Limited/Full to the signal. Magewell Pro Capture has a dedicated low-latency option. |
-| PS5 | Enable Remote Play, discover/enter IP, use PSN Account ID and the console's eight-digit pairing code; reconnect saved hosts. |
+| PS5 | Enable Remote Play and discover/enter the console IP. Click **Get Account ID** to open [PSNTools](https://www.psntools.com/psn/checker), copy the numeric or Base64 Account ID back into Veyra, then enter the console’s eight-digit pairing code. Saved consoles reconnect directly. |
 | PC | Install/configure Sunshine yourself; discover/add the host, PIN-pair, select app/desktop and connect. Sunshine is not bundled. |
 | Xbox | Follow device-code sign-in and select a console with remote features enabled. Unofficial/experimental; account, service and console restrictions apply. |
 | Screen | Select a window/display; avoid recursively capturing Veyra itself. |
@@ -227,6 +245,8 @@ QML renders UI; native D3D12 renders video. List/Nodes share the engine, disconn
 
 ## Source and build
 
+2.1.9 adds Dusk appearance/music, editable exclusion outlines, capture-hang/audio repairs and compatibility updates; see the [full update and limits](docs/RELEASE_NOTES_2.1.9.md). Earlier dedup/60→30 and presentation repairs remain. ANR host source is traceable; beta runtime files are excluded under upstream restrictions.
+
 Developer entry: [current documentation](docs/README.md), [build and validation](docs/DEVELOPMENT.md), [UI code responsibilities](docs/ARCHITECTURE.md). Historical task notes are indexed separately.
 
 Original code: GPL-3.0. The combined Chiaki streaming application is also subject to AGPL-3.0 and its OpenSSL exception (licenses/remoteplay). [Third-party notices](THIRD_PARTY_NOTICES.md), [2.1.2 build/source](docs/BUILD_2.1.2.md). Source Git excludes proprietary runtimes/models. Release manifests audit publisher files, not hash-lock user DLL replacements.
@@ -236,13 +256,20 @@ Original code: GPL-3.0. The combined Chiaki streaming application is also subjec
 <p align="center">
   <a href="https://discord.gg/qetVZTRkC"><img src="https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Join Veyra on Discord" height="36"></a>
   &nbsp;&nbsp;
-  <a href="https://ko-fi.com/likely7"><img src="https://storage.ko-fi.com/cdn/kofi5.png?v=6" alt="Support Veyra on Ko-fi" height="36"></a>
+  <a href="https://www.patreon.com/cw/Likely7" title="Patreon 主页 / Creator page"><img src="https://raw.githubusercontent.com/Likely7/Veyra-NRVideo/main/docs/images/support/patreon-home.svg" alt="Patreon 主页 / Creator page" height="36"></a>
+  &nbsp;&nbsp;
+  <a href="https://www.patreon.com/Likely7/posts/buy-me-coffee-175018110" title="请我喝杯咖啡 · US$5 / Coffee support"><img src="https://raw.githubusercontent.com/Likely7/Veyra-NRVideo/main/docs/images/support/patreon-coffee.svg" alt="☕ 请我喝杯咖啡 · US$5 / Coffee support" height="36"></a>
+</p>
+
+<p align="center">
+  Patreon 主页查看作者动态；☕ 咖啡按钮直达 US$5 赞助页面。<br>
+  Visit the creator page for updates, or open the US$5 coffee support page.
 </p>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/Likely7/Veyra-NRVideo/v1.4.0/docs/images/1.4.0/donate-wechat.jpg" alt="WeChat donation" width="220">
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="https://raw.githubusercontent.com/Likely7/Veyra-NRVideo/main/docs/images/community/group-9-20261110.png" alt="Veyra community group 9" width="220">
+  <img src="https://raw.githubusercontent.com/Likely7/Veyra-NRVideo/main/docs/images/community/group-12-20261115.png" alt="Veyra community group 12" width="220">
 </p>
 
-Left: optional donation, no feature restrictions. Right: community group 9; QR valid **before 2026-11-17** as shown. Check repository updates after expiry.
+Left: optional donation, no feature restrictions. Right: community group 12; QR valid **before 2026-11-22** as shown. Check repository updates after expiry.

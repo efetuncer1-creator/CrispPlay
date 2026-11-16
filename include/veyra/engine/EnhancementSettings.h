@@ -43,12 +43,19 @@ inline bool validNrReuseMode(NrReuseMode v) {
 }
 // Preserve persisted values 0/1/2; the old Fsr value now explicitly selects
 // the 3.1 provider. Fsr4 requires a real ML provider, never an auto fallback.
-enum class FrameGenerationBackend { Dlss = 0, XeSS = 1, Fsr = 2, Fsr4 = 3, Vfg = 4 };
+// AmdFrc: AMD AMF FRC, the video frame interpolation of the AMD driver (gfx::AmfFrcBackend).
+enum class FrameGenerationBackend { Dlss = 0, XeSS = 1, Fsr = 2, Fsr4 = 3, Vfg = 4, Anr = 5, AmdFrc = 6 };
 constexpr bool fsrFrameGeneration(FrameGenerationBackend backend) {
     return backend == FrameGenerationBackend::Fsr || backend == FrameGenerationBackend::Fsr4;
 }
+// Providers that generate exactly one frame per pair.
+constexpr bool twoXFrameGeneration(FrameGenerationBackend backend) {
+    return fsrFrameGeneration(backend) || backend == FrameGenerationBackend::AmdFrc;
+}
+// Not NVIDIA-only (AMD FRC runs on AMD GPUs; its own runtime refuses others).
 constexpr bool crossVendorFrameGeneration(FrameGenerationBackend backend) {
-    return backend == FrameGenerationBackend::XeSS || fsrFrameGeneration(backend);
+    return backend == FrameGenerationBackend::Anr || backend == FrameGenerationBackend::XeSS || fsrFrameGeneration(backend) ||
+        backend == FrameGenerationBackend::AmdFrc;
 }
 // Frame generation that runs inside the present sink (external frame
 // interpolation swapchain) instead of the in-graph DLSSG backend.
@@ -58,6 +65,7 @@ constexpr bool presentSinkFrameGeneration(FrameGenerationBackend backend) {
 // Multipliers the UI offers. 5X is intentionally absent: the DLSS runtime
 // exposes 2/3/4/6 and MFG buyers pick from those; 1 = generation off.
 inline constexpr uint32_t kFgMultiplierChoices[]={1,2,3,4,6};
+inline constexpr uint32_t kAnrMultiplierChoices[]={1,2,3,4,5,6};
 inline constexpr uint32_t kVfgMultiplierChoices[]={1,2,3,4,5,6,7,8};
 // VFG quality: 0-2 run one NvVFX model (Low/Medium/High) for every subframe.
 // 3-5 are mixed tiers (3 High+Medium, 4 High+Low, 5 Medium+Low): one subframe
@@ -155,12 +163,18 @@ constexpr std::string_view nrRuntimeName(NrRuntime runtime) {
 }
 enum class FlowQuality { Performance, Balanced, Quality };
 enum class OpticalFlowBackend { Nvidia, AmdFidelityFx, GpuDis };
-enum class ContentRate { Transport, Auto, Fps30, Fps50, Fps60, Capture60To30 };
+// Persisted IDs must stay stable. 2..4 are legacy identification hints, no longer
+// offered by the UI; importing/applying one uses automatic duplicate removal.
+enum class ContentRate { Transport=0, Auto=1, Fps30=2, Fps50=3, Fps60=4, Capture60To30=5 };
+constexpr ContentRate currentContentRate(ContentRate mode) {
+    return mode>=ContentRate::Fps30&&mode<=ContentRate::Fps60?ContentRate::Auto:mode;
+}
 enum class AudioSyncMode { Automatic, Manual, Off };
 enum class HdrOutputMode { Hdr10, ScRgb };
 enum class MotionSource { Zero, OpticalFlow, Automatic };
 constexpr bool motionUsesFlow(MotionSource source,FrameGenerationBackend backend=FrameGenerationBackend::Dlss) {
-    return backend!=FrameGenerationBackend::Vfg&&
+    // VFG and AMD FRC estimate motion themselves from the two pictures.
+    return backend!=FrameGenerationBackend::Vfg&&backend!=FrameGenerationBackend::AmdFrc&&
         (source==MotionSource::OpticalFlow||(source==MotionSource::Automatic&&backend!=FrameGenerationBackend::XeSS));
 }
 constexpr std::string_view frameGenerationBackendName(FrameGenerationBackend backend) {
@@ -170,6 +184,8 @@ constexpr std::string_view frameGenerationBackendName(FrameGenerationBackend bac
     case FrameGenerationBackend::Fsr: return "AMD-FSR";
     case FrameGenerationBackend::Fsr4: return "AMD-FSR4-ML";
     case FrameGenerationBackend::Vfg: return "NVIDIA-VFG";
+    case FrameGenerationBackend::Anr: return "ANR-FG";
+    case FrameGenerationBackend::AmdFrc: return "AMD-FRC";
     }
     return "unknown";
 }
@@ -289,6 +305,7 @@ struct EnhancementSettings {
     NrSettings model;
     ResidualSettings residual;
     ProtectionSettings protection;
+    ProtectionSettings exclusion; // final raw-source mask, including generated frames
     bool nr=false,sr=false;
     bool lowLatency=false; // preview only: NR before SR, opt-in
     NrRuntime nrRuntime=NrRuntime::Ampere;
@@ -439,8 +456,10 @@ struct EnhancementSettings {
     FlowQuality flow=FlowQuality::Balanced;
     OpticalFlowBackend opticalFlowBackend=OpticalFlowBackend::Nvidia;
     bool amdFlowHalfResolution=false;
-    // UI "边缘神盾": refined optical-flow motion for XeSS frame generation (edge refinement
-    // and the uncovered-background fill). A global control kept in shell preferences.
+    // UI "边缘神盾": refined optical-flow motion for frame generation (edge refinement and
+    // the uncovered-background fill): DLSS, FSR and ANR, and XeSS with the optical-flow
+    // source (2026-11-13; VFG estimates its own motion). A global control kept in shell
+    // preferences.
     bool fgMotionRefine=true;
     // UI "DLSS 性能模式": NVIDIA's DLSS-G performance mode (ngx/DlssgLite.h),
     // DLSS frame generation only. A global control kept in shell preferences.
@@ -448,7 +467,7 @@ struct EnhancementSettings {
     // UI "VFG 自动调控": live 2X VFG runs a pair with the next faster model when the
     // chosen one would miss its refresh or the budget (LivePresentationTiming.h).
     // A global control kept in shell preferences.
-    bool vfgAutoRegulate=true;
+    bool vfgAutoRegulate=false;
     ContentRate content=ContentRate::Transport;
     AudioSyncMode audioSync=AudioSyncMode::Automatic;
     int32_t audioOffsetMs=0;
@@ -479,6 +498,7 @@ struct EnhancementSettings {
         }
         if(!nr||!sr)active.lowLatency=defaults.lowLatency;
         if(!nr||!protection.enabled)active.protection=defaults.protection;
+        if(!exclusion.enabled)active.exclusion=defaults.exclusion;
         if(!sr){active.srTarget=defaults.srTarget;active.videoSrQuality=defaults.videoSrQuality;active.srMotion=defaults.srMotion;}
         // The DLSS SR model serves every DLSS SR pass, the second of a double SR too.
         if(!usesDlaa()&&(!sr||(videoSrQuality!=0&&!(dualSrEnabled&&dualSrQuality==0))))active.dlssSrModel=defaults.dlssSrModel;
@@ -519,8 +539,9 @@ struct EnhancementSettings {
             (sr&&temporalSr()&&motionUsesFlow(srMotion))||
             (multiplier>1&&motionUsesFlow(fgMotion,frameGenerationBackend));
         if(!flowUsed){active.flow=defaults.flow;active.opticalFlowBackend=defaults.opticalFlowBackend;active.amdFlowHalfResolution=defaults.amdFlowHalfResolution;}
-        // Only XeSS frame generation with optical-flow motion reads the refined vectors.
-        if(!(multiplier>1&&frameGenerationBackend==FrameGenerationBackend::XeSS&&motionUsesFlow(fgMotion,frameGenerationBackend)))
+        // Every frame generation that takes its motion from optical flow reads the refined
+        // vectors (DLSS, FSR, ANR; XeSS only with the optical-flow source; never VFG).
+        if(!(multiplier>1&&motionUsesFlow(fgMotion,frameGenerationBackend)))
             active.fgMotionRefine=defaults.fgMotionRefine;
         if(!(multiplier>1&&frameGenerationBackend==FrameGenerationBackend::Dlss))active.dlssgLite=defaults.dlssgLite;
         if(!(multiplier>1&&frameGenerationBackend==FrameGenerationBackend::Vfg))active.vfgAutoRegulate=defaults.vfgAutoRegulate;
@@ -586,6 +607,7 @@ struct EnhancementSettings {
         if(!hdrMetadata.valid())return "invalid HDR metadata parameters";
         auto range=[](float v,float hi){return std::isfinite(v)&&v>=0&&v<=hi;};
         if(auto error=protection.validate();!error.empty())return error;
+        if(auto error=exclusion.validate();!error.empty())return error;
         if(!revision)return "settingsRevision must be nonzero";
         if(!validNrRuntime(nrRuntime))return "invalid NR runtime";
         if(captureAudio<CaptureAudioIngress::Auto||captureAudio>CaptureAudioIngress::BitstreamPreferred)return "invalid capture audio ingress mode";
@@ -618,7 +640,7 @@ struct EnhancementSettings {
                 return "active NR layers must share runtime and NR/SR order";
         }
         if(nr&&nrLayerCount&&!activeNrLayerCount())return "enabled NR stack has no active layer";
-        if(frameGenerationBackend<FrameGenerationBackend::Dlss||frameGenerationBackend>FrameGenerationBackend::Vfg)return "invalid frame generation backend";
+        if(frameGenerationBackend<FrameGenerationBackend::Dlss||frameGenerationBackend>FrameGenerationBackend::AmdFrc)return "invalid frame generation backend";
         if(vfgQuality>=kVfgQualityCount)return "invalid VFG quality";
         // The XeSS provider reports its own generated-frame ceiling at session
         // start; the engine clamps/rejects above it, so validation only guards
@@ -627,6 +649,7 @@ struct EnhancementSettings {
         // The AMD 3.1.x provider delivers one generated frame per present; the
         // probe measured the same count for 2/3/4 requested frames.
         if(fsrFrameGeneration(frameGenerationBackend)&&multiplier>2)return "AMD FSR frame generation supports up to 2X";
+        if(frameGenerationBackend==FrameGenerationBackend::AmdFrc&&multiplier>2)return "AMD FRC supports 2X only";
         if(!validVideoSrQuality(videoSrQuality))return "invalid video SR quality";
         if(dlssSrModel>=kDlssSrModelCount)return "invalid DLSS SR model";
         if(!pipeline::validSrTarget(srTarget))return "invalid SR target";

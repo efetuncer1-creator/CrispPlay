@@ -1,6 +1,6 @@
 // Game subtitle translation: toggle shortcut, status notice, the region picker
-// and the way to the settings tab. Loaded from ReplayHost.qml (our own file),
-// so qml/Veyra/Main.qml needs no extra hook. `veyra` is the upstream bridge,
+// and the way to the settings tab. Loaded by one VEYRA_CUSTOM line in
+// qml/Veyra/Main.qml. `veyra` is the upstream bridge,
 // `crispSubs` ours; `root`, `settingsPage` and `fullBar` are Main.qml's ids.
 import QtQuick
 

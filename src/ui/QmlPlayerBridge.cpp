@@ -1,5 +1,7 @@
 // QML bridge: Core responsibilities.
 #include "QmlPlayerBridge_p.h"
+#include "veyra/engine/MicrophoneCapture.h"
+#include "veyra/ui/NvidiaVrrProfileController.h"
 
 namespace veyra::ui {
 namespace {
@@ -57,6 +59,14 @@ bool prepareStartupPreset(const engine::PresetEntry& entry, engine::ChainSession
 QmlPlayerBridge::QmlPlayerBridge(engine::EngineController& engine, std::filesystem::path dataDirectory,
                                 QObject* parent)
     : QObject(parent), impl_(std::make_unique<Impl>(engine, std::move(dataDirectory))) {
+    connect(this,&QmlPlayerBridge::mediaOpenRequested,this,[this]{
+        endExclusionMove(false);impl_->exclusionSelected=-1;beginProtectionDraw(QString{});
+        emit protectionChanged();
+    });
+    auto* vrrProfile = new NvidiaVrrProfileController(impl_->dataDir, this);
+    nvidiaVrrProfile_ = vrrProfile;
+    connect(vrrProfile, &NvidiaVrrProfileController::notice, this, &QmlPlayerBridge::notice);
+    connect(this, &QmlPlayerBridge::preferencesChanged, vrrProfile, &NvidiaVrrProfileController::changed);
     auto* checker = new UpdateChecker(version(), this);
     updates_ = checker;
     connect(checker, &UpdateChecker::notice, this, &QmlPlayerBridge::notice);
@@ -73,6 +83,7 @@ QmlPlayerBridge::QmlPlayerBridge(engine::EngineController& engine, std::filesyst
     // The compute GPU decides which effects exist, so it is settled before
     // anything below samples the capabilities or restores the saved chain.
     impl_->loadPrefs();
+    impl_->engine.setCaptureAudioMonitoring(impl_->prefBool("captureAudioMonitor",true));
     // The last volume (user 2026-11-08: it came back at 100% every launch).
     // Mute stays per session; profiles without the key keep 100%.
     if (impl_->prefs.contains(QStringLiteral("volume"))) {
@@ -85,6 +96,7 @@ QmlPlayerBridge::QmlPlayerBridge(engine::EngineController& engine, std::filesyst
         }
     }
     applyGameHotkeys();
+    syncReplay();
     impl_->enumerateGpuAdapters();
     impl_->resolveGpuMonitor();
     impl_->applyComputeGpu();
@@ -143,6 +155,7 @@ QmlPlayerBridge::QmlPlayerBridge(engine::EngineController& engine, std::filesyst
         // The game has the keyboard in game mode; the hook hands these over.
         case E::ScreenshotHotkey: takeScreenshot(); break;
         case E::RecordHotkey: toggleRecording(QStringLiteral("game-hotkey")); break;
+        case E::ReplayHotkey: saveReplay(QStringLiteral("game-hotkey")); break;
         }
     };
     auto* gameBeat = new QTimer(this);
@@ -278,7 +291,14 @@ QmlPlayerBridge::QmlPlayerBridge(engine::EngineController& engine, std::filesyst
         }
         if (!defaultFlowApplied && p.contains(QStringLiteral("contentRate"))) {
             const int rate = p.value(QStringLiteral("contentRate")).toInt();
-            if (rate >= 0 && rate <= int(engine::ContentRate::Capture60To30) && int(s.content) != rate) { s.content = static_cast<engine::ContentRate>(rate); changed = true; }
+            if(rate>=0&&rate<=int(engine::ContentRate::Capture60To30)){
+                const auto mode=engine::currentContentRate(static_cast<engine::ContentRate>(rate));
+                if(s.content!=mode){s.content=mode;changed=true;}
+                if(rate!=int(mode)){
+                    impl_->prefs[QStringLiteral("contentRate")]=int(mode);
+                    if(!impl_->savePrefs())veyra::log::warn("ui-prefs","duplicate-removal mode migration not saved");
+                }
+            }
         }
         auto restoreHold = [&](const char* key, float& target) {
             if (!p.contains(QLatin1String(key))) return;
@@ -308,8 +328,14 @@ QmlPlayerBridge::QmlPlayerBridge(engine::EngineController& engine, std::filesyst
         pr.hdrFgCompatibility = impl_->prefBool("hdrFgCompatibility", false);
         if (!saved.isEmpty()) {
             pr.enabled = saved.value(QStringLiteral("lowQueue")).toBool();
-            // Before the three states the low queue was 开 on NVIDIA.
-            pr.nvidiaLowLatency=engine::savedNvidiaLowLatency(saved.value(QStringLiteral("nvidiaLowLatency"),pr.enabled&&nvidiaLowLatencyAvailable()?1:0).toInt());
+            // Before NVIDIA-specific choices, the low queue meant On on NVIDIA.
+            const int savedLatency=saved.value(QStringLiteral("nvidiaLowLatency"),pr.enabled&&nvidiaLowLatencyAvailable()?1:0).toInt();
+            pr.nvidiaLowLatency=engine::savedNvidiaLowLatency(savedLatency);
+            if(savedLatency!=int(pr.nvidiaLowLatency)){
+                auto migrated=saved;migrated[QStringLiteral("nvidiaLowLatency")]=int(pr.nvidiaLowLatency);
+                impl_->prefs[QStringLiteral("presentation")]=migrated;
+                if(!impl_->savePrefs())veyra::log::warn("ui-prefs","retired NVIDIA latency mode migration not saved");
+            }
             engine::syncNvidiaLowLatencyQueue(pr,nvidiaLowLatencyAvailable());
             pr.display = static_cast<engine::DisplaySync>(std::clamp(saved.value(QStringLiteral("display")).toInt(), 0, 2));
             pr.outputRate = static_cast<engine::OutputRateMode>(std::clamp(saved.value(QStringLiteral("outputRate")).toInt(), 0, 2));
@@ -371,6 +397,7 @@ QmlPlayerBridge::QmlPlayerBridge(engine::EngineController& engine, std::filesyst
             state["seconds"]=live.seconds;
             state["files"]=int(live.files);
             state["audio"]=live.audio;
+            state["microphone"]=live.microphone;
             if(state!=impl_->recordingState){
                 const auto previous=impl_->recordingState;
                 impl_->recordingState=state;
@@ -384,6 +411,14 @@ QmlPlayerBridge::QmlPlayerBridge(engine::EngineController& engine, std::filesyst
                                               :tr("录制已保存：%1（%2）").arg(state.value("path").toString(),note),false);
                 }else if(live.active&&!note.isEmpty()&&note!=previous.value("note").toString())emit notice(note,false);
             }
+        }
+        pollReplay();
+        {
+            // One notice per microphone failure, whichever recorder listens.
+            const bool listening=impl_->recordingState.value("microphone").toBool()||impl_->replayState.value("microphone").toBool();
+            const auto mic=listening?engine::microphoneStatus():engine::MicrophoneStatus{};
+            const QString reason=listening&&!mic.open&&!mic.error.empty()?uiText(mic.error):QString();
+            if(reason!=impl_->microphoneNotice){impl_->microphoneNotice=reason;if(!reason.isEmpty())emit notice(tr("麦克风：%1").arg(reason),true);}
         }
   // Custom: a display change re-applies that device's HDR curve. The id check is
   // a few Win32 calls, so this is safe on the polling path.
@@ -399,6 +434,7 @@ QmlPlayerBridge::QmlPlayerBridge(engine::EngineController& engine, std::filesyst
             else emit notice(tr("显存在设置未变时增加了 %1 GB，正在尝试回收；回收结果见诊断日志。原因尚未确认。")
                                  .arg(impl_->snapshot.vramRunawayMiB / 1024.0, 0, 'f', 1), true);
         }
+        updateMaskOverlay();
         tickSubtitles();
         tickImageBatch();
         tickCapture();

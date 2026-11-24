@@ -67,7 +67,11 @@ Get-ChildItem (Join-Path $build "shaders") -Recurse -File -Filter *.dxil | ForEa
     New-Item -ItemType Directory -Force (Split-Path $dst) | Out-Null
     Copy-Item $_.FullName $dst
 }
-# Runtime components (upstream 2.1.5 package, see BUILD.md). Never ship user data or logs.
+$shaderCount = @(Get-ChildItem (Join-Path $stage "shaders") -Recurse -File -Filter *.dxil).Count
+# Upstream 2.1.6+ audits 88 shaders including the GPU DIS subfolders; a top-level-only copy misses effects.
+if ($shaderCount -lt 88) { throw "Only $shaderCount shaders staged (expected 88 or more, subfolders included)" }
+# Runtime components (upstream 2.1.9 NVIDIA package, see BUILD.md). Never ship user data or logs.
+# Upstream's media\startup-music.mp3 is not GPL and CrispPlay never plays it: media\ is not copied at all.
 Copy-Tree (Join-Path $build "runtime") (Join-Path $stage "runtime")
 Copy-Tree (Join-Path $build "runtime_local") (Join-Path $stage "runtime_local") @("user-data*", "*\user-data*", "logs\*")
 Copy-Tree (Join-Path $build "licenses") (Join-Path $stage "licenses")
@@ -137,7 +141,7 @@ Oyun altyazısı çevirisi (F10, Ayarlar → Altyazı çevirisi): ilk açılış
 modeli (~226 MB) indirilir; ayrıntı ve gizlilik: custom/docs/SUBS.md (kaynak zip'i).
 
 SR / NR / FG için NVIDIA RTX ekran kartı ve güncel sürücü gerekir. Anlık tekrar
-(F9) yalnız NVIDIA'da çalışır. NVIDIA, AMD ve Intel bileşenlerinin lisansları
+(F9) varsayılan kapalıdır: Ayarlar → Oynatma → Anlık tekrar. NVIDIA, AMD ve Intel bileşenlerinin lisansları
 licenses\ altındadır; GPL-3 kaynak kodu: CrispPlay-$version-source.zip.
 "@ | Set-Content (Join-Path $stage "BENIOKU.txt") -Encoding UTF8
 
@@ -147,6 +151,8 @@ git -C $root archive --format=zip --prefix="CrispPlay-$version-source/" -o $sour
 if ($LASTEXITCODE -ne 0) { throw "git archive failed" }
 
 $files = Get-ChildItem $stage -Recurse -File
+$music = @($files | Where-Object { $_.Name -like "startup-music*" })
+if ($music.Count) { throw "Startup music must not be packaged: $($music.FullName -join ', ')" }
 $size = ($files | Measure-Object Length -Sum).Sum
 Write-Host ("Staged {0} files, {1:N0} MB" -f $files.Count, ($size / 1MB))
 

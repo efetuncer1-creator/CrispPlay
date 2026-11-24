@@ -24,6 +24,7 @@ FONT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(r"C:\Windows\Fonts\segui
 W, H = 1164, 969
 PAD = 186
 SS = 2  # supersampling
+RIM = (0x1A, 0x0C, 0x2C)  # deep indigo, the dusk palette's night
 PEACH, PINK, LILAC = (0xF0, 0xB1, 0x7B), (0xEF, 0x6F, 0xA3), (0xBB, 0x96, 0xF3)
 
 
@@ -39,6 +40,16 @@ def gradient(size, stops):
         f = t - k
         px[i, 0] = tuple(round(stops[k][c] + (stops[k + 1][c] - stops[k][c]) * f) for c in range(3))
     return line.resize((w, h), Image.BILINEAR)
+
+
+def outlined(layer, radius):
+    """The layer over a dark rim of its own shape, so it stays readable in front of the intro's sun."""
+    alpha = layer.getchannel("A")
+    rim = alpha.filter(ImageFilter.MaxFilter(2 * radius + 1)).filter(ImageFilter.GaussianBlur(radius / 3))
+    under = Image.new("RGBA", layer.size, RIM + (0,))
+    under.putalpha(rim.point(lambda a: a * 235 // 255))
+    under.alpha_composite(layer)
+    return under
 
 
 def trim(im):
@@ -80,6 +91,7 @@ def main():
     layers["wordmark-dusk-n.png"].alpha_composite(logo, ((w - logo.width) // 2, round(h * 0.012)))
     whole = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     for name in ("wordmark-dusk-n.png", "wordmark-dusk-r.png", "wordmark-dusk-veyra.png"):
+        layers[name] = outlined(layers[name], 4 * SS)
         whole.alpha_composite(layers[name])
         layers[name].resize((W, H), Image.LANCZOS).save(OUT / name, optimize=True)
     whole = whole.resize((W, H), Image.LANCZOS)

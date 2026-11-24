@@ -359,7 +359,7 @@
   {
    "zh": "%1 正在运行。它会同时挂接界面和视频两个画面，可能让 Veyra 卡死；开启兼容绘制需重启 Veyra，重启后界面改用软件绘制，它只作用在视频上。现在重启吗？当前播放或串流将停止。",
    "en": "%1 is running. It hooks both the interface and the video, which can freeze Veyra. Restart Veyra to enable compatible rendering: the interface is then drawn in software and %1 only affects the video. Restart now? Current playback or streaming will stop.",
-   "tr": "%1 çalışıyor. Hem arayüze hem videoya bağlanıyor ve Veyra'yı dondurabilir. Uyumlu çizimi etkinleştirmek için Veyra'yı yeniden başlatın: arayüz yazılımla çizilir ve %1 yalnızca videoyu etkiler. Şimdi yeniden başlatılsın mı? Geçerli oynatma veya akış durur."
+   "tr": "%1 çalışıyor. Hem arayüze hem videoya bağlanıyor ve CrispPlay'i dondurabilir. Uyumlu çizimi etkinleştirmek için CrispPlay'i yeniden başlatın: arayüz yazılımla çizilir ve %1 yalnızca videoyu etkiler. Şimdi yeniden başlatılsın mı? Geçerli oynatma veya akış durur."
   },
   {
    "zh": "%1 秒",
@@ -440,11 +440,6 @@
    "zh": "2 项",
    "en": "2 items",
    "tr": "2 öğe"
-  },
-  {
-   "zh": "2. 回到 Veyra，在“音频监听”选“Veyra 虚拟扬声器”，再连接采集。音频输出选真实耳机或音箱，即可使用音画同步。\n\n可选改名：在 Windows 声音的“播放”页打开 CABLE Input 的属性，在“常规”里改成“Veyra 采集音频”。",
-   "en": "2. In Veyra, select Veyra Virtual Speaker under Audio monitoring, then connect the capture card. Select your physical headphones or speakers as the output to use audio/video sync.\n\nOptional rename: On the Playback tab in Windows Sound, open CABLE Input properties. On General, rename it to Veyra Capture Audio.",
-   "tr": "2. Veyra'da Ses izleme altında Veyra Virtual Speaker'ı seçin, sonra yakalama kartını bağlayın. Ses/görüntü senkronunu kullanmak için çıkış olarak fiziksel kulaklığınızı veya hoparlörünüzü seçin.\n\nİsteğe bağlı yeniden adlandırma: Windows Ses'te Kayıttan Yürütme sekmesinde CABLE Input özelliklerini açın. Genel sekmesinde adını Veyra Capture Audio yapın."
   },
   {
    "zh": "203 = 中性；调高整体变亮，峰值不变",
@@ -719,7 +714,7 @@
   {
    "zh": "DXGI 为显示器兼容方式，无鼠标指针；捕获显示器时不显示黄色边框，Veyra 自己也不会出现在截图和录屏里",
    "en": "DXGI is the display-compatible mode, without the mouse pointer. A display capture shows no yellow border, and Veyra itself stays out of screenshots and recordings",
-   "tr": "DXGI ekranla uyumlu moddur, fare imleci olmadan. Ekran yakalamada sarı çerçeve görünmez ve Veyra kendisi ekran görüntülerine ve kayıtlara girmez"
+   "tr": "DXGI ekranla uyumlu moddur, fare imleci olmadan. Ekran yakalamada sarı çerçeve görünmez ve CrispPlay kendisi ekran görüntülerine ve kayıtlara girmez"
   },
   {
    "zh": "Dolby / DTS 位流",
@@ -762,16 +757,6 @@
    "tr": "FSR 3.1 üreticiden bağımsız kare üretimi · en fazla 2X"
   },
   {
-   "zh": "FSR 4 ML · RX 9000 · 实验",
-   "en": "FSR 4 ML · RX 9000 · experimental",
-   "tr": "FSR 4 ML · RX 9000 · deneysel"
-  },
-  {
-   "zh": "FSR 4 ML 提供方不可用（需要支持的 RX 9000 和驱动），已关闭补帧；原因见日志",
-   "en": "FSR 4 ML provider unavailable (needs a supported RX 9000 and driver); frame generation turned off. See the log",
-   "tr": "FSR 4 ML sağlayıcısı kullanılamıyor (desteklenen bir RX 9000 ve sürücü gerekir); kare üretimi kapatıldı. Günlüğe bakın"
-  },
-  {
    "zh": "FSR 4 ML 未能启用（需要支持的 RX 9000 和驱动），已恢复上一套参数",
    "en": "FSR 4 ML could not be enabled (needs a supported RX 9000 and driver); previous settings restored",
    "tr": "FSR 4 ML etkinleştirilemedi (desteklenen bir RX 9000 ve sürücü gerekir); önceki ayarlar geri yüklendi"
@@ -780,11 +765,6 @@
    "zh": "FSR 4 ML 补帧只支持 AMD RX 9000 显卡，当前显卡不能使用，已保持原来的补帧方式",
    "en": "FSR 4 ML frame generation only supports AMD RX 9000 GPUs; this GPU cannot use it, so the current frame generation is kept",
    "tr": "FSR 4 ML kare üretimi yalnızca AMD RX 9000 GPU'ları destekler; bu GPU kullanamaz, geçerli kare üretimi korunuyor"
-  },
-  {
-   "zh": "FSR 4 ML 需要支持的 RX 9000 和驱动；实卡待验",
-   "en": "FSR 4 ML needs a supported RX 9000 and driver; not yet tested on real cards",
-   "tr": "FSR 4 ML desteklenen bir RX 9000 ve sürücü gerektirir; henüz gerçek kartlarda denenmedi"
   },
   {
    "zh": "FXAA：最快，整体略柔",
@@ -967,11 +947,6 @@
    "tr": "K özgün modeli korur; M ve L DLSS 4.5 kullanır. L daha düşük giriş çözünürlüklerini hedefler. Kalite ve işleme süresi kaynağa bağlıdır."
   },
   {
-   "zh": "Ko-fi、微信与支付宝",
-   "en": "Ko-fi, WeChat and Alipay",
-   "tr": "Ko-fi, WeChat ve Alipay"
-  },
-  {
    "zh": "LUT 不可用：%1",
    "en": "LUT unavailable: %1",
    "tr": "LUT kullanılamıyor: %1"
@@ -1045,11 +1020,6 @@
    "zh": "NR 保护区域",
    "en": "NR protected areas",
    "tr": "NR korumalı alanlar"
-  },
-  {
-   "zh": "NR 保护区域仅在列表模式可用",
-   "en": "NR protected areas are available in list mode only",
-   "tr": "NR korumalı alanlar yalnızca liste modunda kullanılabilir"
   },
   {
    "zh": "NR 全局保护区域",
@@ -1167,11 +1137,6 @@
    "tr": "NVIDIA RTX kare üretimi; çarpan, çalışma zamanının desteğine bağlıdır"
   },
   {
-   "zh": "NVIDIA VFG · RTX 30（实验）/ 40 / 50",
-   "en": "NVIDIA VFG · RTX 30 (experimental) / 40 / 50",
-   "tr": "NVIDIA VFG · RTX 30 (deneysel) / 40 / 50"
-  },
-  {
    "zh": "NVIDIA VFG 未能启用（需要 Ada / Blackwell 显卡、VFG 运行组件和支持的输出格式），已关闭补帧；原因见日志",
    "en": "NVIDIA VFG could not start (requires an Ada / Blackwell GPU, VFG runtime and a supported output format). Frame generation is off; see the log.",
    "tr": "NVIDIA VFG başlatılamadı (Ada / Blackwell GPU, VFG çalışma zamanı ve desteklenen bir çıkış biçimi gerekir). Kare üretimi kapalı; günlüğe bakın."
@@ -1275,11 +1240,6 @@
    "zh": "PS5 主机",
    "en": "PS5 console",
    "tr": "PS5 konsolu"
-  },
-  {
-   "zh": "PS5 仍会发一路 720p 30fps、约 5 Mbps 的保活画面，本机收到即丢弃；PS5 同一时间只允许一个远程游玩连接。再串流时记得打开上面的「音频监听」。",
-   "en": "The PS5 still sends a 720p 30 fps keepalive picture of about 5 Mbps, which this PC drops on arrival. A PS5 allows one Remote Play connection at a time. When re-streaming, turn on Audio monitoring above.",
-   "tr": "PS5 yine de yaklaşık 5 Mbps'lik 720p 30 fps canlı tutma görüntüsü gönderir; bu bilgisayar onu geldiği anda atar. PS5 aynı anda tek bir Remote Play bağlantısına izin verir. Yeniden yayın yaparken yukarıdaki Ses izleme'yi açın."
   },
   {
    "zh": "PS5 仍被串流会话占用，请结束其他串流或稍后重试；无需重新配对。",
@@ -1402,21 +1362,6 @@
    "tr": "PS5 bağlantısı başarısız; tanılamaya bakın"
   },
   {
-   "zh": "PSN 授权失败（{}）；原有配对不受影响，可重新登录。",
-   "en": "PSN authorization failed ({}); existing pairing is unaffected, you can sign in again.",
-   "tr": "PSN yetkilendirmesi başarısız ({}); mevcut eşleştirme etkilenmedi, yeniden oturum açabilirsiniz."
-  },
-  {
-   "zh": "PSN 授权已删除，局域网配对保留。",
-   "en": "PSN authorization removed; LAN pairing kept.",
-   "tr": "PSN yetkilendirmesi kaldırıldı; LAN eşleştirmesi korundu."
-  },
-  {
-   "zh": "PSN 登录已保存，Account ID 已填入。首次仍需配对；已配对主机直接连接。",
-   "en": "PSN sign-in saved and the Account ID filled in. First use still needs pairing; paired consoles connect directly.",
-   "tr": "PSN oturumu kaydedildi ve Hesap Kimliği dolduruldu. İlk kullanımda yine eşleştirme gerekir; eşleştirilmiş konsollar doğrudan bağlanır."
-  },
-  {
    "zh": "PSN 账号",
    "en": "PSN account",
    "tr": "PSN hesabı"
@@ -1430,11 +1375,6 @@
    "zh": "RTX 50 · NVIDIA 原版",
    "en": "RTX 50 · NVIDIA original",
    "tr": "RTX 50 · NVIDIA orijinal"
-  },
-  {
-   "zh": "RTX Video HDR 之后只能接补帧",
-   "en": "Only frame generation can follow RTX Video HDR",
-   "tr": "RTX Video HDR'yi yalnızca kare üretimi izleyebilir"
   },
   {
    "zh": "RTX Video HDR 只能放在补帧前面",
@@ -1589,7 +1529,7 @@
   {
    "zh": "Veyra 本地诊断（复制前脱敏预览；不会上传）\n",
    "en": "Veyra local diagnostics (redacted preview before copying; nothing is uploaded)\n",
-   "tr": "Veyra yerel tanılama (kopyalamadan önce gizlenmiş önizleme; hiçbir şey yüklenmez)\n"
+   "tr": "CrispPlay yerel tanılama (kopyalamadan önce gizlenmiş önizleme; hiçbir şey yüklenmez)\n"
   },
   {
    "zh": "Veyra 虚拟扬声器",
@@ -1792,11 +1732,6 @@
    "tr": "XeSS etkinleştirilemedi; önceki ayarlar geri yüklendi"
   },
   {
-   "zh": "XeSS 补帧、运动来源选“光流”时生效：修人物边缘果冻，背景不再被人物拖着晃",
-   "en": "For XeSS frame generation with the optical-flow motion source: stops the jelly at character edges, so the background no longer drags along",
-   "tr": "Optik akış hareket kaynağıyla XeSS kare üretimi için: karakter kenarlarındaki jöle etkisini durdurur, arka plan artık sürüklenmez"
-  },
-  {
    "zh": "XeSS 默认零运动；FSR 仍有自身的光流计算",
    "en": "XeSS uses zero motion by default; FSR still computes its own optical flow",
    "tr": "XeSS varsayılan olarak sıfır hareket kullanır; FSR yine kendi optik akışını hesaplar"
@@ -1904,7 +1839,7 @@
   {
    "zh": "上次 Veyra 异常退出（崩溃在 %1）",
    "en": "Veyra closed unexpectedly last time (crash in %1)",
-   "tr": "Veyra geçen sefer beklenmedik şekilde kapandı (%1 içinde çökme)"
+   "tr": "CrispPlay geçen sefer beklenmedik şekilde kapandı (%1 içinde çökme)"
   },
   {
    "zh": "上次的捕获目标「%1」已不在，请重新选择",
@@ -1925,11 +1860,6 @@
    "zh": "上次的音频输入未连接",
    "en": "Previous audio input is disconnected",
    "tr": "Önceki ses girişinin bağlantısı kesildi"
-  },
-  {
-   "zh": "上次的音频输入未连接，请插回设备或重新选择音频监听",
-   "en": "The previous audio input is disconnected. Reconnect it or select an audio input",
-   "tr": "Önceki ses girişinin bağlantısı kesildi. Yeniden bağlayın veya bir ses girişi seçin"
   },
   {
    "zh": "上次采集时显卡设备丢失",
@@ -2040,11 +1970,6 @@
    "zh": "不是有效的 .vpcolor 文件",
    "en": "Not a valid .vpcolor file",
    "tr": "Geçerli bir .vpcolor dosyası değil"
-  },
-  {
-   "zh": "不监听音频",
-   "en": "Don't monitor audio",
-   "tr": "Sesi izleme"
   },
   {
    "zh": "不确定就选「自动」。采集 HDR：采集格式选 P010，这里选「HDR · PQ」（游戏机、显卡的 HDR10 都是 PQ）。「HDR · HLG」用于广播信号。「SDR · 709」是普通画面。变更需重连",
@@ -2305,11 +2230,6 @@
    "zh": "主机不认识这台电脑，请重新配对。",
    "en": "The host does not recognize this PC; pair again.",
    "tr": "Ana bilgisayar bu bilgisayarı tanımıyor; yeniden eşleştirin."
-  },
-  {
-   "zh": "主机与 PSN 凭据加密保存在用户数据目录。",
-   "en": "Hosts and PSN credentials are stored encrypted in the user data folder.",
-   "tr": "Ana bilgisayarlar ve PSN kimlik bilgileri kullanıcı veri klasöründe şifreli saklanır."
   },
   {
    "zh": "主机列表",
@@ -2847,11 +2767,6 @@
    "tr": "Optik akış · hareket tahmini"
   },
   {
-   "zh": "光流与内容节奏",
-   "en": "Optical flow and content cadence",
-   "tr": "Optik akış ve içerik ritmi"
-  },
-  {
    "zh": "光流宽高减半，更省但更糙",
    "en": "Optical flow at half width and height: cheaper but coarser",
    "tr": "Yarı genişlik ve yükseklikte optik akış: daha ucuz ama daha kaba"
@@ -3038,11 +2953,6 @@
    "tr": "İçerik parlaklığı ekranın yeteneğini çok aşıyor"
   },
   {
-   "zh": "内容节奏",
-   "en": "Content pacing",
-   "tr": "İçerik ritmi"
-  },
-  {
    "zh": "内容：两头极端",
    "en": "Content: dark and bright",
    "tr": "İçerik: karanlık ve parlak"
@@ -3125,7 +3035,7 @@
   {
    "zh": "再串流时建议打开：Veyra 不在前台也继续转发。打开后在这台电脑上用别的程序时，手柄也会操作 PS5",
    "en": "Recommended when re-streaming: input keeps going while Veyra is not in front. While on, the controller also drives the PS5 when you use other programs on this PC",
-   "tr": "Yeniden yayın yaparken önerilir: Veyra önde değilken de giriş sürer. Açıkken bu bilgisayarda başka programlar kullanırken kumanda PS5'i de yönetir"
+   "tr": "Yeniden yayın yaparken önerilir: CrispPlay önde değilken de giriş sürer. Açıkken bu bilgisayarda başka programlar kullanırken kumanda PS5'i de yönetir"
   },
   {
    "zh": "再次降低到",
@@ -3171,11 +3081,6 @@
    "zh": "减少处理排队",
    "en": "Reduce processing queue depth",
    "tr": "İşleme kuyruğu derinliğini azalt"
-  },
-  {
-   "zh": "减少处理排队。高负载时建议选「开」而不是「开＋增强」：增强有概率导致掉帧，还会提高 GPU 频率、增加功耗。",
-   "en": "Reduce processing queue depth. Under heavy load, choose On rather than On + Boost: Boost can drop frames, and it raises GPU clocks and power use.",
-   "tr": "İşleme kuyruğu derinliğini azaltır. Yoğun yükte Açık + Destek yerine Açık'ı seçin: Destek kare düşürebilir, GPU saat hızını ve güç tüketimini artırır."
   },
   {
    "zh": "减少暗部被进一步压黑，保留提亮细节",
@@ -3373,11 +3278,6 @@
    "tr": "Silme başarısız; klasör izinlerini kontrol edin."
   },
   {
-   "zh": "删除授权失败，请检查目录权限。",
-   "en": "Could not delete the authorization; check folder permissions.",
-   "tr": "Yetkilendirme silinemedi; klasör izinlerini kontrol edin."
-  },
-  {
    "zh": "删除此层",
    "en": "Delete this layer",
    "tr": "Bu katmanı sil"
@@ -3443,11 +3343,6 @@
    "tr": "Sayfayı ziyaret et"
   },
   {
-   "zh": "剪贴板不是有效的 Sony 授权回调地址。请复制登录完成后的完整 URL。",
-   "en": "The clipboard does not hold a valid Sony authorization callback URL. Copy the full URL after signing in.",
-   "tr": "Panoda geçerli bir Sony yetkilendirme geri çağrı URL'si yok. Oturum açtıktan sonra URL'nin tamamını kopyalayın."
-  },
-  {
    "zh": "剪辑入点已超过源视频时长",
    "en": "The clip's in point is past the end of the source video",
    "tr": "Klibin giriş noktası kaynak videonun sonundan sonra"
@@ -3501,16 +3396,6 @@
    "zh": "包含",
    "en": "Includes",
    "tr": "İçerir"
-  },
-  {
-   "zh": "区域 · Esc 取消",
-   "en": "area · Esc to cancel",
-   "tr": "alan · iptal için Esc"
-  },
-  {
-   "zh": "区域内排除所有 NR 层 · 仅列表模式",
-   "en": "Excludes the area from every NR layer · list mode only",
-   "tr": "Alanı tüm NR katmanlarının dışında tutar · yalnızca liste modu"
   },
   {
    "zh": "区域扩展",
@@ -3651,11 +3536,6 @@
    "zh": "去朦胧",
    "en": "Dehaze",
    "tr": "Pus giderme"
-  },
-  {
-   "zh": "去登录",
-   "en": "Sign in",
-   "tr": "Oturum aç"
   },
   {
    "zh": "去配对",
@@ -3881,11 +3761,6 @@
    "zh": "只能打开本地文件",
    "en": "Only local files can be opened",
    "tr": "Yalnızca yerel dosyalar açılabilir"
-  },
-  {
-   "zh": "只连接明确选中的输入，默认不监听",
-   "en": "Connects only the input you select explicitly; no monitoring by default",
-   "tr": "Yalnızca açıkça seçtiğiniz girişi bağlar; varsayılan olarak izleme yok"
   },
   {
    "zh": "可以保存",
@@ -4223,21 +4098,6 @@
    "tr": "Daire "
   },
   {
-   "zh": "圆形 / 椭圆",
-   "en": "Circle / ellipse",
-   "tr": "Daire / elips"
-  },
-  {
-   "zh": "在 Sony 网页完成登录，复制最终回调地址，再点“提交登录结果”。",
-   "en": "Sign in on the Sony web page, copy the final callback URL, then click \"Submit sign-in result\".",
-   "tr": "Sony web sayfasında oturum açın, son geri çağrı URL'sini kopyalayın, sonra \"Oturum açma sonucunu gönder\"e tıklayın."
-  },
-  {
-   "zh": "在 Sony 网页登录后复制回调地址再提交；软件不接触密码",
-   "en": "Sign in on the Sony page, then copy the callback URL and submit it; the app never sees your password",
-   "tr": "Sony sayfasında oturum açın, sonra geri çağrı URL'sini kopyalayıp gönderin; uygulama parolanızı asla görmez"
-  },
-  {
    "zh": "在主机上打开 Sunshine 网页（https://主机IP:47990），进入「PIN」页，输入下面的数字并提交：",
    "en": "On the host, open the Sunshine web page (https://host-IP:47990), go to the PIN page, enter the number below and submit:",
    "tr": "Ana bilgisayarda Sunshine web sayfasını açın (https://ana-bilgisayar-IP:47990), PIN sayfasına gidin, aşağıdaki numarayı girip gönderin:"
@@ -4263,19 +4123,9 @@
    "tr": "Oturum açma sayfasını tarayıcıda aç"
   },
   {
-   "zh": "在画面上按住左键拖出",
-   "en": "Hold the left button and drag on the picture",
-   "tr": "Resmin üzerinde sol tuşa basılı tutup sürükleyin"
-  },
-  {
    "zh": "在画面上按住左键拖动分割线：左边原画、右边增强。",
    "en": "Hold the left button on the picture and drag the divider: original on the left, enhanced on the right.",
    "tr": "Resmin üzerinde sol tuşa basılı tutup ayırıcıyı sürükleyin: solda özgün, sağda iyileştirilmiş."
-  },
-  {
-   "zh": "在画面上画出矩形或圆形区域（最多 4 个），区域内的画面不做任何一层 NR 处理。",
-   "en": "Draw rectangles or circles on the picture (up to 4); the picture inside them gets no NR at all.",
-   "tr": "Resmin üzerine dikdörtgen veya daire çizin (en fazla 4); içlerindeki resme hiç NR uygulanmaz."
   },
   {
    "zh": "在线",
@@ -5935,7 +5785,7 @@
   {
    "zh": "开始后 Veyra 在这块屏幕上全屏，键鼠和手柄直接操作屏幕上的程序；%1 调整画面，%2 退出",
    "en": "Veyra opens fullscreen on this display. Keyboard, mouse and controller operate its programs; %1 adjusts the picture and %2 exits.",
-   "tr": "Veyra bu ekranda tam ekran açılır. Klavye, fare ve kumanda programlarını kullanır; %1 resmi ayarlar, %2 çıkar."
+   "tr": "CrispPlay bu ekranda tam ekran açılır. Klavye, fare ve kumanda programlarını kullanır; %1 resmi ayarlar, %2 çıkar."
   },
   {
    "zh": "开始后键鼠交给主机；Ctrl+Alt+Shift+Z 释放，+Q 断开，+S 统计",
@@ -5973,11 +5823,6 @@
    "tr": "Aç"
   },
   {
-   "zh": "开＋增强",
-   "en": "On + Boost",
-   "tr": "Açık + Destek"
-  },
-  {
    "zh": "引擎异常，请查看诊断",
    "en": "Engine error; see diagnostics",
    "tr": "Motor hatası; tanılamaya bakın"
@@ -6006,11 +5851,6 @@
    "zh": "引擎未接受光流配置，原设置保留",
    "en": "The engine did not accept the optical flow settings; previous settings kept",
    "tr": "Motor optik akış ayarlarını kabul etmedi; önceki ayarlar korundu"
-  },
-  {
-   "zh": "引擎未接受内容节奏，原设置保留",
-   "en": "The engine did not accept content pacing; previous setting kept",
-   "tr": "Motor içerik ritmini kabul etmedi; önceki ayar korundu"
   },
   {
    "zh": "引擎未接受模式设置，当前配置不变",
@@ -6266,11 +6106,6 @@
    "zh": "当前非 NVIDIA 适配器：NR、NVIDIA 超分与 DLSS 已禁用；可使用 XeSS 预览和 AMD 光流",
    "en": "Not an NVIDIA adapter: NR, NVIDIA super resolution and DLSS are disabled; XeSS preview and AMD optical flow are available",
    "tr": "NVIDIA bağdaştırıcısı değil: NR, NVIDIA süper çözünürlük ve DLSS devre dışı; XeSS önizleme ve AMD optik akış kullanılabilir"
-  },
-  {
-   "zh": "录入播放器正在播放的声音，不受音量和静音影响；采集卡需要开启音频监听",
-   "en": "Records player audio before volume and mute; capture cards need audio monitoring enabled",
-   "tr": "Oynatıcı sesini ses düzeyi ve sessize almadan önce kaydeder; yakalama kartlarında ses izlemenin açık olması gerekir"
   },
   {
    "zh": "录制",
@@ -6901,11 +6736,6 @@
    "zh": "提交帧率",
    "en": "Submit rate",
    "tr": "Gönderim hızı"
-  },
-  {
-   "zh": "提交登录结果",
-   "en": "Submit sign-in result",
-   "tr": "Oturum açma sonucunu gönder"
   },
   {
    "zh": "提亮暗部与中间调，保留高光峰值。",
@@ -7599,16 +7429,6 @@
    "tr": "Eski biçim seçimi"
   },
   {
-   "zh": "旧节点配置的 NR 保护区域已移除；列表保护及其他节点参数保留，后续保存到 .p3-node 文件，原文件不覆盖",
-   "en": "NR protected areas from the old node configuration were removed; list protection and other node settings are kept and saved to a .p3-node file from now on; the original file is not overwritten",
-   "tr": "Eski düğüm yapılandırmasındaki NR korumalı alanlar kaldırıldı; liste koruması ve diğer düğüm ayarları korunuyor ve bundan sonra bir .p3-node dosyasına kaydediliyor; özgün dosyanın üzerine yazılmıyor"
-  },
-  {
-   "zh": "旧节点预设的 NR 保护区域已移除；其余参数保留，后续保存到 .p3-node 文件，原文件不覆盖",
-   "en": "NR protected areas from the old node preset were removed; other settings are kept and saved to a .p3-node file from now on; the original file is not overwritten",
-   "tr": "Eski düğüm ön ayarındaki NR korumalı alanlar kaldırıldı; diğer ayarlar korunuyor ve bundan sonra bir .p3-node dosyasına kaydediliyor; özgün dosyanın üzerine yazılmıyor"
-  },
-  {
    "zh": "时域稳定",
    "en": "Temporal stability",
    "tr": "Zamansal kararlılık"
@@ -8144,11 +7964,6 @@
    "tr": "Oturum açılmadı"
   },
   {
-   "zh": "未登录 · 在 PS5 串流窗口里登录",
-   "en": "Not signed in · sign in from the PS5 streaming window",
-   "tr": "Oturum açılmadı · PS5 akış penceresinden oturum açın"
-  },
-  {
    "zh": "未知",
    "en": "Unknown",
    "tr": "Bilinmiyor"
@@ -8396,7 +8211,7 @@
   {
    "zh": "检测到 OBS 游戏采集和小飞机（RTSS）同时注入 Veyra。两者默认的挂钩方式冲突，OBS 游戏采集可能抓不到画面（任何 D3D12 程序都一样）。在 RTSS 里添加 veyra_qml_ui.exe，并在它的设置中勾选“Use Microsoft Detours API hooking”；或在 OBS 改用窗口采集（Windows 10 1903+）",
    "en": "OBS game capture and RivaTuner (RTSS) are both injected into Veyra. Their default hooking conflicts, so OBS game capture may get no picture (true of any D3D12 program). Add veyra_qml_ui.exe in RTSS and tick \"Use Microsoft Detours API hooking\" in its settings, or use Window Capture in OBS (Windows 10 1903+)",
-   "tr": "OBS oyun yakalama ve RivaTuner (RTSS) ikisi de Veyra'ya enjekte edilmiş. Varsayılan bağlanma yöntemleri çakıştığından OBS oyun yakalama görüntü alamayabilir (her D3D12 programı için geçerli). RTSS'e veyra_qml_ui.exe'yi ekleyip ayarlarında \"Use Microsoft Detours API hooking\"i işaretleyin ya da OBS'te Pencere Yakalama'yı kullanın (Windows 10 1903+)"
+   "tr": "OBS oyun yakalama ve RivaTuner (RTSS) ikisi de CrispPlay'e enjekte edilmiş. Varsayılan bağlanma yöntemleri çakıştığından OBS oyun yakalama görüntü alamayabilir (her D3D12 programı için geçerli). RTSS'e CrispPlay.exe'yi ekleyip ayarlarında \"Use Microsoft Detours API hooking\"i işaretleyin ya da OBS'te Pencere Yakalama'yı kullanın (Windows 10 1903+)"
   },
   {
    "zh": "检测到 RTSS 屏显服务",
@@ -8406,12 +8221,12 @@
   {
    "zh": "检测到 RTSS 屏显服务正在运行。开启兼容绘制需重启 Veyra，重启后 OSD 仅显示在视频上。现在重启吗？当前播放或串流将停止。",
    "en": "The RTSS on-screen display service is running. Restart Veyra to enable compatible rendering and show the OSD on the video only. Restart now? Current playback or streaming will stop.",
-   "tr": "RTSS ekran üstü gösterim hizmeti çalışıyor. Uyumlu çizimi etkinleştirip OSD'yi yalnızca videoda göstermek için Veyra'yı yeniden başlatın. Şimdi yeniden başlatılsın mı? Geçerli oynatma veya akış durur."
+   "tr": "RTSS ekran üstü gösterim hizmeti çalışıyor. Uyumlu çizimi etkinleştirip OSD'yi yalnızca videoda göstermek için CrispPlay'i yeniden başlatın. Şimdi yeniden başlatılsın mı? Geçerli oynatma veya akış durur."
   },
   {
    "zh": "检测到 RivaTuner（小飞机 OSD）注入了 Veyra。请把 设置 → 监控软件兼容 设为“自动”并在小飞机运行时重启 Veyra：界面改用兼容绘制，OSD 只显示在视频上",
    "en": "RivaTuner (RTSS OSD) is injected into Veyra. Set Settings → Monitoring overlay compatibility to Auto and restart Veyra while RTSS is running: the interface uses compatible drawing and the OSD shows on the video only",
-   "tr": "RivaTuner (RTSS OSD) Veyra'ya enjekte edilmiş. Ayarlar → İzleme katmanı uyumluluğu'nu Otomatik yapın ve RTSS çalışırken Veyra'yı yeniden başlatın: arayüz uyumlu çizim kullanır ve OSD yalnızca videoda görünür"
+   "tr": "RivaTuner (RTSS OSD) CrispPlay'e enjekte edilmiş. Ayarlar → İzleme katmanı uyumluluğu'nu Otomatik yapın ve RTSS çalışırken CrispPlay'i yeniden başlatın: arayüz uyumlu çizim kullanır ve OSD yalnızca videoda görünür"
   },
   {
    "zh": "检测到抖音直播伴侣：GPU 优先级暂时从“实时”降为“高”，避免两个程序争用显卡时卡死；直播伴侣退出后自动恢复",
@@ -9154,11 +8969,6 @@
    "tr": "Oyun modu: fare geçişinden çık"
   },
   {
-   "zh": "游戏锁 30/40 帧、采集卡输出 60 帧时选“自动剔除重复帧”：只去掉与上一张完全相同的画面，补帧时间均匀；“采集 60→30”固定每两帧取一帧，稳定 30 帧",
-   "en": "For a game locked to 30/40 fps behind a 60 fps capture card, choose \"Remove duplicate frames automatically\": only pictures identical to the previous one are dropped and generated frames stay evenly timed; \"Capture 60→30\" always keeps every second frame for a steady 30",
-   "tr": "60 fps yakalama kartının arkasında 30/40 fps'ye kilitli bir oyun için \"Yinelenen kareleri otomatik kaldır\"ı seçin: yalnızca bir öncekiyle aynı resimler atılır ve üretilen kareler eşit aralıklı kalır; \"Yakalama 60→30\" sabit 30 için her zaman iki kareden birini tutar"
-  },
-  {
    "zh": "源 %1 fps",
    "en": "Source %1 fps",
    "tr": "Kaynak %1 fps"
@@ -9416,7 +9226,7 @@
   {
    "zh": "画面引擎无响应，已记录诊断信息；如画面未恢复，请关闭软件后重新打开",
    "en": "The picture engine stopped responding; diagnostics were recorded. If the picture does not recover, close and reopen Veyra.",
-   "tr": "Görüntü motoru yanıt vermeyi bıraktı; tanılama kaydedildi. Resim düzelmezse Veyra'yı kapatıp yeniden açın."
+   "tr": "Görüntü motoru yanıt vermeyi bıraktı; tanılama kaydedildi. Resim düzelmezse CrispPlay'i kapatıp yeniden açın."
   },
   {
    "zh": "画面抽样统计",
@@ -9451,7 +9261,7 @@
   {
    "zh": "界面始终用显卡绘制；小飞机 OSD 不在 Veyra 里显示；开着 NVIDIA 信息浮窗或游戏加加时可能卡死",
    "en": "The interface always draws on the GPU; the RTSS OSD is not shown in Veyra; with NVIDIA's in-game overlay or GamePP running, Veyra may freeze",
-   "tr": "Arayüz her zaman GPU'da çizer; RTSS OSD Veyra'da gösterilmez; NVIDIA oyun içi katmanı veya GamePP çalışırken Veyra donabilir"
+   "tr": "Arayüz her zaman GPU'da çizer; RTSS OSD CrispPlay'de gösterilmez; NVIDIA oyun içi katmanı veya GamePP çalışırken CrispPlay donabilir"
   },
   {
    "zh": "界面状态写入失败",
@@ -9527,11 +9337,6 @@
    "zh": "登录 PIN 必须为数字。",
    "en": "The sign-in PIN must be digits.",
    "tr": "Oturum açma PIN'i rakamlardan oluşmalıdır."
-  },
-  {
-   "zh": "登录 PSN",
-   "en": "Sign in to PSN",
-   "tr": "PSN'de oturum aç"
   },
   {
    "zh": "登录信息加密保存在本机；退出会删除它",
@@ -9654,11 +9459,6 @@
    "tr": "Uykuda (uyandırılabilir)"
   },
   {
-   "zh": "矩形",
-   "en": "Rectangle",
-   "tr": "Dikdörtgen"
-  },
-  {
    "zh": "矩形 ",
    "en": "Rectangle ",
    "tr": "Dikdörtgen "
@@ -9771,7 +9571,7 @@
   {
    "zh": "窗口已关闭或属于 Veyra",
    "en": "The window was closed or belongs to Veyra",
-   "tr": "Pencere kapatıldı veya Veyra'ya ait"
+   "tr": "Pencere kapatıldı veya CrispPlay'e ait"
   },
   {
    "zh": "窗口已最小化，等待恢复",
@@ -10369,11 +10169,6 @@
    "tr": "Otomatik tahmin: canlı yakalama kartı / PS5 girişine uygulanır"
   },
   {
-   "zh": "自动剔除重复帧",
-   "en": "Remove duplicate frames automatically",
-   "tr": "Yinelenen kareleri otomatik kaldır"
-  },
-  {
    "zh": "自动去隔行",
    "en": "Automatic deinterlacing",
    "tr": "Otomatik geçmeli tarama giderme"
@@ -10704,16 +10499,6 @@
    "tr": "Düğüm modu büyük görüntülerin döşemeli işlenmesini henüz yapmıyor; liste moduna geçip yeniden açın"
   },
   {
-   "zh": "节点模式已取消 NR 保护区域，请迁移旧节点配置",
-   "en": "Node mode no longer has NR protected areas; migrate the old node configuration",
-   "tr": "Düğüm modunda artık NR korumalı alanlar yok; eski düğüm yapılandırmasını taşıyın"
-  },
-  {
-   "zh": "节点模式已取消 NR 保护区域；请在列表模式使用全局保护",
-   "en": "Node mode no longer has NR protected areas; use global protection in list mode",
-   "tr": "Düğüm modunda artık NR korumalı alanlar yok; liste modunda genel korumayı kullanın"
-  },
-  {
    "zh": "节点模式按连线顺序真实执行；离线导出仅支持列表模式。",
    "en": "Node mode really runs in link order; offline export supports list mode only.",
    "tr": "Düğüm modu gerçekten bağlantı sırasıyla çalışır; çevrimdışı dışa aktarma yalnızca liste modunu destekler."
@@ -10779,11 +10564,6 @@
    "tr": "NVIDIA Düşük Gecikme · Açık"
   },
   {
-   "zh": "英伟达低延迟 · 开＋增强",
-   "en": "NVIDIA Low Latency · On + Boost",
-   "tr": "NVIDIA Düşük Gecikme · Açık + Destek"
-  },
-  {
    "zh": "英伟达低延迟 · 当前未生效",
    "en": "NVIDIA Low Latency · currently inactive",
    "tr": "NVIDIA Düşük Gecikme · şu an etkin değil"
@@ -10817,11 +10597,6 @@
    "zh": "英伟达低延迟：开（已启用）",
    "en": "NVIDIA Low Latency: On (active)",
    "tr": "NVIDIA Düşük Gecikme: Açık (etkin)"
-  },
-  {
-   "zh": "英伟达低延迟：开＋增强（已启用）",
-   "en": "NVIDIA Low Latency: On + Boost (active)",
-   "tr": "NVIDIA Düşük Gecikme: Açık + Destek (etkin)"
   },
   {
    "zh": "范围 0.25～4.00 倍，保持原有音调",
@@ -11196,7 +10971,7 @@
   {
    "zh": "设置已保存，但自动重启失败。请重新打开软件。\nSettings saved. Automatic restart failed; please reopen Veyra.",
    "en": "Settings saved. Automatic restart failed; please reopen Veyra.",
-   "tr": "Ayarlar kaydedildi. Otomatik yeniden başlatma başarısız; lütfen Veyra'yı yeniden açın."
+   "tr": "Ayarlar kaydedildi. Otomatik yeniden başlatma başarısız; lütfen CrispPlay'i yeniden açın."
   },
   {
    "zh": "设置已保存，请等待导出结束后重启软件",
@@ -11217,26 +10992,6 @@
    "zh": "设置恢复呈现排空失败，已停止",
    "en": "Could not drain presentation to restore settings. Playback stopped.",
    "tr": "Ayarları geri yüklemek için sunum boşaltılamadı. Oynatma durdu."
-  },
-  {
-   "zh": "识别 %1 fps 内容",
-   "en": "Detect %1 fps content",
-   "tr": "%1 fps içeriği algıla"
-  },
-  {
-   "zh": "识别 30fps 内容",
-   "en": "Detect 30 fps content",
-   "tr": "30 fps içeriği algıla"
-  },
-  {
-   "zh": "识别 50fps 内容",
-   "en": "Detect 50 fps content",
-   "tr": "50 fps içeriği algıla"
-  },
-  {
-   "zh": "识别 60fps 内容",
-   "en": "Detect 60 fps content",
-   "tr": "60 fps içeriği algıla"
   },
   {
    "zh": "识别档位",
@@ -11352,11 +11107,6 @@
    "zh": "请先添加超分节点",
    "en": "Add a super resolution node first",
    "tr": "Önce bir süper çözünürlük düğümü ekleyin"
-  },
-  {
-   "zh": "请先点登录 PSN，完成网页授权后再提交。",
-   "en": "Click Sign in to PSN, finish the web authorization, then submit.",
-   "tr": "PSN'de oturum aç'a tıklayın, web yetkilendirmesini bitirin, sonra gönderin."
   },
   {
    "zh": "请先登录 Xbox 账号。",
@@ -11607,11 +11357,6 @@
    "zh": "账号",
    "en": "Account",
    "tr": "Hesap"
-  },
-  {
-   "zh": "账号数字 ID 或 8 字节 Base64，不是昵称；登录 PSN 后自动填入",
-   "en": "The account's numeric ID or 8-byte Base64, not the nickname; filled in automatically after signing in to PSN",
-   "tr": "Takma ad değil, hesabın sayısal kimliği veya 8 baytlık Base64; PSN'de oturum açınca otomatik doldurulur"
   },
   {
    "zh": "账号登录 · 实验",
@@ -12114,11 +11859,6 @@
    "tr": "Edge Aegis"
   },
   {
-   "zh": "边缘神盾（XeSS 防果冻）",
-   "en": "Edge Aegis (XeSS anti-jelly)",
-   "tr": "Edge Aegis (XeSS jöle önleme)"
-  },
-  {
    "zh": "边缘羽化",
    "en": "Edge feather",
    "tr": "Kenar yumuşatma (feather)"
@@ -12409,11 +12149,6 @@
    "tr": "Aygıtı bağladıktan sonra önce temel resmi kontrol etmek için iyileştirmeyi kapatın, sonra gerekenleri açın"
   },
   {
-   "zh": "退出",
-   "en": "Quit",
-   "tr": "Çık"
-  },
-  {
    "zh": "退出全屏，恢复普通窗口操作",
    "en": "Leave fullscreen and restore normal window controls",
    "tr": "Tam ekrandan çık ve normal pencere denetimlerini geri getir"
@@ -12579,24 +12314,9 @@
    "tr": "Bu stilin otomatik değerlerini kullan"
   },
   {
-   "zh": "采用源时间戳",
-   "en": "Use source timestamps",
-   "tr": "Kaynak zaman damgalarını kullan"
-  },
-  {
    "zh": "采集",
    "en": "Capture",
    "tr": "Yakalama"
-  },
-  {
-   "zh": "采集 60→30",
-   "en": "Capture 60→30",
-   "tr": "Yakalama 60→30"
-  },
-  {
-   "zh": "采集 60→30（PS5 30 帧）",
-   "en": "Capture 60→30 (PS5 at 30 fps)",
-   "tr": "Yakalama 60→30 (30 fps'de PS5)"
   },
   {
    "zh": "采集: 接收 %1 丢弃 %2 速率 %3 fps",
@@ -12847,11 +12567,6 @@
    "zh": "重连中",
    "en": "Reconnecting",
    "tr": "Yeniden bağlanıyor"
-  },
-  {
-   "zh": "金额随意，每一份支持都是很大的鼓励",
-   "en": "Any amount is welcome, and every bit of support means a lot",
-   "tr": "Her miktar memnuniyetle karşılanır, her destek çok değerli"
   },
   {
    "zh": "链路中固定为最后一步；画布上可移动",
@@ -13164,11 +12879,6 @@
    "tr": "Ses kayması düzeltmesi sıfırlanamadı"
   },
   {
-   "zh": "音频监听",
-   "en": "Audio monitoring",
-   "tr": "Ses izleme"
-  },
-  {
    "zh": "音频线程异常，请重新打开采集",
    "en": "The audio thread hit an error; reopen the capture",
    "tr": "Ses iş parçacığında hata oluştu; yakalamayı yeniden açın"
@@ -13282,11 +12992,6 @@
    "zh": "预设光流字段损坏",
    "en": "Preset optical-flow fields are damaged",
    "tr": "Ön ayar optik akış alanları hasarlı"
-  },
-  {
-   "zh": "预设光流或内容节奏无效",
-   "en": "Invalid preset optical flow or content cadence",
-   "tr": "Geçersiz ön ayar optik akışı veya içerik ritmi"
   },
   {
    "zh": "预设内容类型无效",
@@ -14039,9 +13744,774 @@
    "tr": "; bu dışa aktarma AMD FSR süper çözünürlüğü kullanıyor"
   },
   {
-   "zh": "；默认“实时”，同时运行游戏或其他重负载程序变慢时可改为“高”或“普通”",
-   "en": "; Realtime by default. If a game or other heavy program running alongside slows down, choose High or Normal",
-   "tr": "; varsayılan Gerçek zamanlı. Yanında çalışan bir oyun veya başka ağır program yavaşlarsa Yüksek veya Normal'i seçin"
+   "zh": "1 分钟",
+   "en": "1 min",
+   "tr": "1 dk"
+  },
+  {
+   "zh": "10 分钟",
+   "en": "10 min",
+   "tr": "10 dk"
+  },
+  {
+   "zh": "15 秒",
+   "en": "15 s",
+   "tr": "15 sn"
+  },
+  {
+   "zh": "2 分钟",
+   "en": "2 min",
+   "tr": "2 dk"
+  },
+  {
+   "zh": "30 秒",
+   "en": "30 s",
+   "tr": "30 sn"
+  },
+  {
+   "zh": "5 分钟",
+   "en": "5 min",
+   "tr": "5 dk"
+  },
+  {
+   "zh": "60→30：固定每两帧保留一帧。自动去除：检测并跳过重复画面。",
+   "en": "60→30 keeps every other frame. Automatic removal detects and skips duplicate images.",
+   "tr": "60→30 her iki kareden birini tutar. Otomatik kaldırma yinelenen görüntüleri algılayıp atlar."
+  },
+  {
+   "zh": "ANR FG（极差质量） · 本地实验",
+   "en": "ANR FG (Very poor quality) · Local experiment",
+   "tr": "ANR FG (çok düşük kalite) · Yerel deneme"
+  },
+  {
+   "zh": "ANR 帧生成未能启用，已关闭补帧；请检查运行组件、驱动与工作尺寸（至少 640×360），详细原因见日志",
+   "en": "ANR frame generation could not start and has been turned off. Check its runtime, driver and processing size (at least 640×360); see the log for details.",
+   "tr": "ANR kare üretimi başlatılamadı ve kapatıldı. Çalışma zamanını, sürücüyü ve işleme boyutunu (en az 640×360) kontrol edin; ayrıntılar günlükte."
+  },
+  {
+   "zh": "Apex Neural Rendering · 2X～6X · 视频估算输入，效果与速度以实际运行结果为准",
+   "en": "Apex Neural Rendering · 2X–6X · Estimated video inputs; quality and speed depend on actual results",
+   "tr": "Apex Neural Rendering · 2X–6X · Girdiler videodan tahmin edilir; kalite ve hız gerçek sonuca bağlıdır"
+  },
+  {
+   "zh": "FSR 4 ML 提供方不可用（需要支持的 RX 9000 和驱动），已改用 FSR 3.1；原因见日志",
+   "en": "FSR 4 ML provider unavailable (needs a supported RX 9000 and driver); switched to FSR 3.1. See the log",
+   "tr": "FSR 4 ML sağlayıcısı kullanılamıyor (desteklenen bir RX 9000 ve sürücü gerekir); FSR 3.1'e geçildi. Günlüğe bakın"
+  },
+  {
+   "zh": "AMD FRC 未能启用（需要 AMD 显卡和驱动自带的 AMF 运行库），已关闭补帧；原因见日志",
+   "en": "AMD FRC could not start (needs an AMD GPU and the AMF runtime from its driver); frame generation turned off. See the log",
+   "tr": "AMD FRC başlatılamadı (AMD GPU ve sürücüsündeki AMF çalışma zamanı gerekir); kare üretimi kapatıldı. Günlüğe bakın"
+  },
+  {
+   "zh": "AMD FRC 未能启用（需要 AMD 显卡和驱动自带的 AMF 运行库），已恢复上一套参数",
+   "en": "AMD FRC could not start (needs an AMD GPU and the AMF runtime from its driver); the previous settings were restored",
+   "tr": "AMD FRC başlatılamadı (AMD GPU ve sürücüsündeki AMF çalışma zamanı gerekir); önceki ayarlar geri yüklendi"
+  },
+  {
+   "zh": "AMD FRC · 视频补帧 · 2X",
+   "en": "AMD FRC · video frame interpolation · 2X",
+   "tr": "AMD FRC · video kare üretimi · 2X"
+  },
+  {
+   "zh": "AMD 驱动自带的视频补帧（AMF FRC），只用前后两帧画面估算运动，固定 2X",
+   "en": "Video frame interpolation built into the AMD driver (AMF FRC); it estimates motion from the two pictures only, fixed at 2X",
+   "tr": "AMD sürücüsüne gömülü video kare üretimi (AMF FRC); hareketi yalnızca iki görüntüden tahmin eder, 2X'e sabittir"
+  },
+  {
+   "zh": "需要 AMD 显卡（驱动自带 AMF 运行库）",
+   "en": "Requires an AMD GPU (AMF runtime from the AMD driver)",
+   "tr": "AMD GPU gerekir (AMD sürücüsündeki AMF çalışma zamanı)"
+  },
+  {
+   "zh": "FSR 4 ML 运行失败，已改用 FSR 3.1；错误码见日志",
+   "en": "FSR 4 ML failed while running; switched to FSR 3.1. Error codes are in the log",
+   "tr": "FSR 4 ML çalışırken hata verdi; FSR 3.1'e geçildi. Hata kodları günlükte"
+  },
+  {
+   "zh": "FSR 4 ML 需要支持的 RX 9000 和驱动，不可用时自动改用 FSR 3.1；尚未在 RX 9000 实卡上验证",
+   "en": "FSR 4 ML needs a supported RX 9000 and driver and switches to FSR 3.1 when unavailable; not yet verified on an actual RX 9000",
+   "tr": "FSR 4 ML, desteklenen bir RX 9000 ve sürücü ister; kullanılamadığında FSR 3.1'e geçilir. Gerçek bir RX 9000'de henüz doğrulanmadı"
+  },
+  {
+   "zh": "NR 稳定器必须位于最后一层 NR 与 NR 保护区域之后",
+   "en": "Place the NR stabilizer after the final NR layer and NR protection.",
+   "tr": "NR sabitleyiciyi son NR katmanından ve NR korumasından sonra yerleştirin."
+  },
+  {
+   "zh": "NR 输出稳定器",
+   "en": "NR output stabilizer",
+   "tr": "NR çıkış sabitleyici"
+  },
+  {
+   "zh": "NVIDIA VFG 👑（顶级补帧质量） · RTX 30（实验）/ 40 / 50",
+   "en": "NVIDIA VFG 👑 (Top-tier frame generation quality) · RTX 30 (experimental) / 40 / 50",
+   "tr": "NVIDIA VFG 👑 (en üst düzey kare üretimi kalitesi) · RTX 30 (deneysel) / 40 / 50"
+  },
+  {
+   "zh": "Patreon 主页",
+   "en": "Patreon home",
+   "tr": "Patreon sayfası"
+  },
+  {
+   "zh": "Patreon 主页查看作者动态，咖啡赞助为 US$5。",
+   "en": "Visit Patreon for creator updates, or buy me a coffee for US$5.",
+   "tr": "Yazarın haberleri için Patreon'a göz atın ya da 5 ABD dolarına bir kahve ısmarlayın."
+  },
+  {
+   "zh": "Patreon、微信与支付宝",
+   "en": "Patreon, WeChat and Alipay",
+   "tr": "Patreon, WeChat ve Alipay"
+  },
+  {
+   "zh": "RTX Video HDR 之后只能接全效果剔除与补帧",
+   "en": "Only effect exclusion and frame generation may follow RTX Video HDR.",
+   "tr": "RTX Video HDR'den sonra yalnızca efekt hariç tutma ve kare üretimi gelebilir."
+  },
+  {
+   "zh": "Windows 不允许 Veyra 使用麦克风，请在 设置 → 隐私和安全性 → 麦克风 中允许桌面应用访问",
+   "en": "Windows does not let Veyra use the microphone; allow desktop apps in Settings → Privacy & security → Microphone",
+   "tr": "Windows, CrispPlay'in mikrofonu kullanmasına izin vermiyor; Ayarlar → Gizlilik ve güvenlik → Mikrofon'da masaüstü uygulamalarına izin verin"
+  },
+  {
+   "zh": "DLSS、FSR、ANR 补帧，及运动来源选“光流”的 XeSS 生效：修人物边缘果冻，背景不再被人物拖着晃",
+   "en": "For DLSS, FSR and ANR frame generation, and XeSS with the optical-flow motion source: stops the jelly at character edges, so the background no longer drags along",
+   "tr": "DLSS, FSR ve ANR kare üretimi ile optik akış hareket kaynaklı XeSS için: karakter kenarlarındaki jöle etkisini durdurur, arka plan artık sürüklenmez"
+  },
+  {
+   "zh": "☕ 请作者喝杯咖啡 · US$5",
+   "en": "☕ Buy me a coffee · US$5",
+   "tr": "☕ Bir kahve ısmarla · 5 ABD doları"
+  },
+  {
+   "zh": "上一段回放仍在保存，请稍后再试",
+   "en": "The previous replay is still being saved; try again shortly",
+   "tr": "Önceki tekrar hâlâ kaydediliyor; birazdan yeniden deneyin"
+  },
+  {
+   "zh": "主机配对凭据加密保存在用户数据目录。",
+   "en": "Console pairing credentials are encrypted in the user data directory.",
+   "tr": "Konsol eşleştirme bilgileri kullanıcı verisi klasöründe şifreli saklanır."
+  },
+  {
+   "zh": "保存即时回放",
+   "en": "Save instant replay",
+   "tr": "Anlık tekrarı kaydet"
+  },
+  {
+   "zh": "保存最近的画面和声音（%1）",
+   "en": "Save the latest picture and sound (%1)",
+   "tr": "Son görüntüyü ve sesi kaydet (%1)"
+  },
+  {
+   "zh": "保护区域参数无效",
+   "en": "Invalid protection region parameters.",
+   "tr": "Koruma bölgesi parametreleri geçersiz."
+  },
+  {
+   "zh": "光流与去除重复帧",
+   "en": "Optical flow and duplicate removal",
+   "tr": "Optik akış ve yinelenen kare kaldırma"
+  },
+  {
+   "zh": "全效果剔除",
+   "en": "Exclude all effects",
+   "tr": "Tüm efektleri hariç tut"
+  },
+  {
+   "zh": "全效果剔除必须位于其他画质效果之后、补帧之前",
+   "en": "Place effect exclusion after image effects and before frame generation.",
+   "tr": "Efekt hariç tutmayı görüntü efektlerinden sonra, kare üretiminden önce yerleştirin."
+  },
+  {
+   "zh": "关闭启动音乐",
+   "en": "Turn the startup music off",
+   "tr": "Başlangıç müziğini kapat"
+  },
+  {
+   "zh": "其他桌面",
+   "en": "Other desktop",
+   "tr": "Başka masaüstü"
+  },
+  {
+   "zh": "内存上限只够保留 %1 秒（约 %2 MB），可降低录制码率",
+   "en": "The memory cap only holds %1 s (about %2 MB); a lower recording bitrate keeps more",
+   "tr": "Bellek sınırı yalnızca %1 sn tutabiliyor (yaklaşık %2 MB); kayıt bit hızını düşürürseniz daha uzun tutar"
+  },
+  {
+   "zh": "写入回放文件失败（磁盘已满或没有写入权限？）",
+   "en": "Could not write the replay file (disk full or no write permission?)",
+   "tr": "Tekrar dosyası yazılamadı (disk dolu ya da yazma izni yok mu?)"
+  },
+  {
+   "zh": "区域内恢复原始画面与帧率",
+   "en": "Restore source picture and frame cadence inside the regions",
+   "tr": "Bölgelerin içinde kaynak görüntüyü ve kare ritmini geri getir"
+  },
+  {
+   "zh": "区域内恢复原始画面，补帧也不参与，按原始帧节奏更新。最多 4 个区域。",
+   "en": "Restore the source picture inside each region, updating only at the source frame cadence. Up to 4 regions.",
+   "tr": "Her bölgenin içinde kaynak görüntü geri getirilir ve yalnızca kaynağın kare ritminde güncellenir. En çok 4 bölge."
+  },
+  {
+   "zh": "区域内排除 NR 处理。最多 4 个区域。",
+   "en": "Exclude NR processing inside the regions. Up to 4 regions.",
+   "tr": "Bölgelerin içinde NR işlemi uygulanmaz. En çok 4 bölge."
+  },
+  {
+   "zh": "区域内排除所有 NR 层",
+   "en": "Exclude every NR layer inside the regions",
+   "tr": "Bölgelerin içinde tüm NR katmanlarını hariç tut"
+  },
+  {
+   "zh": "单击或按任意键跳过",
+   "en": "Click or press any key to skip",
+   "tr": "Geçmek için tıklayın ya da bir tuşa basın"
+  },
+  {
+   "zh": "即时回放",
+   "en": "Instant replay",
+   "tr": "Anlık tekrar"
+  },
+  {
+   "zh": "即时回放写入失败",
+   "en": "Instant replay buffering failed",
+   "tr": "Anlık tekrar ara belleğe alınamadı"
+  },
+  {
+   "zh": "即时回放已保存：%1",
+   "en": "Instant replay saved: %1",
+   "tr": "Anlık tekrar kaydedildi: %1"
+  },
+  {
+   "zh": "即时回放未开启",
+   "en": "Instant replay is off",
+   "tr": "Anlık tekrar kapalı"
+  },
+  {
+   "zh": "即时回放未开启：设置 → 播放 → 即时回放",
+   "en": "Instant replay is off: Settings → Playback → Instant replay",
+   "tr": "Anlık tekrar kapalı: Ayarlar → Oynatma → Anlık tekrar"
+  },
+  {
+   "zh": "去重关闭",
+   "en": "Duplicate removal off",
+   "tr": "Yinelenen kare kaldırma kapalı"
+  },
+  {
+   "zh": "去除重复帧",
+   "en": "Remove duplicate frames",
+   "tr": "Yinelenen kareleri kaldır"
+  },
+  {
+   "zh": "同时录入麦克风；默认混进录制声音，也可以放在单独的音轨",
+   "en": "Also record a microphone; mixed into the recorded sound by default, or on a track of its own",
+   "tr": "Mikrofonu da kaydeder; varsayılan olarak kayıt sesine karıştırılır, istenirse ayrı bir ize alınır"
+  },
+  {
+   "zh": "启动动画",
+   "en": "Startup animation",
+   "tr": "Başlangıç animasyonu"
+  },
+  {
+   "zh": "启动音乐",
+   "en": "Startup music",
+   "tr": "Başlangıç müziği"
+  },
+  {
+   "zh": "回放 %1",
+   "en": "Replay %1",
+   "tr": "Tekrar %1"
+  },
+  {
+   "zh": "回放文件收尾失败：",
+   "en": "Could not finish the replay file: ",
+   "tr": "Tekrar dosyası tamamlanamadı: "
+  },
+  {
+   "zh": "回放里还没有画面",
+   "en": "The replay buffer has no picture yet",
+   "tr": "Tekrar ara belleğinde henüz görüntü yok"
+  },
+  {
+   "zh": "回放长度",
+   "en": "Replay length",
+   "tr": "Tekrar uzunluğu"
+  },
+  {
+   "zh": "在 PSNTools 网页获取 Account ID，再到 PS5 串流窗口填写并配对。",
+   "en": "Get your Account ID on PSNTools, then enter it in the PS5 streaming window to pair.",
+   "tr": "Hesap Kimliğinizi PSNTools'tan alın, sonra eşleştirmek için PS5 akış penceresine girin."
+  },
+  {
+   "zh": "在内存中保留最近一段画面和声音，按 %1 保存到录制保存位置；会多占用一路硬件编码",
+   "en": "Keeps the latest picture and sound in memory; %1 saves them to the recording folder. Uses one more hardware encoder session",
+   "tr": "Son görüntüyü ve sesi bellekte tutar; %1 bunları kayıt klasörüne kaydeder. Bir donanım kodlayıcı oturumu daha kullanır"
+  },
+  {
+   "zh": "在最后一层 NR 之后稳住未变化的像素。",
+   "en": "Stabilize unchanged pixels after the final NR layer.",
+   "tr": "Son NR katmanından sonra değişmeyen pikselleri sabitler."
+  },
+  {
+   "zh": "在画面上拖出区域，Esc 取消",
+   "en": "Drag a region on the picture. Press Esc to cancel.",
+   "tr": "Görüntünün üzerinde bir bölge sürükleyin. İptal için Esc'ye basın."
+  },
+  {
+   "zh": "在网页获取 PSN Account ID 后，复制到配对栏，再填写主机的 8 位配对码。",
+   "en": "Copy the PSN Account ID from the website into the pairing field, then enter the console’s 8-digit pairing code.",
+   "tr": "PSN Hesap Kimliğini web sitesinden eşleştirme alanına kopyalayın, sonra konsolun 8 haneli eşleştirme kodunu girin."
+  },
+  {
+   "zh": "已缓存 %1 秒，占用内存约 %2 MB",
+   "en": "%1 s buffered, about %2 MB of memory",
+   "tr": "%1 sn ara bellekte, yaklaşık %2 MB bellek"
+  },
+  {
+   "zh": "已选设备（未连接）",
+   "en": "Chosen device (not connected)",
+   "tr": "Seçili aygıt (bağlı değil)"
+  },
+  {
+   "zh": "开启后麦克风在第 2 条音轨，剪辑时可单独调整；普通播放器通常只播放第 1 条",
+   "en": "Puts the microphone on audio track 2 to adjust it separately when editing; most players only play track 1",
+   "tr": "Mikrofonu 2. ses izine koyar, düzenlerken ayrı ayarlanabilir; çoğu oynatıcı yalnızca 1. izi çalar"
+  },
+  {
+   "zh": "引擎未接受去除重复帧设置，原设置保留",
+   "en": "The engine rejected the duplicate-removal setting. The previous setting was kept.",
+   "tr": "Motor yinelenen kare kaldırma ayarını reddetti. Önceki ayar korundu."
+  },
+  {
+   "zh": "录制目录所在磁盘剩余空间不足，无法保存回放",
+   "en": "Not enough free space on the recording folder's disk to save the replay",
+   "tr": "Kayıt klasörünün diskinde tekrarı kaydetmeye yetecek boş alan yok"
+  },
+  {
+   "zh": "录制麦克风",
+   "en": "Record microphone",
+   "tr": "Mikrofonu kaydet"
+  },
+  {
+   "zh": "打开启动音乐",
+   "en": "Turn the startup music on",
+   "tr": "Başlangıç müziğini aç"
+  },
+  {
+   "zh": "找不到所选麦克风，请插回设备或重新选择",
+   "en": "The chosen microphone is not found; plug it back in or choose another",
+   "tr": "Seçili mikrofon bulunamadı; yeniden takın ya da başka birini seçin"
+  },
+  {
+   "zh": "播放时开始缓存；录制码率越高，占用内存越多",
+   "en": "Buffering starts when something plays; a higher recording bitrate uses more memory",
+   "tr": "Bir şey oynatılınca ara belleğe almaya başlar; kayıt bit hızı yükseldikçe daha çok bellek kullanır"
+  },
+  {
+   "zh": "无法写入回放文件头",
+   "en": "Could not write the replay file header",
+   "tr": "Tekrar dosyasının başlığı yazılamadı"
+  },
+  {
+   "zh": "无法写入回放文件头：",
+   "en": "Could not write the replay file header: ",
+   "tr": "Tekrar dosyasının başlığı yazılamadı: "
+  },
+  {
+   "zh": "无法创建回放文件封装器",
+   "en": "Could not create the replay file muxer",
+   "tr": "Tekrar dosyası birleştiricisi oluşturulamadı"
+  },
+  {
+   "zh": "无法创建回放文件：",
+   "en": "Could not create the replay file: ",
+   "tr": "Tekrar dosyası oluşturulamadı: "
+  },
+  {
+   "zh": "无法创建回放视频流",
+   "en": "Could not create the replay video stream",
+   "tr": "Tekrar video akışı oluşturulamadı"
+  },
+  {
+   "zh": "无法创建回放音频流",
+   "en": "Could not create the replay audio stream",
+   "tr": "Tekrar ses akışı oluşturulamadı"
+  },
+  {
+   "zh": "无法创建录制音频流",
+   "en": "Could not create the recording audio stream",
+   "tr": "Kayıt ses akışı oluşturulamadı"
+  },
+  {
+   "zh": "无法开始保存回放",
+   "en": "Could not start saving the replay",
+   "tr": "Tekrar kaydı başlatılamadı"
+  },
+  {
+   "zh": "日落",
+   "en": "Dusk",
+   "tr": "Günbatımı"
+  },
+  {
+   "zh": "日落天空的渐变强度，带抖动防色带",
+   "en": "Strength of the sunset sky gradient, dithered against banding",
+   "tr": "Günbatımı gökyüzü geçişinin gücü; bantlanmaya karşı titreştirilir"
+  },
+  {
+   "zh": "日落渐变",
+   "en": "Sunset gradient",
+   "tr": "Günbatımı geçişi"
+  },
+  {
+   "zh": "日落配色下打开软件时播放，单击或按任意键可跳过",
+   "en": "Plays when Veyra starts in the Dusk color scheme; click or press any key to skip",
+   "tr": "Günbatımı renk düzeninde CrispPlay açılırken oynar; geçmek için tıklayın ya da bir tuşa basın"
+  },
+  {
+   "zh": "日落：深靛紫底、日落渐变强调色；经典：原来的黑灰配色",
+   "en": "Dusk: deep indigo-violet with a sunset gradient accent; Classic: the original black and grey",
+   "tr": "Günbatımı: günbatımı geçişli vurgu rengiyle koyu çivit moru; Klasik: özgün siyah ve gri"
+  },
+  {
+   "zh": "未找到音乐文件：程序目录下的 media/startup-music.mp3",
+   "en": "Music file not found: media/startup-music.mp3 in the program folder",
+   "tr": "Müzik dosyası bulunamadı: program klasöründe media/startup-music.mp3"
+  },
+  {
+   "zh": "未设置快捷键",
+   "en": "no shortcut set",
+   "tr": "kısayol atanmadı"
+  },
+  {
+   "zh": "桌面 %1",
+   "en": "Desktop %1",
+   "tr": "Masaüstü %1"
+  },
+  {
+   "zh": "桌面 %1 · %2",
+   "en": "Desktop %1 · %2",
+   "tr": "Masaüstü %1 · %2"
+  },
+  {
+   "zh": "游戏模式需要窗口和 Veyra 在同一个虚拟桌面：请把窗口移到当前桌面，或关闭游戏模式后直接捕获",
+   "en": "Game mode needs the window on the same virtual desktop as Veyra: move the window to the current desktop, or turn game mode off and capture it directly",
+   "tr": "Oyun modu, pencerenin CrispPlay ile aynı sanal masaüstünde olmasını ister: pencereyi geçerli masaüstüne taşıyın ya da oyun modunu kapatıp doğrudan yakalayın"
+  },
+  {
+   "zh": "点击获取 Account ID，在网页查询后复制到这里。支持数字 ID 或 8 字节 Base64，不是 PSN 昵称。",
+   "en": "Click Get Account ID and copy the result here. Accepts a numeric ID or 8-byte Base64, not your PSN nickname.",
+   "tr": "Hesap Kimliğini al'a tıklayıp sonucu buraya kopyalayın. Sayısal kimlik ya da 8 baytlık Base64 kabul edilir; PSN takma adınız değil."
+  },
+  {
+   "zh": "界面配色",
+   "en": "Color scheme",
+   "tr": "Renk düzeni"
+  },
+  {
+   "zh": "稳定器参数超出范围",
+   "en": "Stabilizer parameters are out of range.",
+   "tr": "Sabitleyici parametreleri aralık dışında."
+  },
+  {
+   "zh": "窗口在其他虚拟桌面上，暂时没有新画面：部分程序（如 Chrome、Edge）在所在桌面不显示时会暂停绘制",
+   "en": "The window is on another virtual desktop and has no new picture yet: some programs (such as Chrome and Edge) stop drawing while their desktop is not shown",
+   "tr": "Pencere başka bir sanal masaüstünde ve henüz yeni görüntüsü yok: bazı programlar (Chrome ve Edge gibi) masaüstleri gösterilmezken çizmeyi durdurur"
+  },
+  {
+   "zh": "系统默认麦克风",
+   "en": "System default microphone",
+   "tr": "Sistem varsayılan mikrofonu"
+  },
+  {
+   "zh": "经典",
+   "en": "Classic",
+   "tr": "Klasik"
+  },
+  {
+   "zh": "自动去除",
+   "en": "Automatic removal",
+   "tr": "Otomatik kaldırma"
+  },
+  {
+   "zh": "英伟达低延迟：驱动每帧等待过长，本次播放已关闭；当前使用低排队",
+   "en": "NVIDIA Low Latency: the driver waited too long every frame and was turned off for this session; using low queue depth",
+   "tr": "NVIDIA Düşük Gecikme: sürücü her karede fazla uzun bekledi ve bu oturum için kapatıldı; düşük kuyruk derinliği kullanılıyor"
+  },
+  {
+   "zh": "获取 Account ID",
+   "en": "Get Account ID",
+   "tr": "Hesap Kimliğini al"
+  },
+  {
+   "zh": "边缘神盾（防果冻）",
+   "en": "Edge Aegis (anti-jelly)",
+   "tr": "Edge Aegis (jöle önleme)"
+  },
+  {
+   "zh": "这个窗口在其他虚拟桌面上，不用切换桌面即可捕获；部分程序在所在桌面不显示时会暂停绘制",
+   "en": "This window is on another virtual desktop and can be captured without switching to it; some programs stop drawing while their desktop is not shown",
+   "tr": "Bu pencere başka bir sanal masaüstünde; oraya geçmeden yakalanabilir. Bazı programlar masaüstleri gösterilmezken çizmeyi durdurur"
+  },
+  {
+   "zh": "这个目标所在的显示器接在 %1 上，Veyra 在 %2 上处理：每帧画面都要由 Windows 在两块显卡之间复制，延迟更高。双显卡分工时，建议把显示器接到处理用的显卡上（笔记本可开独显直连）",
+   "en": "The display this target is on is connected to %1, while Veyra processes on %2: Windows copies every frame between the two GPUs, which adds latency. When two GPUs share the work, connect the display to the processing GPU (on a laptop, turn on the discrete-GPU-only (MUX) mode)",
+   "tr": "Bu hedefin bulunduğu ekran %1 kartına bağlı, CrispPlay ise %2 üzerinde işliyor: Windows her kareyi iki GPU arasında kopyalar, bu da gecikme ekler. İş iki GPU arasında paylaşılıyorsa ekranı işlemeyi yapan GPU'ya bağlayın (dizüstünde yalnızca ayrık GPU (MUX) modunu açın)"
+  },
+  {
+   "zh": "配对设置",
+   "en": "Pairing settings",
+   "tr": "Eşleştirme ayarları"
+  },
+  {
+   "zh": "随启动动画播放一次，打开任意播放源后自动暂停",
+   "en": "Plays once with the startup animation and pauses when any source opens",
+   "tr": "Başlangıç animasyonuyla birlikte bir kez çalar, bir kaynak açılınca duraklar"
+  },
+  {
+   "zh": "需先在 设置 → 播放 开启即时回放；游戏模式下在游戏里也能用",
+   "en": "Turn on instant replay in Settings → Playback first; also works inside the game in game mode",
+   "tr": "Önce Ayarlar → Oynatma'da anlık tekrarı açın; oyun modunda oyunun içinde de çalışır"
+  },
+  {
+   "zh": "需要在 Windows 设置 → 隐私和安全性 → 麦克风 中允许桌面应用访问",
+   "en": "Allow desktop apps in Windows Settings → Privacy & security → Microphone",
+   "tr": "Windows Ayarlar → Gizlilik ve güvenlik → Mikrofon'da masaüstü uygulamalarına izin verin"
+  },
+  {
+   "zh": "预设光流或去除重复帧设置无效",
+   "en": "Invalid optical-flow or duplicate-removal preset settings",
+   "tr": "Ön ayardaki optik akış ya da yinelenen kare kaldırma ayarları geçersiz"
+  },
+  {
+   "zh": "预设库稳定器字段损坏",
+   "en": "Invalid preset stabilizer data.",
+   "tr": "Ön ayardaki sabitleyici verisi geçersiz."
+  },
+  {
+   "zh": "麦克风单独音轨",
+   "en": "Microphone on its own track",
+   "tr": "Mikrofon ayrı izde"
+  },
+  {
+   "zh": "麦克风无法录音（0x{:08X}）",
+   "en": "The microphone cannot record (0x{:08X})",
+   "tr": "Mikrofon kaydedilemiyor (0x{:08X})"
+  },
+  {
+   "zh": "麦克风被其他程序独占，请关闭独占模式后再试",
+   "en": "Another program holds the microphone exclusively; turn off its exclusive mode and try again",
+   "tr": "Mikrofonu başka bir program özel modda tutuyor; onun özel modunu kapatıp yeniden deneyin"
+  },
+  {
+   "zh": "麦克风设备",
+   "en": "Microphone device",
+   "tr": "Mikrofon aygıtı"
+  },
+  {
+   "zh": "麦克风：%1",
+   "en": "Microphone: %1",
+   "tr": "Mikrofon: %1"
+  },
+  {
+   "zh": "；默认“高”，同时运行游戏或其他重负载程序变慢时可改为“普通”",
+   "en": "; High by default. If a game or other heavy program running alongside slows down, choose Normal",
+   "tr": "; varsayılan Yüksek. Yanında çalışan oyun ya da başka ağır program yavaşlarsa Normal'i seçin"
+  },
+  {
+   "zh": "展开",
+   "en": "Expand",
+   "tr": "Genişlet"
+  },
+  {
+   "zh": "NVIDIA G-SYNC 配置",
+   "en": "NVIDIA G-SYNC setup",
+   "tr": "NVIDIA G-SYNC kurulumu"
+  },
+  {
+   "zh": "仅为当前软件路径配置窗口和全屏 G-SYNC，可恢复原设置；显示器和驱动的 G-SYNC 总开关仍需开启。",
+   "en": "Configure windowed and fullscreen G-SYNC for this application path, with an option to restore the original settings. G-SYNC must also be enabled on the monitor and in the driver.",
+   "tr": "Bu uygulama yolu için pencereli ve tam ekran G-SYNC'i yapılandırır; özgün ayarlara dönme seçeneği vardır. G-SYNC'in ekranda ve sürücüde de açık olması gerekir."
+  },
+  {
+   "zh": "修复",
+   "en": "Repair",
+   "tr": "Onar"
+  },
+  {
+   "zh": "另一个软件实例正在处理驱动配置，请稍后重试。",
+   "en": "Another application instance is updating the driver profile. Try again shortly.",
+   "tr": "Başka bir uygulama örneği sürücü profilini güncelliyor. Birazdan yeniden deneyin."
+  },
+  {
+   "zh": "尚未检查",
+   "en": "Not checked",
+   "tr": "Kontrol edilmedi"
+  },
+  {
+   "zh": "尚未配置窗口和全屏",
+   "en": "Windowed and fullscreen not configured",
+   "tr": "Pencereli ve tam ekran yapılandırılmamış"
+  },
+  {
+   "zh": "已允许窗口和全屏",
+   "en": "Windowed and fullscreen allowed",
+   "tr": "Pencereli ve tam ekran izinli"
+  },
+  {
+   "zh": "当前配置无法单独修改",
+   "en": "This profile cannot be changed independently",
+   "tr": "Bu profil bağımsız olarak değiştirilemez"
+  },
+  {
+   "zh": "恢复原设置",
+   "en": "Restore original",
+   "tr": "Özgün ayara dön"
+  },
+  {
+   "zh": "恢复记录与当前配置不一致",
+   "en": "Backup does not match the current profile",
+   "tr": "Yedek, geçerli profille eşleşmiyor"
+  },
+  {
+   "zh": "操作结果尚未确认，请重新检查。已有恢复记录会保留，不会自动重试写入。",
+   "en": "The result has not been confirmed. Check again. The backup is retained; writes will not be retried automatically.",
+   "tr": "Sonuç doğrulanamadı. Yeniden kontrol edin. Yedek saklanıyor; yazma otomatik olarak yeniden denenmez."
+  },
+  {
+   "zh": "无法保存或清理恢复记录",
+   "en": "Cannot save or remove the backup",
+   "tr": "Yedek kaydedilemiyor ya da kaldırılamıyor"
+  },
+  {
+   "zh": "无法读取 NVIDIA 驱动配置；请检查显卡和驱动是否支持此功能。",
+   "en": "Cannot read NVIDIA driver profiles. Check whether the GPU and driver support this feature.",
+   "tr": "NVIDIA sürücü profilleri okunamıyor. GPU'nun ve sürücünün bu özelliği destekleyip desteklemediğini kontrol edin."
+  },
+  {
+   "zh": "未能确认驱动配置",
+   "en": "Driver profile not confirmed",
+   "tr": "Sürücü profili doğrulanmadı"
+  },
+  {
+   "zh": "正在处理驱动配置…",
+   "en": "Processing driver profile…",
+   "tr": "Sürücü profili işleniyor…"
+  },
+  {
+   "zh": "请以管理员身份启动本软件后重试；完成配置后可恢复普通方式启动。",
+   "en": "Run this application as administrator and try again. After setup, you can start it normally.",
+   "tr": "Bu uygulamayı yönetici olarak çalıştırıp yeniden deneyin. Kurulumdan sonra normal şekilde açabilirsiniz."
+  },
+  {
+   "zh": "请检查软件数据目录是否可写。恢复记录保留在该目录的 driver-profiles 文件夹中。",
+   "en": "Check that the application data directory is writable. Backups are kept in its driver-profiles folder.",
+   "tr": "Uygulama veri klasörünün yazılabilir olduğunu kontrol edin. Yedekler oradaki driver-profiles klasöründe tutulur."
+  },
+  {
+   "zh": "配置或恢复记录发生变化，已停止本次操作。请重新检查，必要时使用 Profile Inspector 手动处理。",
+   "en": "The profile or backup changed, so this operation was stopped. Check again, or use Profile Inspector to handle it manually.",
+   "tr": "Profil ya da yedek değiştiği için bu işlem durduruldu. Yeniden kontrol edin ya da Profile Inspector ile elle halledin."
+  },
+  {
+   "zh": "配置未独立绑定当前程序路径，可能由其他程序共用。请使用 Profile Inspector 单独配置本软件。",
+   "en": "The profile is not exclusive to this application path and may be shared. Use Profile Inspector to configure this application separately.",
+   "tr": "Profil yalnızca bu uygulama yoluna ait değil, paylaşılıyor olabilir. Bu uygulamayı ayrı yapılandırmak için Profile Inspector kullanın."
+  },
+  {
+   "zh": "需要管理员权限",
+   "en": "Administrator rights required",
+   "tr": "Yönetici hakları gerekli"
+  },
+  {
+   "zh": "驱动配置已保存，请手动重启本软件。是否实际生效仍以驱动和显示器报告为准。",
+   "en": "The driver profile was saved. Restart this application manually. Actual activation still depends on the driver and monitor reports.",
+   "tr": "Sürücü profili kaydedildi. Bu uygulamayı elle yeniden başlatın. Gerçekten etkinleşmesi yine sürücünün ve ekranın bildirdiklerine bağlıdır."
+  },
+  {
+   "zh": "驱动配置正在被占用",
+   "en": "Driver profile is in use",
+   "tr": "Sürücü profili kullanımda"
+  },
+  {
+   "zh": "2. 回到 Veyra，在“音频输入”选“Veyra 虚拟扬声器”，再连接采集。音频输出选真实耳机或音箱，即可使用音画同步。\n\n可选改名：在 Windows 声音的“播放”页打开 CABLE Input 的属性，在“常规”里改成“Veyra 采集音频”。",
+   "en": "2. In Veyra, select Veyra virtual speaker under Audio input, then connect capture. Select real headphones or speakers as the audio output to use A/V sync.\n\nOptional: rename CABLE Input to Veyra capture audio in Windows Sound → Playback → Properties → General.",
+   "tr": "2. CrispPlay'de Ses girişi altında Veyra Virtual Speaker'ı seçin, sonra yakalamayı bağlayın. Ses/görüntü senkronunu kullanmak için ses çıkışı olarak gerçek kulaklığınızı veya hoparlörünüzü seçin.\n\nİsteğe bağlı: Windows Ses → Kayıttan Yürütme → Özellikler → Genel'de CABLE Input'un adını \"Veyra capture audio\" yapın."
+  },
+  {
+   "zh": "PS5 仍会发一路 720p 30fps、约 5 Mbps 的保活画面，本机收到即丢弃；PS5 同一时间只允许一个远程游玩连接。再串流时记得选择上面的「音频输入」。",
+   "en": "PS5 still sends a 720p 30fps keep-alive video at about 5 Mbps, discarded on arrival. PS5 allows only one Remote Play connection at a time. Select an Audio input above when streaming again.",
+   "tr": "PS5 yine de yaklaşık 5 Mbps'lik 720p 30 fps canlı tutma görüntüsü gönderir; gelir gelmez atılır. PS5 aynı anda yalnızca bir Remote Play bağlantısına izin verir. Yeniden akış başlatırken yukarıdan bir Ses girişi seçin."
+  },
+  {
+   "zh": "上次的音频输入未连接，请插回设备或重新选择音频输入",
+   "en": "The previous audio input is disconnected. Reconnect it or select another audio input.",
+   "tr": "Önceki ses girişinin bağlantısı kesildi. Yeniden bağlayın ya da başka bir ses girişi seçin."
+  },
+  {
+   "zh": "不采集音频",
+   "en": "No audio input",
+   "tr": "Ses girişi yok"
+  },
+  {
+   "zh": "关闭后仍可录制和保存回放；本机不播放采集声音",
+   "en": "When off, recording and replay still receive audio; capture sound is not played locally.",
+   "tr": "Kapalıyken kayıt ve tekrar sesi almaya devam eder; yakalama sesi bu bilgisayarda çalınmaz."
+  },
+  {
+   "zh": "录入所选音频输入，不受音量、静音和本机音频监听开关影响；采集卡需选择音频输入",
+   "en": "Records the selected audio input regardless of volume, mute or local monitoring. Select an audio input for capture cards.",
+   "tr": "Seçili ses girişini ses düzeyinden, sessize almadan ve yerel izlemeden bağımsız kaydeder. Yakalama kartları için bir ses girişi seçin."
+  },
+  {
+   "zh": "录制采集卡声音需选择输入；本机监听可独立关闭",
+   "en": "Select an audio input to record capture-card sound. Local monitoring can be turned off independently.",
+   "tr": "Yakalama kartının sesini kaydetmek için bir ses girişi seçin. Yerel izleme ayrıca kapatılabilir."
+  },
+  {
+   "zh": "本机音频监听",
+   "en": "Local audio monitoring",
+   "tr": "Yerel ses izleme"
+  },
+  {
+   "zh": "音频输入",
+   "en": "Audio input",
+   "tr": "Ses girişi"
+  },
+  {
+   "zh": "显示区域红框",
+   "en": "Show region outlines",
+   "tr": "Bölge çerçevelerini göster"
+  },
+  {
+   "zh": "选中区域后可拖动位置；红框不会写入录制或导出",
+   "en": "Select a region to move it. Outlines are excluded from recordings and exports.",
+   "tr": "Taşımak için bir bölge seçin. Çerçeveler kayıtlara ve dışa aktarmalara girmez."
+  },
+  {
+   "zh": "已选中",
+   "en": "Selected",
+   "tr": "Seçili"
+  },
+  {
+   "zh": "选中",
+   "en": "Select",
+   "tr": "Seç"
+  },
+  {
+   "zh": "打开软件播放一次，动画结束后继续；打开媒体或关闭声音立即停止",
+   "en": "Plays once on launch, continuing after the intro. Opening media or turning sound off stops it immediately.",
+   "tr": "Açılışta bir kez çalar, giriş animasyonundan sonra sürer. Medya açmak ya da sesi kapatmak onu hemen durdurur."
+  },
+  {
+   "zh": "停止本次启动音乐",
+   "en": "Stop music for this launch",
+   "tr": "Bu açılış için müziği durdur"
+  },
+  {
+   "zh": "每次启动播放一次，动画结束后继续；此开关会保存，角落按钮仅停止本次",
+   "en": "Plays once per launch, continuing after the intro. This setting is saved; the corner button stops only this launch.",
+   "tr": "Her açılışta bir kez çalar, giriş animasyonundan sonra sürer. Bu ayar kaydedilir; köşedeki düğme yalnızca bu açılışı durdurur."
   }
  ]
 }

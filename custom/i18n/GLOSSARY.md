@@ -9,7 +9,8 @@
 - Durumlar edilgen veya sıfat: "Bağlandı", "Duraklatıldı", "Kullanılamıyor".
 - Ondalık ayırıcı virgül (0,25; 1,7 GB), binlik nokta (10.000). Koddan gelen `{:.1f}` gibi sayılar olduğu gibi kalır.
 - Yüzde: Türkçede işaret önce gelir, ama `%` + rakam Qt'de yer tutucudur (`%1`). Bu yüzden sabit yüzdeler "yüzde 50" diye yazılır; yer tutuculu yüzdeler `%%1` (ekranda `%50`).
-- Ekler kesme işaretiyle: PS5'e, Veyra'yı, IP'yi, F11'e.
+- Ekler kesme işaretiyle: PS5'e, CrispPlay'i, IP'yi, F11'e.
+- Uygulamanın kendisi kastedildiğinde kaynak metindeki "Veyra" Türkçede **CrispPlay** yazılır ("CrispPlay'i yeniden başlatın", `CrispPlay.exe`). "Veyra" olarak kalanlar: Veyra Virtual Speaker (sürücünün adı), `*.vpreset` / `*.vpcolor` dosya türü adları ve özgün yazara giden bağış metinleri.
 
 ## Dokunulmayanlar
 

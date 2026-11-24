@@ -16,6 +16,11 @@ param(
     [string]$Size = "1600x900",
     # Press the toggle shortcut (F10) at these times, ms after start (the script activates the window).
     [int[]]$ToggleAtMs = @(),
+    # Other keys, "<ms>:<SendKeys text>", e.g. "20000:{F8}", "30000:{F9}" (upstream recording /
+    # instant replay next to subtitle translation; files land in out\subs-test\<name>\clips).
+    [string[]]$Keys = @(),
+    # Extra upstream preferences for qml-preferences.v1.json, e.g. @{ replayEnabled = $true; replaySeconds = 15 }.
+    [hashtable]$Prefs = @{},
     # Open Ayarlar -> Altyazı çevirisi instead of playing (screenshot of the settings tab).
     [switch]$Settings,
     # Initial contents of crispplay-subs.v1.json besides "enabled" (e.g. @{ online = $true }).
@@ -60,7 +65,7 @@ New-Item -ItemType Directory -Force $data | Out-Null
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 $subsSettings = @{ enabled = ($Subs -eq "on") } + $Options
 [IO.File]::WriteAllText((Join-Path $data "crispplay-subs.v1.json"), ($subsSettings | ConvertTo-Json), $utf8)
-[IO.File]::WriteAllText((Join-Path $data "qml-preferences.v1.json"), (@{ language = "tr"; recordDir = (Join-Path $work "clips") } | ConvertTo-Json), $utf8)
+[IO.File]::WriteAllText((Join-Path $data "qml-preferences.v1.json"), ((@{ language = "tr"; recordDir = (Join-Path $work "clips") } + $Prefs) | ConvertTo-Json), $utf8)
 
 $env:PATH = "$deps\qt\6.8.3\msvc2022_64\bin;$deps\vcpkg_installed\x64-windows\bin;$env:PATH"
 # Development models (the release build downloads them into <data>\models): the
@@ -163,7 +168,8 @@ $process = Start-Process -FilePath $exe -WorkingDirectory $build -PassThru -Redi
 $null = $process.Handle
 $started = Get-Date
 $shots = @($ShotsAtMs | Sort-Object)
-$toggles = @($ToggleAtMs | Sort-Object); $toggleIndex = 0
+$toggles = @(@($ToggleAtMs | ForEach-Object { [pscustomobject]@{ ms = [int]$_; key = "{F10}" } }) +
+             @($Keys | ForEach-Object { $p = $_.Split(":", 2); [pscustomobject]@{ ms = [int]$p[0]; key = $p[1] } }) | Sort-Object ms); $toggleIndex = 0
 $shell = if ($toggles.Count) { New-Object -ComObject WScript.Shell } else { $null }
 $shotIndex = 0
 $inputs = @(@($Clicks | ForEach-Object { $p = $_.Split(":", 2); [pscustomobject]@{ ms = [int]$p[0]; kind = "click"; arg = $p[1] } }) +
@@ -174,9 +180,10 @@ $cores = [Environment]::ProcessorCount
 $lastCpu = $null; $lastAt = $null
 while (-not $process.HasExited) {
     $elapsed = ((Get-Date) - $started).TotalMilliseconds
-    while ($toggleIndex -lt $toggles.Count -and $elapsed -ge $toggles[$toggleIndex]) {
-        if ($shell.AppActivate($process.Id)) { Start-Sleep -Milliseconds 150; $shell.SendKeys("{F10}"); Write-Host "sent F10 at $([int]$elapsed) ms" }
-        else { Write-Host "could not activate the window for F10" }
+    while ($toggleIndex -lt $toggles.Count -and $elapsed -ge $toggles[$toggleIndex].ms) {
+        $key = $toggles[$toggleIndex].key
+        if ($shell.AppActivate($process.Id)) { Start-Sleep -Milliseconds 150; $shell.SendKeys($key); Write-Host "sent $key at $([int]$elapsed) ms" }
+        else { Write-Host "could not activate the window for $key" }
         $toggleIndex++
     }
     while ($inputIndex -lt $inputs.Count -and $elapsed -ge $inputs[$inputIndex].ms) {
